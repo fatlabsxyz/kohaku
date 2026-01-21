@@ -1,7 +1,7 @@
 import { Address } from 'viem';
 import { Interface } from 'ethers';
 import { createTx, TxData } from '@kohaku-eth/provider';
-import { NetworkConfig } from '../../config';
+import { PPv1NetworkConfig } from '../../config';
 import { CommitmentActions } from '../actions/commitment';
 import { Nullifier } from '../types';
 
@@ -24,7 +24,7 @@ const generateMockProof = (): string => {
 };
 
 export const makeUnshield = (
-  network: NetworkConfig,
+  network: PPv1NetworkConfig,
   actions: CommitmentActions
 ): Unshield => {
 

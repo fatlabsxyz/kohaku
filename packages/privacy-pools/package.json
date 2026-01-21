@@ -20,7 +20,9 @@
   "scripts": {
     "build": "echo Building @kohaku-eth/privacy-pools && tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
-    "demo": "tsx demo/index.ts",
+    "demo": "tsx demo/simple.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "pnpm -w -r build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
@@ -53,6 +55,8 @@
     "tsup": "^8.5.0",
     "tsx": "^4.17.0",
     "typescript": "^5.9.2",
-    "viem": "^2.37.9"
+    "viem": "^2.37.9",
+    "prool": "^0.0.24",
+    "vitest": "^3.0.0"
   }
 }
