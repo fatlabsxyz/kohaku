@@ -1,22 +1,22 @@
 import { EthereumProvider } from '@kohaku-eth/provider';
-import { NetworkConfig, SEPOLIA_CONFIG } from '../config';
+import { PPv1NetworkConfig, SEPOLIA_CONFIG } from '../config';
 import { DerivedKeys, deriveKeys, KeyConfig } from './keys';
 import { Commitment } from './types';
 import { CommitmentActions, makeCommitmentActions } from './actions/commitment';
-import { Shield, makeShield } from './tx/shield';
+import { Shield, makeCreateShield } from './tx/shield';
 import { Unshield, makeUnshield } from './tx/unshield';
 
 export type PrivacyPoolsAccountParams = {
   credential: KeyConfig;
   provider?: EthereumProvider;
-  network?: NetworkConfig;
+  network?: PPv1NetworkConfig;
 };
 
 export type PrivacyPoolsAccount =
   Shield &
   Unshield &
   CommitmentActions & {
-    network: NetworkConfig;
+    network: PPv1NetworkConfig;
     _internal: {
       keys: DerivedKeys;
       commitments: Commitment[];
@@ -43,7 +43,7 @@ export const createPrivacyPoolsAccount = (
   });
 
   // 5. Create transaction builders
-  const shield = makeShield(network, commitmentActions);
+  const shield = makeCreateShield({ network, actions: commitmentActions });
   const unshield = makeUnshield(network, commitmentActions);
 
   // 6. Compose account
