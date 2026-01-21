@@ -1,18 +1,23 @@
 import { MOCK_POOL_ADDRESS, MOCK_VERIFIER_ADDRESS } from './constants';
 
-export type NetworkConfig = {
+export type PPv1NetworkConfig = {
+  NAME: string;
   CHAIN_ID: number;
-  POOL_ADDRESS: string;
-  VERIFIER_ADDRESS: string;
-  WETH: string;
+  ENTRYPOINT_ADDRESS: string;
 };
 
 // Sepolia testnet config with mocks
-export const SEPOLIA_CONFIG: NetworkConfig = {
+export const SEPOLIA_CONFIG: PPv1NetworkConfig = {
+  NAME: "sepolia",
   CHAIN_ID: 11155111,
-  POOL_ADDRESS: MOCK_POOL_ADDRESS,
-  VERIFIER_ADDRESS: MOCK_VERIFIER_ADDRESS,
-  WETH: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14',
+  ENTRYPOINT_ADDRESS: "",
+};
+
+// Mainnet config with mocks
+export const MAINNET_CONFIG: PPv1NetworkConfig = {
+  NAME: "mainnet",
+  CHAIN_ID: 1,
+  ENTRYPOINT_ADDRESS: "0x6818809EefCe719E480a7526D76bD3e561526b46",
 };
 
 // Re-export constants
