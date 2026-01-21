@@ -5,6 +5,8 @@ import { Commitment } from './types';
 import { CommitmentActions, makeCommitmentActions } from './actions/commitment';
 import { Shield, makeCreateShield } from './tx/shield';
 import { Unshield, makeUnshield } from './tx/unshield';
+import { PoolOperation, PrepareShieldResult, PrivacyProtocol } from '../types';
+import { AssetId, U256, Address, AccountId } from '../types/base';
 
 export type PrivacyPoolsAccountParams = {
   credential: KeyConfig;
@@ -64,3 +66,27 @@ export const createPrivacyPoolsAccount = (
 export type Config = PrivacyPoolsAccountParams;
 export type Account = PrivacyPoolsAccount;
 export const createAccount = createPrivacyPoolsAccount;
+
+export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
+
+  prepareShield(assets: Array<{ asset: AssetId; amount: U256; }>): PrepareShieldResult {
+    throw new Error('Method not implemented.');
+  }
+
+  prepareUnshield(target: Address, assets: Array<{ asset: AssetId; amount: U256; }>): PoolOperation {
+    throw new Error('Method not implemented.');
+  }
+
+  prepareTransfer(target: AccountId, assets: Array<{ asset: AssetId; amount: U256; }>): PoolOperation {
+    throw new Error('Method not implemented.');
+  }
+
+  broadcast(operation: PoolOperation): void {
+    throw new Error('Method not implemented.');
+  }
+
+  balance(assets: Array<{ asset: AssetId; }>): Array<{ asset: AssetId; balance: U256; }> {
+    throw new Error('Method not implemented.');
+  }
+
+}
