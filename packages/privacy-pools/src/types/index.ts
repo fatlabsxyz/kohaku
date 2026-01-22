@@ -1,7 +1,7 @@
 import { AccountId, Address, AssetId, U256 } from "./base";
 import { HostInterface } from "./host";
 
-type Transaction = unknown;
+export type Transaction = unknown;
 
 export interface PrepareShieldResult {
   transactions: Array<Transaction>;
@@ -26,7 +26,7 @@ export interface PrivacyProtocol {
   // Returns the list of transactions that will be broadcasted to perform the shield.
   //
   // Returns an error if the shield cannot be performed.
-  prepareShield(assets: Array<{ asset: AssetId, amount: U256; }>): PrepareShieldResult;
+  prepareShield(assets: Array<{ asset: AssetId, amount: U256; }>): PrepareShieldResult | Promise<PrepareShieldResult>;
 
   // Prepares an unshield operation.
   // 
