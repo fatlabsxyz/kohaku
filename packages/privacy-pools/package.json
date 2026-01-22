@@ -46,17 +46,18 @@
     }
   },
   "dependencies": {
-    "@kohaku-eth/provider": "workspace:*"
+    "@kohaku-eth/provider": "workspace:*",
+    "maci-crypto": "2.5.0"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
     "dotenv": "^17.2.1",
+    "prool": "^0.0.24",
     "ts-node": "^10.9.2",
     "tsup": "^8.5.0",
     "tsx": "^4.17.0",
     "typescript": "^5.9.2",
     "viem": "^2.37.9",
-    "prool": "^0.0.24",
     "vitest": "^3.0.0"
   }
 }
