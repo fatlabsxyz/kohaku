@@ -3,10 +3,11 @@ import { PPv1NetworkConfig, SEPOLIA_CONFIG } from '../config';
 import { DerivedKeys, deriveKeys, KeyConfig } from './keys';
 import { Commitment } from './types';
 import { CommitmentActions, makeCommitmentActions } from './actions/commitment';
-import { Shield, makeCreateShield } from './tx/shield';
+import { Shield, makeCreateShield, prepareShield } from './tx/shield';
 import { Unshield, makeUnshield } from './tx/unshield';
 import { PoolOperation, PrepareShieldResult, PrivacyProtocol } from '../types';
-import { AssetId, U256, Address, AccountId } from '../types/base';
+import { AssetId, U256, Address, AccountId, Bytes } from '../types/base';
+import { HostInterface } from '../types/host';
 
 export type PrivacyPoolsAccountParams = {
   credential: KeyConfig;
@@ -67,10 +68,26 @@ export type Config = PrivacyPoolsAccountParams;
 export type Account = PrivacyPoolsAccount;
 export const createAccount = createPrivacyPoolsAccount;
 
+export const PRIVACY_POOLS_PATH = "m/28784'/1'";
+
 export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
 
-  prepareShield(assets: Array<{ asset: AssetId; amount: U256; }>): PrepareShieldResult {
-    throw new Error('Method not implemented.');
+  static PRIVACY_POOLS_PATH = PRIVACY_POOLS_PATH;
+  masterKey: Bytes;
+
+  constructor(readonly host: HostInterface) {
+    this.masterKey = host.keystore.deriveAtPath(PrivacyPoolsV1Protocol.PRIVACY_POOLS_PATH);
+    this.secrets = new SecretManager(this.masterKey); 
+  }
+
+  async prepareShield(assets: Array<{ asset: AssetId; amount: U256; }>): Promise<PrepareShieldResult> {
+    const transactions: PrepareShieldResult['transactions'] = [];
+    ///XXX: beware of failed deposits
+    for (const { asset, amount } of assets) {
+      const tx = await prepareShield({ host: this.host, shield: { asset, amount } });
+      transactions.push(tx);
+    }
+    return { transactions };
   }
 
   prepareUnshield(target: Address, assets: Array<{ asset: AssetId; amount: U256; }>): PoolOperation {
