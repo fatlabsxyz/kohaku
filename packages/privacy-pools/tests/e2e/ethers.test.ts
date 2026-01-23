@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { E_ADDRESS } from '../../src/config/constants';
 import { MAINNET_CONFIG } from '../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../src/index';
-import { AssetId, ChainId } from '../../src/types/base';
+import { AssetId, ChainId } from '@kohaku-eth/plugins';
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
 import { createMockHost } from '../utils/mock-host';
@@ -15,7 +15,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_CHAIN_ID: ChainId = { kind: 'Evm', chainId: 1n };
+  const MAINNET_CHAIN_ID: ChainId = { kind: 'Evm', chainId: 1 };
 
   beforeAll(async () => {
     anvil = defineAnvil({
@@ -46,12 +46,12 @@ describe('PrivacyPools v1 E2E Flow', () => {
       assetType: { kind: 'Erc20', address: E_ADDRESS }
     };
 
-    const { transactions } = await protocol.prepareShield([
+    const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: 1000000000000000000n } // 1 ETH
-    ]);
+    );
 
-    expect(transactions).toHaveLength(1);
-    const tx = transactions[0];
+    expect(txns).toHaveLength(1);
+    const tx = txns[0];
 
     expect(tx.to).toBe(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
     expect(tx.value).toBe(1000000000000000000n);
@@ -80,11 +80,11 @@ describe('PrivacyPools v1 E2E Flow', () => {
       assetType: { kind: 'Erc20', address: E_ADDRESS }
     };
 
-    const { transactions } = await protocol.prepareShield([
+    const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: 1000000000000000000n } // 1 ETH
-    ]);
+    );
 
-    const tx = transactions[0];
+    const [tx] = txns;
     const txResponse = await alice.sendTransaction({
       to: tx.to,
       data: tx.data,
@@ -115,12 +115,12 @@ describe('PrivacyPools v1 E2E Flow', () => {
       assetType: { kind: 'Erc20', address: USDC_ADDRESS }
     };
 
-    const { transactions } = await protocol.prepareShield([
+    const { txns } = await protocol.prepareShield(
       { asset: usdcAsset, amount: 100000000n } // 100 USDC
-    ]);
+    );
 
-    expect(transactions).toHaveLength(1);
-    const tx = transactions[0];
+    expect(txns).toHaveLength(1);
+    const [tx] = txns;
 
     expect(tx.to).toBe(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
     expect(tx.value).toBe(0n); // ERC20 has no ETH value
@@ -159,11 +159,11 @@ describe('PrivacyPools v1 E2E Flow', () => {
       assetType: { kind: 'Erc20', address: USDC_ADDRESS }
     };
 
-    const { transactions } = await protocol.prepareShield([
+    const { txns } = await protocol.prepareShield(
       { asset: usdcAsset, amount: DEPOSIT_AMOUNT }
-    ]);
+    );
 
-    const tx = transactions[0];
+    const [tx] = txns;
     const txResponse = await alice.sendTransaction({
       to: tx.to,
       data: tx.data,
