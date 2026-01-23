@@ -1,11 +1,9 @@
 import { HostInterface } from '../../types/host';
-import { Address } from 'viem';
 import { Interface } from 'ethers';
 import { createTx, TxData } from '@kohaku-eth/provider';
-import { PPv1NetworkConfig } from '../../config';
-import { CommitmentActions } from '../actions/commitment';
 import { Commitment } from '../types';
-import { AssetId, U256 } from '../../types/base';
+import { Address, AssetId, U256 } from '../../types/base';
+import { Secret } from '../keys';
 
 export type ShieldFn = (token: Address, value: bigint) => { commitment: Commitment; tx: TxData; };
 export type Shield = { shield: ShieldFn; };
@@ -21,85 +19,59 @@ const ENTRYPOINT_ABI_ERC20 = [
 const ENTRYPOINT_INTERFACE_NATIVE = new Interface(ENTRYPOINT_ABI_NATIVE);
 const ENTRYPOINT_INTERFACE_ERC20 = new Interface(ENTRYPOINT_ABI_ERC20);
 
-type CreateShieldContext = {
-  network: PPv1NetworkConfig;
-  actions: CommitmentActions;
-};
-
-export const makeCreateShield = async ({ network, actions }: CreateShieldContext): Promise<Shield> => {
-
-  const shieldNative: ShieldFn = (_, value) => {
-    // 1. Generate commitment
-    const commitment = actions.createCommitment("0xee", value);
-
-    // 2. Encode transaction
-    const data = ENTRYPOINT_INTERFACE_NATIVE.encodeFunctionData('deposit', [commitment.hash]);
-    const tx = createTx(network.ENTRYPOINT_ADDRESS, data, value);
-
-    // Return both commitment and tx
-    // User should: 1) submit tx, 2) wait for confirmation, 3) call addCommitment()
-    return { commitment, tx };
-
-  };
-
-  const shieldErc20: ShieldFn = (token, value) => {
-    // 1. Generate commitment
-    const commitment = actions.createCommitment(token, value);
-
-    // 2. Encode transaction
-    const data = ENTRYPOINT_INTERFACE_ERC20.encodeFunctionData('deposit', [token, value, commitment.hash]);
-    const tx = createTx(network.ENTRYPOINT_ADDRESS, data);
-
-    // Return both commitment and tx
-    // User should: 1) submit tx, 2) wait for confirmation, 3) call addCommitment()
-    return { commitment, tx };
-  };
-
-  const shield: ShieldFn = (token, value) => {
-    return isNative(token) ? shieldNative(token, value) : shieldErc20(token, value);
-  };
-
-  return { shield };
-};
-
 function isNative(token: string) {
   return token.toLowerCase() === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 }
 
 type PrepareShieldContext = {
   host: HostInterface;
+  secret: Secret;
   shield: { asset: AssetId; amount: U256; };
 };
 
-export function prepareNativeShield(host: HostInterface, amount: bigint) {
-    // 2. Encode transaction
-    const data = ENTRYPOINT_INTERFACE_NATIVE.encodeFunctionData('deposit', [commitment.hash]);
-    const tx = createTx(network.ENTRYPOINT_ADDRESS, data, value);
+type PrepareNativeShieldParam = {
+  precommitment: bigint;
+  amount: U256;
+  entrypointAddress: string;
+};
 
-    // Return both commitment and tx
-    // User should: 1) submit tx, 2) wait for confirmation, 3) call addCommitment()
-    return { commitment, tx };
+type PrepareErc20ShieldParam = {
+  precommitment: bigint;
+  amount: U256;
+  tokenAddress: string;
+  entrypointAddress: string;
+};
+
+export function prepareNativeShield({ precommitment, amount, entrypointAddress }: PrepareNativeShieldParam) {
+  const data = ENTRYPOINT_INTERFACE_NATIVE.encodeFunctionData('deposit', [precommitment]);
+  const tx = createTx(entrypointAddress, data, amount);
+
+  return { tx };
 }
 
-export function prepareErc20Shield(host: HostInterface, asset: string, amount: bigint) {
-    
-    // 1. Generate commitment
-    const commitment = host.keystore.createCommitment(token, value);
+export function prepareErc20Shield({ precommitment, amount, tokenAddress, entrypointAddress }: PrepareErc20ShieldParam) {
+  const data = ENTRYPOINT_INTERFACE_ERC20.encodeFunctionData('deposit', [tokenAddress, amount, precommitment]);
+  const tx = createTx(entrypointAddress, data);
 
-    // 2. Encode transaction
-    const data = ENTRYPOINT_INTERFACE_ERC20.encodeFunctionData('deposit', [token, value, commitment.hash]);
-    const tx = createTx(network.ENTRYPOINT_ADDRESS, data);
-
-    // Return both commitment and tx
-    // User should: 1) submit tx, 2) wait for confirmation, 3) call addCommitment()
-    return { commitment, tx };
+  return { tx };
 }
 
-export async function prepareShield({ host, shield }: PrepareShieldContext) {
+type PrepareShieldContextWithEntrypoint = PrepareShieldContext & {
+  entrypointAddress: string;
+};
+
+export async function prepareShield({ secret: { precommitment }, shield, entrypointAddress }: PrepareShieldContextWithEntrypoint) {
   const { asset, amount } = shield;
-  if (isNative(asset)) {
-    return prepareNativeShield(host, amount);
+
+  if (asset.assetType.kind !== "Erc20") {
+    throw new Error(`Asset type \`${asset.assetType.kind}\` not supported.`);
+  }
+
+  const { assetType: { address } } = asset;
+
+  if (isNative(address)) {
+    return prepareNativeShield({ precommitment, amount, entrypointAddress });
   } else {
-    return prepareErc20Shield(host, asset, amount);
+    return prepareErc20Shield({ precommitment, amount, tokenAddress: address, entrypointAddress });
   }
 }
