@@ -46,6 +46,7 @@
     }
   },
   "dependencies": {
+    "@kohaku-eth/plugins": "workspace:*",
     "@kohaku-eth/provider": "workspace:*",
     "maci-crypto": "2.5.0"
   },

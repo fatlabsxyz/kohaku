@@ -20,7 +20,7 @@ export type Secret = {
 
 type BaseDeriveSecretParams = {
   entrypointAddress: string;
-  chainId: bigint;
+  chainId: number;
 }
 
 type DeriveDepositSecretParams = BaseDeriveSecretParams & {
@@ -53,8 +53,8 @@ export function SecretManager({
     const { chainId, entrypointAddress, ...depositWithdrawIdexes } = deriveSecretParams;
     const saltSecret = keystore.deriveAtPath(ppPath({ secretType: "salt", accountIndex, ...depositWithdrawIdexes }));
     const nullifierSecret = keystore.deriveAtPath(ppPath({ accountIndex, secretType: "nullifier", ...depositWithdrawIdexes }));
-    const nullifier = hashToSnarkField([chainId, toBigInt(entrypointAddress), toBigInt(nullifierSecret)]);
-    const salt = hashToSnarkField([chainId, toBigInt(entrypointAddress), toBigInt(saltSecret)]);
+    const nullifier = hashToSnarkField([BigInt(chainId), toBigInt(entrypointAddress), toBigInt(nullifierSecret)]);
+    const salt = hashToSnarkField([BigInt(chainId), toBigInt(entrypointAddress), toBigInt(saltSecret)]);
     const precommitment = hashToSnarkField([nullifier, salt]);
 
     return { nullifier, salt, precommitment };
