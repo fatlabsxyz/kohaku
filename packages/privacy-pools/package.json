@@ -46,6 +46,7 @@
     }
   },
   "dependencies": {
+    "@kohaku-eth/plugins": "workspace:*",
     "@kohaku-eth/provider": "workspace:*",
     "@reduxjs/toolkit": "^2.11.2",
     "maci-crypto": "2.5.0"
