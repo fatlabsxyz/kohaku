@@ -14,12 +14,14 @@ const DefaultContext: PrivacyPoolsV1ProtocolContext = {
   entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
 };
 
-
 interface PrivacyPoolsV1ProtocolParams {
   context: PrivacyPoolsV1ProtocolContext;
   secretManager: (params: SecretManagerParams) => ISecretManager;
   stateManager: () => IStateManager;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type Account = {};
 
 type State = unknown;
 interface IStateManager {
