@@ -4,7 +4,7 @@ import { TxData, TxLog, TransactionReceipt } from "./tx";
  * Abstract provider interface for blockchain interactions
  * Supports both Ethers v6 and Viem implementations
  */
-export type EthereumProvider<T = unknown> = {
+export interface EthereumProvider<T = unknown> {
   _internal: T;
 
   /**
@@ -13,7 +13,7 @@ export type EthereumProvider<T = unknown> = {
   getLogs(params: {
     address: string;
     fromBlock: number;
-    toBlock: number;
+    toBlock?: number;
   }): Promise<TxLog[]>;
 
   /**
