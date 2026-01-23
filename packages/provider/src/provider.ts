@@ -7,7 +7,7 @@ import { RpcRequest } from "ox/RpcRequest";
  * Abstract provider interface for blockchain interactions
  * Supports both Ethers v6 and Viem implementations
  */
-export type EthereumProvider<T = unknown> = {
+export interface EthereumProvider<T = unknown> {
   _internal: T;
 
   /**
