@@ -1,9 +1,11 @@
-import { HostInterface } from '../../types/host';
-import { Interface } from 'ethers';
+import { AssetId } from "@kohaku-eth/plugins";
 import { createTx, TxData } from '@kohaku-eth/provider';
-import { Commitment } from '../types';
-import { Address, AssetId, U256 } from '../../types/base';
+import { Interface } from 'ethers';
+import { Address } from "viem";
+import { U256 } from '../../types/base';
+import { HostInterface } from '../../types/host';
 import { Secret } from '../keys';
+import { Commitment } from '../types';
 
 export type ShieldFn = (token: Address, value: bigint) => { commitment: Commitment; tx: TxData; };
 export type Shield = { shield: ShieldFn; };
