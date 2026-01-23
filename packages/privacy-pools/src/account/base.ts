@@ -1,92 +1,96 @@
-import { EthereumProvider } from '@kohaku-eth/provider';
-import { PPv1NetworkConfig, SEPOLIA_CONFIG } from '../config';
-import { DerivedKeys, deriveKeys, KeyConfig } from './keys';
-import { Commitment } from './types';
-import { CommitmentActions, makeCommitmentActions } from './actions/commitment';
-import { Shield, makeCreateShield, prepareShield } from './tx/shield';
-import { Unshield, makeUnshield } from './tx/unshield';
 import { PoolOperation, PrepareShieldResult, PrivacyProtocol } from '../types';
-import { AssetId, U256, Address, AccountId, Bytes } from '../types/base';
+import { AccountId, Address, AssetId, Bytes, ChainId, U256 } from '../types/base';
 import { HostInterface } from '../types/host';
-
-export type PrivacyPoolsAccountParams = {
-  credential: KeyConfig;
-  provider?: EthereumProvider;
-  network?: PPv1NetworkConfig;
-};
-
-export type PrivacyPoolsAccount =
-  Shield &
-  Unshield &
-  CommitmentActions & {
-    network: PPv1NetworkConfig;
-    _internal: {
-      keys: DerivedKeys;
-      commitments: Commitment[];
-    };
-  };
-
-export const createPrivacyPoolsAccount = (
-  params: PrivacyPoolsAccountParams
-): PrivacyPoolsAccount => {
-  // 1. Derive keys
-  const keys = deriveKeys(params.credential);
-
-  // 2. Network config (default to Sepolia)
-  const network = params.network ?? SEPOLIA_CONFIG;
-
-  // 3. In-memory commitment storage
-  const commitments: Commitment[] = [];
-
-  // 4. Create commitment actions
-  const commitmentActions = makeCommitmentActions({
-    commitmentKey: keys.commitmentKey,
-    nullifierKey: keys.nullifierKey,
-    commitments
-  });
-
-  // 5. Create transaction builders
-  const shield = makeCreateShield({ network, actions: commitmentActions });
-  const unshield = makeUnshield(network, commitmentActions);
-
-  // 6. Compose account
-  const account = Object.assign(
-    {
-      network,
-      _internal: { keys, commitments }
-    },
-    commitmentActions,
-    shield,
-    unshield
-  );
-
-  return account;
-};
-
-// Legacy exports for backwards compatibility (deprecated)
-export type Config = PrivacyPoolsAccountParams;
-export type Account = PrivacyPoolsAccount;
-export const createAccount = createPrivacyPoolsAccount;
+import { ISecretManager, SecretManager, SecretManagerParams } from './keys';
+import { prepareShield } from './tx/shield';
 
 export const PRIVACY_POOLS_PATH = "m/28784'/1'";
+
+interface PrivacyPoolsV1ProtocolContext {
+  entrypointAddress: (chainId: ChainId) => string;
+}
+
+const DefaultContext: PrivacyPoolsV1ProtocolContext = {
+  entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
+};
+
+
+interface PrivacyPoolsV1ProtocolParams {
+  context: PrivacyPoolsV1ProtocolContext;
+  secretManager: (params: SecretManagerParams) => ISecretManager;
+  stateManager: () => IStateManager;
+}
+
+type State = unknown;
+interface IStateManager {
+  sync: () => Promise<void>;
+  getDepositCount: () => Promise<number>;
+  getState: () => State;
+}
+
+function StateManager(): IStateManager {
+  return {
+    sync: async () => { },
+    getDepositCount: async () => 0,
+    getState: () => 1,
+  };
+}
 
 export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
 
   static PRIVACY_POOLS_PATH = PRIVACY_POOLS_PATH;
   masterKey: Bytes;
+  accountIndex: number;
+  secretManager: ISecretManager;
+  stateManager: IStateManager;
+  context: PrivacyPoolsV1ProtocolContext;
 
-  constructor(readonly host: HostInterface) {
+  constructor(readonly host: HostInterface,
+    {
+      context = DefaultContext,
+      secretManager = SecretManager,
+      stateManager = StateManager,
+    }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
+    this.context = context;
+    this.accountIndex = 0;
     this.masterKey = host.keystore.deriveAtPath(PrivacyPoolsV1Protocol.PRIVACY_POOLS_PATH);
-    this.secrets = new SecretManager(this.masterKey); 
+    this.secretManager = secretManager({
+      host,
+      accountIndex: this.accountIndex
+    });
+    this.stateManager = stateManager();
   }
 
   async prepareShield(assets: Array<{ asset: AssetId; amount: U256; }>): Promise<PrepareShieldResult> {
+
+    await this.stateManager.sync();
+
+    if (assets.length > 1) {
+      throw new Error();
+    }
+
     const transactions: PrepareShieldResult['transactions'] = [];
+
     ///XXX: beware of failed deposits
     for (const { asset, amount } of assets) {
-      const tx = await prepareShield({ host: this.host, shield: { asset, amount } });
+      const { chainId } = asset;
+
+      if (chainId.kind !== 'Evm') {
+        throw new Error("Only support `Evm` chainId.kind assets");
+      }
+
+      const entrypointAddress = this.context.entrypointAddress(chainId);
+      const depositCount = await this.stateManager.getDepositCount();
+      const secret = this.secretManager.getDepositSecrets({
+        entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
+      });
+      const { tx } = await prepareShield({
+        host: this.host, secret, shield: { asset, amount }, entrypointAddress
+      });
+
       transactions.push(tx);
     }
+
     return { transactions };
   }
 

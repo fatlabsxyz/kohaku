@@ -1,7 +1,8 @@
+import { TxData } from "@kohaku-eth/provider";
 import { AccountId, Address, AssetId, U256 } from "./base";
 import { HostInterface } from "./host";
 
-export type Transaction = unknown;
+export type Transaction = TxData;
 
 export interface PrepareShieldResult {
   transactions: Array<Transaction>;
