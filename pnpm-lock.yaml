@@ -72,6 +72,9 @@ importers:
 
   packages/privacy-pools:
     dependencies:
+      '@kohaku-eth/plugins':
+        specifier: workspace:*
+        version: link:../plugins
       '@kohaku-eth/provider':
         specifier: workspace:*
         version: link:../provider

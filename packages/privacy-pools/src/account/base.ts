@@ -1,5 +1,6 @@
-import { PoolOperation, PrepareShieldResult, PrivacyProtocol } from '../types';
-import { AccountId, Address, AssetId, Bytes, ChainId, U256 } from '../types/base';
+import { AccountId, AssetAmount, AssetId, ChainId, Operation, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
+import { Address } from "viem";
+import { Bytes } from '../types/base';
 import { HostInterface } from '../types/host';
 import { ISecretManager, SecretManager, SecretManagerParams } from './keys';
 import { prepareShield } from './tx/shield';
@@ -38,7 +39,7 @@ function StateManager(): IStateManager {
   };
 }
 
-export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
+export class PrivacyPoolsV1Protocol implements Plugin {
 
   static PRIVACY_POOLS_PATH = PRIVACY_POOLS_PATH;
   masterKey: Bytes;
@@ -63,53 +64,49 @@ export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
     this.stateManager = stateManager();
   }
 
-  async prepareShield(assets: Array<{ asset: AssetId; amount: U256; }>): Promise<PrepareShieldResult> {
+  account(): AccountId {
+    throw new Error("Method not implemented.");
+  }
+
+  balance(assets: Set<AssetId> | undefined): Promise<Map<AssetId, bigint>> {
+    throw new Error("Method not implemented.");
+  }
+
+  async prepareShield(assets: { asset: AssetId, amount: bigint; }, from?: Address): Promise<ShieldPreparation> {
 
     await this.stateManager.sync();
 
-    if (assets.length > 1) {
-      throw new Error();
+    const txns: ShieldPreparation['txns'] = [];
+
+    const { asset, amount } = assets;
+    const { chainId } = asset;
+
+    if (chainId.kind !== 'Evm') {
+      throw new Error("Only support `Evm` chainId.kind assets");
     }
 
-    const transactions: PrepareShieldResult['transactions'] = [];
+    const entrypointAddress = this.context.entrypointAddress(chainId);
+    const depositCount = await this.stateManager.getDepositCount();
+    const secret = this.secretManager.getDepositSecrets({
+      entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
+    });
+    const { tx } = await prepareShield({
+      host: this.host, secret, shield: { asset, amount }, entrypointAddress
+    });
 
-    ///XXX: beware of failed deposits
-    for (const { asset, amount } of assets) {
-      const { chainId } = asset;
+    txns.push(tx);
 
-      if (chainId.kind !== 'Evm') {
-        throw new Error("Only support `Evm` chainId.kind assets");
-      }
-
-      const entrypointAddress = this.context.entrypointAddress(chainId);
-      const depositCount = await this.stateManager.getDepositCount();
-      const secret = this.secretManager.getDepositSecrets({
-        entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
-      });
-      const { tx } = await prepareShield({
-        host: this.host, secret, shield: { asset, amount }, entrypointAddress
-      });
-
-      transactions.push(tx);
-    }
-
-    return { transactions };
+    return { txns };
   }
 
-  prepareUnshield(target: Address, assets: Array<{ asset: AssetId; amount: U256; }>): PoolOperation {
-    throw new Error('Method not implemented.');
+  prepareUnshield(assets: Map<AssetId, bigint> | AssetAmount, to: Address): Promise<Operation> {
+    throw new Error("Method not implemented.");
   }
-
-  prepareTransfer(target: AccountId, assets: Array<{ asset: AssetId; amount: U256; }>): PoolOperation {
-    throw new Error('Method not implemented.');
+  prepareTransfer(assets: Map<AssetId, bigint> | AssetAmount, to: AccountId): Promise<Operation> {
+    throw new Error("Method not implemented.");
   }
-
-  broadcast(operation: PoolOperation): void {
-    throw new Error('Method not implemented.');
-  }
-
-  balance(assets: Array<{ asset: AssetId; }>): Array<{ asset: AssetId; balance: U256; }> {
-    throw new Error('Method not implemented.');
+  broadcast(operation: Operation): Promise<void> {
+    throw new Error("Method not implemented.");
   }
 
 }
