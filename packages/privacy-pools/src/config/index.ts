@@ -1,5 +1,3 @@
-import { MOCK_POOL_ADDRESS, MOCK_VERIFIER_ADDRESS } from './constants';
-
 export type PPv1NetworkConfig = {
   NAME: string;
   CHAIN_ID: number;
@@ -21,4 +19,4 @@ export const MAINNET_CONFIG: PPv1NetworkConfig = {
 };
 
 // Re-export constants
-export { MOCK_POOL_ADDRESS, MOCK_VERIFIER_ADDRESS, COMMITMENT_TREE_DEPTH, POOL_VERSION } from './constants';
+export { MOCK_POOL_ADDRESS, MOCK_VERIFIER_ADDRESS, COMMITMENT_TREE_DEPTH, POOL_VERSION, E_ADDRESS } from './constants';
