@@ -1,11 +1,12 @@
 // Main factory
-export { createPrivacyPoolsAccount, createAccount } from './account/base';
-export type { PrivacyPoolsAccount, PrivacyPoolsAccountParams, Account, Config } from './account/base';
+export { PrivacyPoolsV1Protocol } from './account/base';
 
 // Types
-export type { KeyConfig, DerivedKeys } from './account/keys';
+export type { SecretManager, SecretManagerParams, ISecretManager } from './account/keys';
 export type { Commitment, Nullifier } from './account/types';
 export type { PPv1NetworkConfig as NetworkConfig } from './config';
+export type { AssetId, ChainId, Address, U256 } from './types/base';
+export type { Transaction, PrepareShieldResult } from './types';
 
 // Configs
-export { SEPOLIA_CONFIG, MOCK_POOL_ADDRESS, MOCK_VERIFIER_ADDRESS } from './config';
+export { MOCK_POOL_ADDRESS, MOCK_VERIFIER_ADDRESS, SEPOLIA_CONFIG, MAINNET_CONFIG, E_ADDRESS } from './config';
