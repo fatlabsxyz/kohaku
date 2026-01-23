@@ -1,10 +1,4 @@
 /**
- * Pool ID for prool instance isolation
- * Each test suite should use a unique pool ID to avoid conflicts
- */
-export const poolId = Number(process.env.VITEST_POOL_ID ?? 1);
-
-/**
  * Test accounts with known private keys for testing
  * These are standard anvil default accounts
  */
