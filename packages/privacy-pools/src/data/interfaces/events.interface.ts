@@ -4,7 +4,7 @@ interface IBaseEvent {
     value: bigint
 }
 
-export interface IDepositEvent extends IBaseEvent {
+export interface IPoolDepositEvent extends IBaseEvent {
   depositor: bigint;
   commitment: bigint;
   label: bigint;
@@ -20,4 +20,10 @@ export interface IRagequitEvent extends IBaseEvent {
   ragequitter: bigint;
   commitment: bigint;
   label: bigint;
+}
+
+export interface IEntrypointDepositEvent extends IBaseEvent {
+    depositor: bigint;
+    poolAddress: bigint;
+    commitment: bigint;
 }
