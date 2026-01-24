@@ -1,7 +1,7 @@
 export * from './v1';
 export * from './v2';
 // Main factory
-export { PrivacyPoolsV1Protocol } from './account/base';
+export { PrivacyPoolsV1Protocol } from './plugin/base';
 
 // Types
 export type { SecretManager, SecretManagerParams, ISecretManager } from './account/keys';
