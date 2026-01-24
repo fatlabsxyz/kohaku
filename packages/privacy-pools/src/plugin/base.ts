@@ -2,38 +2,23 @@ import { AccountId, AssetAmount, AssetId, ChainId, Operation, Plugin, ShieldPrep
 import { Address } from "viem";
 import { Bytes } from '../types/base';
 import { HostInterface } from '../types/host';
-import { ISecretManager, SecretManager, SecretManagerParams } from './keys';
-import { prepareShield } from './tx/shield';
+import { ISecretManager, SecretManager } from '../account/keys';
+import { prepareShield } from '../account/tx/shield';
+import { IStateManager, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
+import { storeStateManager } from '../state/state-manager';
 
 export const PRIVACY_POOLS_PATH = "m/28784'/1'";
 
-interface PrivacyPoolsV1ProtocolContext {
-  entrypointAddress: (chainId: ChainId) => string;
-}
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {
   entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
 };
 
 
-interface PrivacyPoolsV1ProtocolParams {
-  context: PrivacyPoolsV1ProtocolContext;
-  secretManager: (params: SecretManagerParams) => ISecretManager;
-  stateManager: () => IStateManager;
-}
-
-type State = unknown;
-interface IStateManager {
-  sync: () => Promise<void>;
-  getDepositCount: () => Promise<number>;
-  getState: () => State;
-}
-
 function StateManager(): IStateManager {
   return {
     sync: async () => { },
     getDepositCount: async () => 0,
-    getState: () => 1,
   };
 }
 
@@ -50,7 +35,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     {
       context = DefaultContext,
       secretManager = SecretManager,
-      stateManager = StateManager,
+      stateManager = storeStateManager,
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     this.context = context;
     this.accountIndex = 0;
@@ -59,7 +44,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
       host,
       accountIndex: this.accountIndex
     });
-    this.stateManager = stateManager();
+    this.stateManager = stateManager({ entrypointAddress: context.entrypointAddress, secretManager: this.secretManager });
   }
 
   account(): AccountId {

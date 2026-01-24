@@ -1,5 +1,5 @@
 import { EventTypes } from "../abis/events.abi";
-import { IDepositEvent, IRagequitEvent, IWithdrawalEvent } from "./events.interface";
+import { IPoolDepositEvent, IRagequitEvent, IWithdrawalEvent } from "./events.interface";
 
 export interface IGetEventsParams<T extends EventTypes> {
     events: T | T[];
@@ -9,7 +9,7 @@ export interface IGetEventsParams<T extends EventTypes> {
 }
 
 interface IEventNameToEvent {
-    Deposited: IDepositEvent;
+    Deposited: IPoolDepositEvent;
     Withdrawn: IWithdrawalEvent;
     Ragequit: IRagequitEvent;
 }
