@@ -1,6 +1,6 @@
 import { Address } from 'viem';
 
-export type Commitment = {
+export interface Commitment {
   hash: string;           // Commitment hash (what goes on-chain)
   token: Address;         // Token address
   value: bigint;          // Amount
@@ -9,7 +9,7 @@ export type Commitment = {
   index?: number;         // Position in merkle tree (optional)
 };
 
-export type Nullifier = {
+export interface Nullifier {
   hash: string;           // Nullifier hash
   commitment: Commitment; // Reference to spent commitment
 };
