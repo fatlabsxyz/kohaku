@@ -1,9 +1,7 @@
-import { AssetId } from "@kohaku-eth/plugins";
+import { AssetId, Host } from "@kohaku-eth/plugins";
 import { createTx, TxData } from '@kohaku-eth/provider';
 import { Interface } from 'ethers';
 import { Address } from "viem";
-import { U256 } from '../../types/base';
-import { HostInterface } from '../../types/host';
 import { Secret } from '../keys';
 import { Commitment } from '../types';
 
@@ -26,20 +24,20 @@ function isNative(token: string) {
 }
 
 type PrepareShieldContext = {
-  host: HostInterface;
+  host: Host;
   secret: Secret;
-  shield: { asset: AssetId; amount: U256; };
+  shield: { asset: AssetId; amount: bigint; };
 };
 
 type PrepareNativeShieldParam = {
   precommitment: bigint;
-  amount: U256;
+  amount: bigint;
   entrypointAddress: string;
 };
 
 type PrepareErc20ShieldParam = {
   precommitment: bigint;
-  amount: U256;
+  amount: bigint;
   tokenAddress: string;
   entrypointAddress: string;
 };
