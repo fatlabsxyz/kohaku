@@ -4,10 +4,10 @@ import { HostInterface } from '../types/host';
 
 /** BIP32-BIP43 - Privacy Pools v1
  *   2**31
- *                                                LABEL >>>
- * m/purpose'/version'/account'/ -- /secret_type'/deposit'   /withdraw
- *                                                  L-> PH[depositSecret(N|C), entrypointAddress] -> circuit
- *                                                              L-> PH[withdrawSecret(N|C), entrypointAddress] -> circuit
+ *
+ * m/purpose'/version'/account'/secretType'/deposit'/secretIndex'
+ *   secretIndex: 0 = deposit secret, 1+ = withdrawal secrets
+ *   PH[secret(N|C), entrypointAddress] -> circuit
  */
 
 const PRIVACY_POOLS_PATH = "m/28784'/1'";
@@ -21,22 +21,25 @@ export type Secret = {
 type BaseDeriveSecretParams = {
   entrypointAddress: string;
   chainId: number;
-}
+};
 
 type DeriveDepositSecretParams = BaseDeriveSecretParams & {
   depositIndex: number;
 };
 
-type DeriveWithdrawalSecretsParams = DeriveDepositSecretParams & {
+type DeriveWithdrawalSecretsParams = BaseDeriveSecretParams & {
+  depositIndex: number;
   withdrawIndex: number;
 };
 
-type DeriveSecretsParams = DeriveDepositSecretParams & { withdrawIndex?: number; };
+type DeriveSecretsParams = BaseDeriveSecretParams & {
+  depositIndex: number;
+  secretIndex: number;
+};
 
 export interface ISecretManager {
-  deriveSecrets: (params: DeriveSecretsParams) => Secret;
   getDepositSecrets: (params: DeriveDepositSecretParams) => Secret;
-  getWithdrawalSecrets: (params: DeriveWithdrawalSecretsParams) => Secret;
+  getSecrets: (params: DeriveWithdrawalSecretsParams) => Secret;
 }
 
 export interface SecretManagerParams {
@@ -49,10 +52,9 @@ export function SecretManager({
   accountIndex = 0
 }: SecretManagerParams): ISecretManager {
 
-  const deriveSecrets = (deriveSecretParams: DeriveSecretsParams) => {
-    const { chainId, entrypointAddress, ...depositWithdrawIdexes } = deriveSecretParams;
-    const saltSecret = keystore.deriveAtPath(ppPath({ secretType: "salt", accountIndex, ...depositWithdrawIdexes }));
-    const nullifierSecret = keystore.deriveAtPath(ppPath({ accountIndex, secretType: "nullifier", ...depositWithdrawIdexes }));
+  const deriveSecrets = ({ chainId, entrypointAddress, depositIndex, secretIndex }: DeriveSecretsParams) => {
+    const saltSecret = keystore.deriveAtPath(ppPath({ secretType: "salt", accountIndex, depositIndex, secretIndex }));
+    const nullifierSecret = keystore.deriveAtPath(ppPath({ accountIndex, secretType: "nullifier", depositIndex, secretIndex }));
     const nullifier = hashToSnarkField([BigInt(chainId), toBigInt(entrypointAddress), toBigInt(nullifierSecret)]);
     const salt = hashToSnarkField([BigInt(chainId), toBigInt(entrypointAddress), toBigInt(saltSecret)]);
     const precommitment = hashToSnarkField([nullifier, salt]);
@@ -60,18 +62,17 @@ export function SecretManager({
     return { nullifier, salt, precommitment };
   };
 
-  const getDepositSecrets = (params: DeriveDepositSecretParams) => {
-    return deriveSecrets(params);
+  const getDepositSecrets = ({ entrypointAddress, chainId, depositIndex }: DeriveDepositSecretParams) => {
+    return deriveSecrets({ entrypointAddress, chainId, depositIndex, secretIndex: 0 });
   };
 
-  const getWithdrawalSecrets = (params: DeriveWithdrawalSecretsParams) => {
-    return deriveSecrets(params);
+  const getSecrets = ({ entrypointAddress, chainId, depositIndex, withdrawIndex }: DeriveWithdrawalSecretsParams) => {
+    return deriveSecrets({ entrypointAddress, chainId, depositIndex, secretIndex: withdrawIndex });
   };
 
   return {
-    deriveSecrets,
     getDepositSecrets,
-    getWithdrawalSecrets
+    getSecrets
   };
 
 }
@@ -80,18 +81,13 @@ type PrivacyPoolsDerivationPath = {
   accountIndex: number;
   secretType: "salt" | "nullifier";
   depositIndex: number;
-  withdrawIndex?: number;
+  secretIndex: number;
 };
 
-function ppPath({ accountIndex, secretType, depositIndex, withdrawIndex }: PrivacyPoolsDerivationPath) {
+function ppPath({ accountIndex, secretType, depositIndex, secretIndex }: PrivacyPoolsDerivationPath) {
   const _secretType = secretType === "nullifier" ? 0 : 1;
-  const depositPath = `${PRIVACY_POOLS_PATH}/${accountIndex}'/${_secretType}'/${depositIndex}'`;
 
-  if (withdrawIndex) {
-    return `${depositPath}/${withdrawIndex}'`;
-  } else {
-    return depositPath;
-  }
+  return `${PRIVACY_POOLS_PATH}/${accountIndex}'/${_secretType}'/${depositIndex}'/${secretIndex}'`;
 }
 
 function hashToSnarkField(numberLikes: (string | bigint)[]) {

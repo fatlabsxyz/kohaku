@@ -8,17 +8,12 @@ import { AccountId, AssetAmount, AssetId, ChainId, Operation, Plugin, ShieldPrep
 import { Address } from "viem";
 import { HostInterface } from '../types/host';
 
-export const PRIVACY_POOLS_PATH = "m/28784'/1'";
-
-
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {
   entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
 };
 
-
 export class PrivacyPoolsV1Protocol implements Plugin {
 
-  static PRIVACY_POOLS_PATH = PRIVACY_POOLS_PATH;
   accountIndex: number;
   secretManager: ISecretManager;
   stateManager: IStateManager;
@@ -78,9 +73,48 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     return { txns };
   }
 
-  prepareUnshield(assets: Map<AssetId, bigint> | AssetAmount, to: Address): Promise<Operation> {
-    throw new Error("Method not implemented.");
+  async prepareUnshield(assets: AssetAmount, to: Address): Promise<Operation> {
+    await this.stateManager.sync();
+
+    const { asset, amount } = assets;
+    const { chainId } = asset;
+
+    if (chainId.kind !== 'Evm') {
+      throw new Error("Only support `Evm` chainId.kind assets");
+    }
+
+    // Get a single note for {asset} with at least {amount}
+    const note = this.stateManager.getNote(asset, amount);
+
+    if (!note) {
+      throw new Error("Not enough balance left in a single note for withdrawing.");
+    }
+
+    const { precommitment, deposit, withdraw, value } = note;
+
+    const entrypointAddress = this.context.entrypointAddress(chainId);
+    const existingNoteSecrets = this.secretManager.getSecrets({
+      entrypointAddress,
+      depositIndex: deposit,
+      withdrawIndex: withdraw,
+      chainId: chainId.chainId,
+    });
+    const newNoteSecrets = this.secretManager.getSecrets({
+      entrypointAddress,
+      depositIndex: deposit,
+      withdrawIndex: withdraw + 1,
+      chainId: chainId.chainId,
+    })
+
+    return {
+      inner: {
+        existingNoteSecrets,
+        newNoteSecrets
+      }
+    }
+
   }
+
   prepareTransfer(assets: Map<AssetId, bigint> | AssetAmount, to: AccountId): Promise<Operation> {
     throw new Error("Method not implemented.");
   }
