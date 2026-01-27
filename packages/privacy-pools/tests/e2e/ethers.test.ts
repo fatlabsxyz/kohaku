@@ -15,7 +15,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_CHAIN_ID: ChainId = { kind: 'Evm', chainId: 1 };
+  const MAINNET_CHAIN_ID: ChainId = { kind: 'Evm', chainId: 1n };
 
   beforeAll(async () => {
     anvil = defineAnvil({
