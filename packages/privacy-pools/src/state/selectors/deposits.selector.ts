@@ -2,26 +2,26 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { IPoolDepositEvent } from '../../data/interfaces/events.interface';
 import { BaseSelectorParams } from '../interfaces/selectors.interface';
+import { EvmChainId } from '@kohaku-eth/provider';
 
-const selectChainId = (state: any, chainId: string) => chainId;
-const selectEntrypoint = (state: any, entrypointAddress: string) => entrypointAddress;
+const selectChainId = (state: RootState, chainId: EvmChainId) => chainId;
 
 export const createMyDepositsSelector = ({
   secretManager,
-}: Pick<BaseSelectorParams, 'secretManager'>) => {
+  entrypointAddress
+}: Pick<BaseSelectorParams, 'secretManager' | 'entrypointAddress'>) => {
   return createSelector(
     [
       (state: RootState) => state.deposits.deposits,
       selectChainId,
-      selectEntrypoint
     ],
-    (depositsMap, chainId, entrypointAddress): IPoolDepositEvent[] => {
+    (depositsMap, chainId): IPoolDepositEvent[] => {
       const myDeposits: IPoolDepositEvent[] = [];
 
       for (let depositIndex = 0; ; depositIndex++) {
         const { precommitment } = secretManager.deriveSecrets({
-          entrypointAddress,
-          chainId: BigInt(chainId),
+          entrypointAddress: entrypointAddress(chainId),
+          chainId: BigInt(chainId.chainId),
           depositIndex,
         });
 
@@ -40,3 +40,13 @@ export const createMyDepositsSelector = ({
   );
 };
 
+export const createMyDepositsCountSelector = (params: Pick<BaseSelectorParams, 'secretManager' | 'entrypointAddress'>) => {
+  const myDepositsSelector = createMyDepositsSelector(params);
+
+  return createSelector(
+    [myDepositsSelector],
+    (myDeposits): number => {
+      return myDeposits.length;
+    }
+  );
+};
