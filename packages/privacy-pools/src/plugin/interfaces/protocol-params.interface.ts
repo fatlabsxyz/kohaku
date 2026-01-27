@@ -14,7 +14,16 @@ export interface PrivacyPoolsV1ProtocolParams {
 }
 
 export interface IStateManager {
+  getNote(asset: AssetId, amount: bigint): Note | undefined;
   sync: (chainId: EvmChainId, entrypointAddress: string) => Promise<void>;
   getDepositCount: (chainId: EvmChainId) => Promise<number>;
   getBalance: (asset: AssetId) => string;
 }
+
+export type Note = {
+  precommitment: bigint;
+  label: bigint;
+  value: bigint;
+  deposit: number;
+  withdraw: number;
+};
