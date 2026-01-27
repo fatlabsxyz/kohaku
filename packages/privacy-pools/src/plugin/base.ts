@@ -1,12 +1,10 @@
+import { AccountId, AssetAmount, AssetId, ChainId, Host, Operation, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
+import { Address } from "viem";
 import { ISecretManager, SecretManager } from '../account/keys';
 import { prepareShield } from '../account/tx/shield';
-import { IStateManager, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
-import { storeStateManager } from '../state/state-manager';
 import { DataService } from '../data/data.service';
-import { HostProviders } from '@kohaku-eth/provider';
-import { AccountId, AssetAmount, AssetId, ChainId, Operation, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
-import { Address } from "viem";
-import { HostInterface } from '../types/host';
+import { storeStateManager } from '../state/state-manager';
+import { IStateManager, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {
   entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
@@ -19,7 +17,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
   stateManager: IStateManager;
   context: PrivacyPoolsV1ProtocolContext;
 
-  constructor(readonly host: HostProviders,
+  constructor(readonly host: Host,
     {
       context = DefaultContext,
       secretManager = SecretManager,
@@ -34,7 +32,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     this.stateManager = stateManager({
       entrypointAddress: context.entrypointAddress,
       secretManager: this.secretManager,
-      dataService: new DataService({provider: host.ethProvider})
+      dataService: new DataService({ provider: host.ethProvider })
     });
   }
 
@@ -48,8 +46,6 @@ export class PrivacyPoolsV1Protocol implements Plugin {
 
   async prepareShield(assets: { asset: AssetId, amount: bigint; }, from?: Address): Promise<ShieldPreparation> {
 
-    await this.stateManager.sync();
-
     const txns: ShieldPreparation['txns'] = [];
 
     const { asset, amount } = assets;
@@ -60,6 +56,8 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     }
 
     const entrypointAddress = this.context.entrypointAddress(chainId);
+    await this.stateManager.sync(chainId, entrypointAddress);
+
     const depositCount = await this.stateManager.getDepositCount();
     const secret = this.secretManager.getDepositSecrets({
       entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
@@ -104,15 +102,14 @@ export class PrivacyPoolsV1Protocol implements Plugin {
       depositIndex: deposit,
       withdrawIndex: withdraw + 1,
       chainId: chainId.chainId,
-    })
+    });
 
     return {
       inner: {
         existingNoteSecrets,
         newNoteSecrets
       }
-    }
-
+    };
   }
 
   prepareTransfer(assets: Map<AssetId, bigint> | AssetAmount, to: AccountId): Promise<Operation> {
