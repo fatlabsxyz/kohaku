@@ -58,7 +58,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     const entrypointAddress = this.context.entrypointAddress(chainId);
     await this.stateManager.sync(chainId, entrypointAddress);
 
-    const depositCount = await this.stateManager.getDepositCount();
+    const depositCount = await this.stateManager.getDepositCount(chainId);
     const secret = this.secretManager.getDepositSecrets({
       entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
     });
@@ -72,25 +72,25 @@ export class PrivacyPoolsV1Protocol implements Plugin {
   }
 
   async prepareUnshield(assets: AssetAmount, to: Address): Promise<Operation> {
-    await this.stateManager.sync();
-
+    
     const { asset, amount } = assets;
     const { chainId } = asset;
-
+    
     if (chainId.kind !== 'Evm') {
       throw new Error("Only support `Evm` chainId.kind assets");
     }
-
+    
+    const entrypointAddress = this.context.entrypointAddress(chainId);
+    await this.stateManager.sync(chainId, entrypointAddress);
     // Get a single note for {asset} with at least {amount}
     const note = this.stateManager.getNote(asset, amount);
-
+    
     if (!note) {
       throw new Error("Not enough balance left in a single note for withdrawing.");
     }
-
+    
     const { precommitment, deposit, withdraw, value } = note;
-
-    const entrypointAddress = this.context.entrypointAddress(chainId);
+    
     const existingNoteSecrets = this.secretManager.getSecrets({
       entrypointAddress,
       depositIndex: deposit,
