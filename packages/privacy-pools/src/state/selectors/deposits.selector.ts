@@ -19,7 +19,7 @@ export const createMyDepositsSelector = ({
       const myDeposits: IPoolDepositEvent[] = [];
 
       for (let depositIndex = 0; ; depositIndex++) {
-        const { precommitment } = secretManager.deriveSecrets({
+        const { precommitment } = secretManager.getDepositSecrets({
           entrypointAddress: entrypointAddress(chainId),
           chainId: BigInt(chainId.chainId),
           depositIndex,
