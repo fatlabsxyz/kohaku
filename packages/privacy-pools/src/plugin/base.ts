@@ -1,50 +1,14 @@
-import { AccountId, AssetAmount, AssetId, ChainId, Operation, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
+import { AccountId, AssetAmount, AssetId, ChainId, Host, Operation, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
 import { Address } from "viem";
-import { HostInterface } from '../types/host';
-import { ISecretManager, SecretManager, SecretManagerParams } from './keys';
-import { prepareShield } from './tx/shield';
-
-interface PrivacyPoolsV1ProtocolContext {
-  entrypointAddress: (chainId: ChainId) => string;
-}
+import { ISecretManager, SecretManager } from "../account/keys";
+import { prepareShield } from '../account/tx/shield';
+import { DataService } from '../data/data.service';
+import { storeStateManager } from '../state/state-manager';
+import { IStateManager, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {
   entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
 };
-
-interface PrivacyPoolsV1ProtocolParams {
-  context: PrivacyPoolsV1ProtocolContext;
-  secretManager: (params: SecretManagerParams) => ISecretManager;
-  stateManager: () => IStateManager;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export type Account = {};
-
-export type Note = {
-  precommitment: bigint;
-  label: bigint;
-  value: bigint;
-  deposit: number;
-  withdraw: number;
-};
-
-type State = unknown;
-interface IStateManager {
-  getNote(asset: AssetId, amount: bigint): Note | undefined;
-  sync: () => Promise<void>;
-  getDepositCount: () => Promise<number>;
-  getState: () => State;
-}
-
-function StateManager(): IStateManager {
-  return {
-    getNote: (asset: AssetId, amount: bigint): Note | undefined => undefined,
-    sync: async () => { },
-    getDepositCount: async () => 0,
-    getState: () => 1,
-  };
-}
 
 export class PrivacyPoolsV1Protocol implements Plugin {
 
@@ -53,11 +17,11 @@ export class PrivacyPoolsV1Protocol implements Plugin {
   stateManager: IStateManager;
   context: PrivacyPoolsV1ProtocolContext;
 
-  constructor(readonly host: HostInterface,
+  constructor(readonly host: Host,
     {
       context = DefaultContext,
       secretManager = SecretManager,
-      stateManager = StateManager,
+      stateManager = storeStateManager,
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     this.context = context;
     this.accountIndex = 0;
@@ -65,7 +29,11 @@ export class PrivacyPoolsV1Protocol implements Plugin {
       host,
       accountIndex: this.accountIndex
     });
-    this.stateManager = stateManager();
+    this.stateManager = stateManager({
+      entrypointAddress: context.entrypointAddress,
+      secretManager: this.secretManager,
+      dataService: new DataService({ provider: host.ethProvider })
+    });
   }
 
   account(): AccountId {
@@ -78,8 +46,6 @@ export class PrivacyPoolsV1Protocol implements Plugin {
 
   async prepareShield(assets: { asset: AssetId, amount: bigint; }, from?: Address): Promise<ShieldPreparation> {
 
-    await this.stateManager.sync();
-
     const txns: ShieldPreparation['txns'] = [];
 
     const { asset, amount } = assets;
@@ -90,6 +56,8 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     }
 
     const entrypointAddress = this.context.entrypointAddress(chainId);
+    await this.stateManager.sync(chainId, entrypointAddress);
+
     const depositCount = await this.stateManager.getDepositCount();
     const secret = this.secretManager.getDepositSecrets({
       entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
@@ -134,15 +102,14 @@ export class PrivacyPoolsV1Protocol implements Plugin {
       depositIndex: deposit,
       withdrawIndex: withdraw + 1,
       chainId: chainId.chainId,
-    })
+    });
 
     return {
       inner: {
         existingNoteSecrets,
         newNoteSecrets
       }
-    }
-
+    };
   }
 
   prepareTransfer(assets: Map<AssetId, bigint> | AssetAmount, to: AccountId): Promise<Operation> {
