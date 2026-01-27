@@ -1,9 +1,10 @@
+import { EvmChainId } from "packages/provider/dist";
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { BaseSelectorParams } from "../../state/interfaces/selectors.interface";
-import { AssetId, ChainId } from "../../types/base";
+import { AssetId } from "../../types/base";
 
 export interface PrivacyPoolsV1ProtocolContext {
-  entrypointAddress: (chainId: ChainId) => string;
+  entrypointAddress: (chainId: EvmChainId) => string;
 }
 
 export interface PrivacyPoolsV1ProtocolParams {
@@ -13,7 +14,7 @@ export interface PrivacyPoolsV1ProtocolParams {
 }
 
 export interface IStateManager {
-  sync: () => Promise<void>;
-  getDepositCount: () => Promise<number>;
+  sync: (chainId: EvmChainId, entrypointAddress: string) => Promise<void>;
+  getDepositCount: (chainId: EvmChainId) => Promise<number>;
   getBalance: (asset: AssetId) => string;
 }
