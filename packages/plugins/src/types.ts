@@ -11,7 +11,7 @@ import { InvalidAddressError, UnsupportedChainError } from "./errors";
  * `RAILGUN:1` for railgun assets on Ethereum mainnet).
  */
 export type ChainId =
-    | { kind: "Evm"; chainId: number; }
+    | { kind: "Evm"; chainId: bigint; }
     | { kind: "Custom"; namespace: string; reference: string; };
 
 /**
