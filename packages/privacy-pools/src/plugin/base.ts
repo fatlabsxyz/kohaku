@@ -6,6 +6,8 @@ import { ISecretManager, SecretManager } from '../account/keys';
 import { prepareShield } from '../account/tx/shield';
 import { IStateManager, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 import { storeStateManager } from '../state/state-manager';
+import { DataService } from '../data/data.service';
+import { HostProviders } from '@kohaku-eth/provider';
 
 export const PRIVACY_POOLS_PATH = "m/28784'/1'";
 
@@ -13,14 +15,6 @@ export const PRIVACY_POOLS_PATH = "m/28784'/1'";
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {
   entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
 };
-
-
-function StateManager(): IStateManager {
-  return {
-    sync: async () => { },
-    getDepositCount: async () => 0,
-  };
-}
 
 export class PrivacyPoolsV1Protocol implements Plugin {
 
@@ -31,7 +25,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
   stateManager: IStateManager;
   context: PrivacyPoolsV1ProtocolContext;
 
-  constructor(readonly host: HostInterface,
+  constructor(readonly host: HostProviders,
     {
       context = DefaultContext,
       secretManager = SecretManager,
@@ -44,7 +38,11 @@ export class PrivacyPoolsV1Protocol implements Plugin {
       host,
       accountIndex: this.accountIndex
     });
-    this.stateManager = stateManager({ entrypointAddress: context.entrypointAddress, secretManager: this.secretManager });
+    this.stateManager = stateManager({
+      entrypointAddress: context.entrypointAddress,
+      secretManager: this.secretManager,
+      dataService: new DataService({provider: host.ethProvider})
+    });
   }
 
   account(): AccountId {
