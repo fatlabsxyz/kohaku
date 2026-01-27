@@ -1,11 +1,8 @@
 import { AccountId, AssetAmount, AssetId, ChainId, Operation, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
 import { Address } from "viem";
-import { Bytes } from '../types/base';
 import { HostInterface } from '../types/host';
 import { ISecretManager, SecretManager, SecretManagerParams } from './keys';
 import { prepareShield } from './tx/shield';
-
-export const PRIVACY_POOLS_PATH = "m/28784'/1'";
 
 interface PrivacyPoolsV1ProtocolContext {
   entrypointAddress: (chainId: ChainId) => string;
@@ -24,8 +21,17 @@ interface PrivacyPoolsV1ProtocolParams {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type Account = {};
 
+export type Note = {
+  precommitment: bigint;
+  label: bigint;
+  value: bigint;
+  deposit: number;
+  withdraw: number;
+};
+
 type State = unknown;
 interface IStateManager {
+  getNote(asset: AssetId, amount: bigint): Note | undefined;
   sync: () => Promise<void>;
   getDepositCount: () => Promise<number>;
   getState: () => State;
@@ -33,6 +39,7 @@ interface IStateManager {
 
 function StateManager(): IStateManager {
   return {
+    getNote: (asset: AssetId, amount: bigint): Note | undefined => undefined,
     sync: async () => { },
     getDepositCount: async () => 0,
     getState: () => 1,
@@ -41,8 +48,6 @@ function StateManager(): IStateManager {
 
 export class PrivacyPoolsV1Protocol implements Plugin {
 
-  static PRIVACY_POOLS_PATH = PRIVACY_POOLS_PATH;
-  masterKey: Bytes;
   accountIndex: number;
   secretManager: ISecretManager;
   stateManager: IStateManager;
@@ -56,7 +61,6 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     this.context = context;
     this.accountIndex = 0;
-    this.masterKey = host.keystore.deriveAtPath(PrivacyPoolsV1Protocol.PRIVACY_POOLS_PATH);
     this.secretManager = secretManager({
       host,
       accountIndex: this.accountIndex
@@ -99,9 +103,48 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     return { txns };
   }
 
-  prepareUnshield(assets: Map<AssetId, bigint> | AssetAmount, to: Address): Promise<Operation> {
-    throw new Error("Method not implemented.");
+  async prepareUnshield(assets: AssetAmount, to: Address): Promise<Operation> {
+    await this.stateManager.sync();
+
+    const { asset, amount } = assets;
+    const { chainId } = asset;
+
+    if (chainId.kind !== 'Evm') {
+      throw new Error("Only support `Evm` chainId.kind assets");
+    }
+
+    // Get a single note for {asset} with at least {amount}
+    const note = this.stateManager.getNote(asset, amount);
+
+    if (!note) {
+      throw new Error("Not enough balance left in a single note for withdrawing.");
+    }
+
+    const { precommitment, deposit, withdraw, value } = note;
+
+    const entrypointAddress = this.context.entrypointAddress(chainId);
+    const existingNoteSecrets = this.secretManager.getSecrets({
+      entrypointAddress,
+      depositIndex: deposit,
+      withdrawIndex: withdraw,
+      chainId: chainId.chainId,
+    });
+    const newNoteSecrets = this.secretManager.getSecrets({
+      entrypointAddress,
+      depositIndex: deposit,
+      withdrawIndex: withdraw + 1,
+      chainId: chainId.chainId,
+    })
+
+    return {
+      inner: {
+        existingNoteSecrets,
+        newNoteSecrets
+      }
+    }
+
   }
+
   prepareTransfer(assets: Map<AssetId, bigint> | AssetAmount, to: AccountId): Promise<Operation> {
     throw new Error("Method not implemented.");
   }
