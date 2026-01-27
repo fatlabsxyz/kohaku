@@ -1,7 +1,7 @@
-import { EvmChainId } from "packages/provider/dist";
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { BaseSelectorParams } from "../../state/interfaces/selectors.interface";
-import { AssetId } from "../../types/base";
+import { EvmChainId } from "../../types/base";
+import { AssetId } from '@kohaku-eth/plugins';
 
 export interface PrivacyPoolsV1ProtocolContext {
   entrypointAddress: (chainId: EvmChainId) => string;

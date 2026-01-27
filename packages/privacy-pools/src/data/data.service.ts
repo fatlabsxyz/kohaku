@@ -1,26 +1,28 @@
-import { EthereumProvider } from "@kohaku-eth/provider";
+import { EthProvider } from "@kohaku-eth/plugins";
+import { TxLog } from "@kohaku-eth/provider";
 import { GetEventsFn, IDataService } from "./interfaces/data.service.interface";
 import { parseEventLogs } from "viem";
 import { EVENTS_SIGNATURES, EventTypes } from "./abis/events.abi";
 import { EVENTS_PARSERS } from "./utils/events-parsers.util";
 
 export interface DataServiceParams {
-    provider: EthereumProvider
+    provider: EthProvider
 }
 
 const depositEvents = new Set(['PoolDeposited', 'EntrypointDeposited']);
 
 export class DataService implements IDataService {
-    private readonly provider!: EthereumProvider;
+    private readonly provider!: EthProvider;
 
     constructor(params: DataServiceParams) {
         Object.assign(this, params);
     }
 
     getEvents: GetEventsFn = async ({events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn'], ...params}) => {
-        const logs = await this.provider.getLogs({
-            ...params
-        });
+        // const logs = await this.provider.getLogs({
+        //     ...params
+        // });
+        const logs: TxLog[] = [];
         const allEvents = events instanceof Array ? events : [events];
         return allEvents.reduce((parsedEvents, eventType) => ({
             ...parsedEvents,
