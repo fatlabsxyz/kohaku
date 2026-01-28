@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { IPoolDepositEvent } from '../../data/interfaces/events.interface';
 import { BaseSelectorParams } from '../interfaces/selectors.interface';
-import { EvmChainId } from '@kohaku-eth/provider';
+import { EvmChainId } from '../../types/base';
 
 const selectChainId = (state: RootState, chainId: EvmChainId) => chainId;
 
@@ -21,7 +21,7 @@ export const createMyDepositsSelector = ({
       for (let depositIndex = 0; ; depositIndex++) {
         const { precommitment } = secretManager.getDepositSecrets({
           entrypointAddress: entrypointAddress(chainId),
-          chainId: BigInt(chainId.chainId),
+          chainId: chainId.chainId,
           depositIndex,
         });
 
