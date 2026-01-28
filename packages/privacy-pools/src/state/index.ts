@@ -2,6 +2,8 @@ export { storeFactory } from './store';
 export type { RootState, AppDispatch } from './store';
 export { registerDeposit, registerDeposits } from './slices/depositsSlice';
 export type { DepositsState } from './slices/depositsSlice';
+export { registerEntrypointDeposit, registerEntrypointDeposits } from './slices/entrypointDepositsSlice';
+export type { EntrypointDepositsState } from './slices/entrypointDepositsSlice';
 export { registerWithdrawal, registerWithdrawals } from './slices/withdrawalsSlice';
 export type { WithdrawalsState } from './slices/withdrawalsSlice';
 export { registerRagequit, registerRagequits } from './slices/ragequitsSlice';
