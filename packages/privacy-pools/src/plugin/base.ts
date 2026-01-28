@@ -36,11 +36,11 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     });
   }
 
-  account(): AccountId {
+  account(): Promise<AccountId> {
     throw new Error("Method not implemented.");
   }
 
-  balance(assets: Set<AssetId> | undefined): Promise<Map<AssetId, bigint>> {
+  balance(assets: Array<AssetId> | undefined): Promise<Array<AssetAmount>> {
     throw new Error("Method not implemented.");
   }
 
@@ -51,8 +51,8 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     const { asset, amount } = assets;
     const { chainId } = asset;
 
-    if (chainId.kind !== 'Evm') {
-      throw new Error("Only support `Evm` chainId.kind assets");
+    if (chainId.namespace !== 'eip155') {
+      throw new Error("Only support `evm` assets");
     }
 
     const entrypointAddress = this.context.entrypointAddress(chainId);
@@ -60,7 +60,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
 
     const depositCount = await this.stateManager.getDepositCount(chainId);
     const secret = this.secretManager.getDepositSecrets({
-      entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
+      entrypointAddress, depositIndex: depositCount, chainId: BigInt(chainId.reference)
     });
     const { tx } = await prepareShield({
       host: this.host, secret, shield: { asset, amount }, entrypointAddress
@@ -76,8 +76,8 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     const { asset, amount } = assets;
     const { chainId } = asset;
     
-    if (chainId.kind !== 'Evm') {
-      throw new Error("Only support `Evm` chainId.kind assets");
+    if (chainId.namespace !== 'eip155') {
+      throw new Error("Only support `evm` assets");
     }
     
     const entrypointAddress = this.context.entrypointAddress(chainId);
@@ -95,13 +95,13 @@ export class PrivacyPoolsV1Protocol implements Plugin {
       entrypointAddress,
       depositIndex: deposit,
       withdrawIndex: withdraw,
-      chainId: chainId.chainId,
+      chainId: BigInt(chainId.reference),
     });
     const newNoteSecrets = this.secretManager.getSecrets({
       entrypointAddress,
       depositIndex: deposit,
       withdrawIndex: withdraw + 1,
-      chainId: chainId.chainId,
+      chainId: BigInt(chainId.reference),
     });
 
     return {
@@ -112,9 +112,10 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     };
   }
 
-  prepareTransfer(assets: Map<AssetId, bigint> | AssetAmount, to: AccountId): Promise<Operation> {
+  prepareTransfer(assets: Array<AssetAmount> | AssetAmount, to: AccountId): Promise<Operation> {
     throw new Error("Method not implemented.");
   }
+
   broadcast(operation: Operation): Promise<void> {
     throw new Error("Method not implemented.");
   }
