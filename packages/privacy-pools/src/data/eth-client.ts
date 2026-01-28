@@ -49,7 +49,7 @@ export class EthClient {
     ): Promise<DecodeFunctionResultReturnType<Abi, FunctionName, any>> {
         const abi = abis[contractName];
         const data = encodeFunctionData({
-            abi: abi,
+            abi,
             functionName,
         } as never);
 
