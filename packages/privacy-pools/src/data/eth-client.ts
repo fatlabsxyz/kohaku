@@ -1,5 +1,6 @@
 import type { EthProvider } from "@kohaku-eth/plugins";
 import { ContractFunctionName, decodeFunctionResult, DecodeFunctionResultReturnType, encodeFunctionData, EncodeFunctionDataParameters, erc20Abi, type RpcLog, toHex } from 'viem';
+import { poolAbi } from "./abis/events.abi";
 
 export interface GetLogsParams {
     address: string;
@@ -9,6 +10,7 @@ export interface GetLogsParams {
 
 const abis = {
     erc20: erc20Abi,
+    pool: poolAbi,
 } as const;
 
 export class EthClient {

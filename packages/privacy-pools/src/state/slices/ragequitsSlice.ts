@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IRagequitEvent } from '../../data/interfaces/events.interface';
 
 export interface RagequitsState {
-  ragequits: Map<string, IRagequitEvent>;
+  ragequits: Map<bigint, IRagequitEvent>;
 }
 
 const initialState: RagequitsState = {
@@ -14,7 +14,7 @@ export const ragequitsSlice = createSlice({
   initialState,
   reducers: {
     registerRagequit: (state, action: PayloadAction<IRagequitEvent>) => {
-      const key = action.payload.label.toString();
+      const key = action.payload.label;
       const newRagequits = new Map(state.ragequits);
       newRagequits.set(key, action.payload);
       return { ragequits: newRagequits };
@@ -22,7 +22,7 @@ export const ragequitsSlice = createSlice({
     registerRagequits: (state, action: PayloadAction<IRagequitEvent[]>) => {
       const newRagequits = new Map(state.ragequits);
       action.payload.forEach((ragequit) => {
-        const key = ragequit.label.toString();
+        const key = ragequit.label;
         newRagequits.set(key, ragequit);
       });
       return { ragequits: newRagequits };
