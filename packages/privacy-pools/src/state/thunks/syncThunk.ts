@@ -1,19 +1,24 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, Selector } from '@reduxjs/toolkit';
 import { IDataService } from '../../data/interfaces/data.service.interface';
 import { selectLastSyncedBlock } from '../selectors/last-synced-block.selector';
 import { registerDeposits } from '../slices/depositsSlice';
 import { registerWithdrawals } from '../slices/withdrawalsSlice';
 import { registerRagequits } from '../slices/ragequitsSlice';
 import { RootState } from '../store';
+import { registerEntrypointDeposits } from '../slices/entrypointDepositsSlice';
+import { syncPoolsThunk, SyncPoolsThunkParams } from './syncPoolsThunk';
+import { syncAssetsThunk, SyncAssetsThunkParams } from './syncAssetsThunk';
 
-export interface SyncThunkParams {
-  dataService: IDataService;
-  entrypointAddress: string;
+export interface SyncThunkParams extends
+  SyncPoolsThunkParams,
+  SyncAssetsThunkParams {
+    dataService: IDataService;
+    entrypointAddress: string;
 }
 
 export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootState }>(
   'sync/fetchEvents',
-  async ({ dataService, entrypointAddress }, { getState, dispatch }) => {
+  async ({ dataService, entrypointAddress, ...params }, { getState, dispatch }) => {
     const state = getState();
     const lastSyncedBlock = selectLastSyncedBlock(state);
     const fromBlock = lastSyncedBlock + 1;
@@ -34,5 +39,13 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
     if (events.Ragequit.length > 0) {
       dispatch(registerRagequits(events.Ragequit));
     }
+
+    if (events.EntrypointDeposited.length > 0) {
+      dispatch(registerEntrypointDeposits(events.EntrypointDeposited));
+    }
+
+    await dispatch(syncPoolsThunk({ dataService, ...params }));
+    
+    await dispatch(syncAssetsThunk({ dataService, ...params }));
   }
 );
