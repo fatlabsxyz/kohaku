@@ -1,7 +1,7 @@
 /* eslint-disable */
 // @ts-nocheck
-/// <reference path="./global.d.ts" />
-import './global.d.ts';
+/// <reference path="./webpack.d.ts" />
+import './webpack.d.ts';
 // A safe browser shim for Node's `fs` module.
 // Provides browser-safe implementations for file operations using an in-memory cache.
 

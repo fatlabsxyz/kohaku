@@ -4,7 +4,7 @@ declare type Optional<T> = T | undefined;
 declare const __non_webpack_require__: typeof require | undefined;
 
 // Polyfill __dirname for browser environments
-// This is set by global.ts to enable npm packages that use __dirname
+// This is set by webpack.ts to enable npm packages that use __dirname
 declare const __dirname: string;
 
 declare module '@railgun-community/circomlibjs' {

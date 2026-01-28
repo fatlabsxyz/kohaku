@@ -1,12 +1,6 @@
 packages:
-  - packages/provider
-  - packages/railgun
-  - packages/privacy-pools
-  - packages/plugins
-  - packages/railgun-plugin
-  - packages/tc-plugin
-  - docs
-
-onlyBuiltDependencies:
-  - blake-hash
-  - keccak
+  - "packages/provider"
+  - "packages/railgun"
+  - "packages/privacy-pools"
+  - "packages/plugins"
+  - "docs"
