@@ -1,5 +1,6 @@
 import { HDNodeWallet, Mnemonic } from 'ethers';
-import { Host, Keystore } from '@kohaku-eth/plugins';
+import { EthProvider, Host, Keystore, Storage as PluginStorage } from '@kohaku-eth/plugins';
+import { createPublicClient, http } from 'viem';
 
 export const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 
@@ -8,13 +9,6 @@ export function createMockKeystore(phrase: string = TEST_MNEMONIC): Keystore {
   // Create root HD node from mnemonic (depth 0)
   const mnemonic = Mnemonic.fromPhrase(phrase);
   const masterNode = HDNodeWallet.fromSeed(mnemonic.computeSeed());
-
-  // XXX: unused
-  const deriveAtBytes = (path: string) => {
-    const derived = masterNode.derivePath(path);
-    // Return the private key as bytes (32 bytes)
-    return Uint8Array.from(Buffer.from(derived.privateKey.slice(2), 'hex'));
-  };
 
   return {
     deriveAt(path: string) {
@@ -25,8 +19,28 @@ export function createMockKeystore(phrase: string = TEST_MNEMONIC): Keystore {
   };
 }
 
-export function createMockHost(mnemonic?: string): Partial<Host> {
+const createMockStorage = (): PluginStorage => {
+  const storageMap = new Map<string, string>();
   return {
-    keystore: createMockKeystore(mnemonic)
+    set: storageMap.set,
+    get: (key) => storageMap.get(key) || null,
+  }
+}
+
+const createEthProvider = (rpcUrl = 'http://127.0.0.1:8545'): EthProvider => {
+  const publicClient = createPublicClient({transport: http(rpcUrl)});
+  return {
+    request: publicClient.request as never
+  }
+}
+
+export function createMockHost(mnemonic?: string): Host {
+  return {
+    keystore: createMockKeystore(mnemonic),
+    network: {fetch},
+    storage: createMockStorage(),
+    secretStorage: createMockStorage(),
+    ethProvider: createEthProvider(),
+    log: console
   };
 }
