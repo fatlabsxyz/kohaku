@@ -26,5 +26,6 @@ export type GetEventsFn = <const T extends EventTypes>(params: IGetEventsParams<
 
 export interface IDataService {
     getEvents: GetEventsFn;
-    getAsset(assetAddress: string): Promise<IAsset>;
+    getAsset(assetAddress: bigint): Promise<IAsset>;
+    getPoolAsset(poolAddress: bigint): Promise<bigint>;
 }
