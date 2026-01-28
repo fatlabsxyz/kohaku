@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IPool } from '../../data/interfaces/events.interface';
 
 export interface PoolsState {
-  pools: Map<string, IPool>;
+  pools: Map<bigint, IPool>;
 }
 
 const initialState: PoolsState = {

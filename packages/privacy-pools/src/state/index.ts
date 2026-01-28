@@ -12,7 +12,7 @@ export { registerPool, registerPools } from './slices/poolsSlice';
 export type { PoolsState } from './slices/poolsSlice';
 export { registerAsset, registerAssets } from './slices/assetsSlice';
 export type { AssetsState } from './slices/assetsSlice';
-export { createMyDepositsSelector, createMyDepositsCountSelector } from './selectors/deposits.selector';
+export { createMyDepositsSelector, createMyDepositsCountSelector, createMyEntrypointDepositsSelector } from './selectors/deposits.selector';
 export { selectLastSyncedBlock } from './selectors/last-synced-block.selector';
 export { syncThunk } from './thunks/syncThunk';
 export type { SyncThunkParams } from './thunks/syncThunk';

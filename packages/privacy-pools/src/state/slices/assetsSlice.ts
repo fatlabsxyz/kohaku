@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IAsset } from '../../data/interfaces/events.interface';
 
 export interface AssetsState {
-  assets: Map<string, IAsset>;
+  assets: Map<bigint, IAsset>;
 }
 
 const initialState: AssetsState = {

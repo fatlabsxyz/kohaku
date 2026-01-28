@@ -29,13 +29,13 @@ export interface IEntrypointDepositEvent extends IBaseEvent {
 }
 
 export interface IPool {
-  address: string;
-  assetAddress: string;
+  address: bigint;
+  assetAddress: bigint;
 }
 
 export interface IAsset {
   name: string;
   decimals: number;
-  address: string;
+  address: bigint;
   symbol: string;
 }
