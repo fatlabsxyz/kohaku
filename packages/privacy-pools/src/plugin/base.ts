@@ -1,40 +1,18 @@
 import { PoolOperation, PrepareShieldResult, PrivacyProtocol } from '../types';
 import { AccountId, Address, AssetId, Bytes, ChainId, U256 } from '../types/base';
-import { HostInterface } from '../types/host';
-import { ISecretManager, SecretManager, SecretManagerParams } from './keys';
-import { prepareShield } from './tx/shield';
+import { ISecretManager, SecretManager } from '../account/keys';
+import { prepareShield } from '../account/tx/shield';
+import { IStateManager, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
+import { storeStateManager } from '../state/state-manager';
+import { DataService } from '../data/data.service';
+import { HostProviders } from '@kohaku-eth/provider';
 
 export const PRIVACY_POOLS_PATH = "m/28784'/1'";
 
-interface PrivacyPoolsV1ProtocolContext {
-  entrypointAddress: (chainId: ChainId) => string;
-}
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {
   entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
 };
-
-
-interface PrivacyPoolsV1ProtocolParams {
-  context: PrivacyPoolsV1ProtocolContext;
-  secretManager: (params: SecretManagerParams) => ISecretManager;
-  stateManager: () => IStateManager;
-}
-
-type State = unknown;
-interface IStateManager {
-  sync: () => Promise<void>;
-  getDepositCount: () => Promise<number>;
-  getState: () => State;
-}
-
-function StateManager(): IStateManager {
-  return {
-    sync: async () => { },
-    getDepositCount: async () => 0,
-    getState: () => 1,
-  };
-}
 
 export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
 
@@ -45,11 +23,11 @@ export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
   stateManager: IStateManager;
   context: PrivacyPoolsV1ProtocolContext;
 
-  constructor(readonly host: HostInterface,
+  constructor(readonly host: HostProviders,
     {
       context = DefaultContext,
       secretManager = SecretManager,
-      stateManager = StateManager,
+      stateManager = storeStateManager,
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     this.context = context;
     this.accountIndex = 0;
@@ -58,28 +36,31 @@ export class PrivacyPoolsV1Protocol implements PrivacyProtocol {
       host,
       accountIndex: this.accountIndex
     });
-    this.stateManager = stateManager();
+    this.stateManager = stateManager({
+      entrypointAddress: context.entrypointAddress,
+      secretManager: this.secretManager,
+      dataService: new DataService({provider: host.ethProvider})
+    });
   }
 
   async prepareShield(assets: Array<{ asset: AssetId; amount: U256; }>): Promise<PrepareShieldResult> {
-
-    await this.stateManager.sync();
-
     if (assets.length > 1) {
       throw new Error();
     }
-
+    
     const transactions: PrepareShieldResult['transactions'] = [];
-
+    
     ///XXX: beware of failed deposits
     for (const { asset, amount } of assets) {
       const { chainId } = asset;
-
+      
       if (chainId.kind !== 'Evm') {
         throw new Error("Only support `Evm` chainId.kind assets");
       }
-
       const entrypointAddress = this.context.entrypointAddress(chainId);
+
+      await this.stateManager.sync(chainId, entrypointAddress);
+      
       const depositCount = await this.stateManager.getDepositCount();
       const secret = this.secretManager.getDepositSecrets({
         entrypointAddress, depositIndex: depositCount, chainId: chainId.chainId
