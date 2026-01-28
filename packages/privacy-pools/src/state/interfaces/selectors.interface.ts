@@ -1,9 +1,9 @@
 import { ISecretManager } from "../../account/keys";
-import { DataService } from "../../data/data.service";
+import { IDataService } from "../../data/interfaces/data.service.interface";
 import { EvmChainId } from "../../types/base";
 
 export interface BaseSelectorParams {
   secretManager: ISecretManager;
   entrypointAddress: (chainId: EvmChainId) => string;
-  dataService: DataService;
+  dataService: IDataService;
 }

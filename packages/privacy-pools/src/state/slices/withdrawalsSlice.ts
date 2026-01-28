@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IWithdrawalEvent } from '../../data/interfaces/events.interface';
 
 export interface WithdrawalsState {
-  withdrawals: Map<string, IWithdrawalEvent>;
+  withdrawals: Map<bigint, IWithdrawalEvent>;
 }
 
 const initialState: WithdrawalsState = {
@@ -14,7 +14,7 @@ export const withdrawalsSlice = createSlice({
   initialState,
   reducers: {
     registerWithdrawal: (state, action: PayloadAction<IWithdrawalEvent>) => {
-      const key = action.payload.spentNullifier.toString();
+      const key = action.payload.spentNullifier;
       const newWithdrawals = new Map(state.withdrawals);
       newWithdrawals.set(key, action.payload);
       return { withdrawals: newWithdrawals };
@@ -22,7 +22,7 @@ export const withdrawalsSlice = createSlice({
     registerWithdrawals: (state, action: PayloadAction<IWithdrawalEvent[]>) => {
       const newWithdrawals = new Map(state.withdrawals);
       action.payload.forEach((withdrawal) => {
-        const key = withdrawal.spentNullifier.toString();
+        const key = withdrawal.spentNullifier;
         newWithdrawals.set(key, withdrawal);
       });
       return { withdrawals: newWithdrawals };
