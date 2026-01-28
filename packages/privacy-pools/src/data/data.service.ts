@@ -38,13 +38,16 @@ export class DataService implements IDataService {
         } satisfies Pick<Awaited<ReturnType<GetEventsFn>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GetEventsFn>>;
     }
 
-    async getAsset(assetAddress: string): Promise<IAsset> {
-        const address = BigInt(assetAddress);
+    async getAsset(address: bigint): Promise<IAsset> {
         const [name, decimals, symbol] = await Promise.all([
             this.ethClient.makeContractRequest(address, 'erc20', 'name'),
             this.ethClient.makeContractRequest(address, 'erc20', 'decimals'),
             this.ethClient.makeContractRequest(address, 'erc20', 'symbol'),
         ]);
-        return { name, decimals, symbol, address: assetAddress };
+        return { name, decimals, symbol, address };
+    }
+
+    async getPoolAsset(poolAddress: bigint) {
+        return BigInt(await this.ethClient.makeContractRequest(poolAddress, 'pool', 'ASSET'));
     }
 }

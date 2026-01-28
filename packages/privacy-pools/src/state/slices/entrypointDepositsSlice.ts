@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IEntrypointDepositEvent } from '../../data/interfaces/events.interface';
 
 export interface EntrypointDepositsState {
-  entrypointDeposits: Map<string, IEntrypointDepositEvent>;
+  entrypointDeposits: Map<bigint, IEntrypointDepositEvent>;
 }
 
 const initialState: EntrypointDepositsState = {
@@ -14,7 +14,7 @@ export const entrypointDepositsSlice = createSlice({
   initialState,
   reducers: {
     registerEntrypointDeposit: (state, action: PayloadAction<IEntrypointDepositEvent>) => {
-      const key = action.payload.commitment.toString();
+      const key = action.payload.commitment;
       const newDeposits = new Map(state.entrypointDeposits);
       newDeposits.set(key, action.payload);
       return { entrypointDeposits: newDeposits };
@@ -22,7 +22,7 @@ export const entrypointDepositsSlice = createSlice({
     registerEntrypointDeposits: (state, action: PayloadAction<IEntrypointDepositEvent[]>) => {
       const newDeposits = new Map(state.entrypointDeposits);
       action.payload.forEach((deposit) => {
-        const key = deposit.commitment.toString();
+        const key = deposit.commitment;
         newDeposits.set(key, deposit);
       });
       return { entrypointDeposits: newDeposits };

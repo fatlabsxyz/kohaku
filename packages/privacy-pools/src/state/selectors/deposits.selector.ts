@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { IPoolDepositEvent } from '../../data/interfaces/events.interface';
+import { IPoolDepositEvent, IEntrypointDepositEvent, IPool } from '../../data/interfaces/events.interface';
 import { BaseSelectorParams } from '../interfaces/selectors.interface';
 import { EvmChainId } from '../../types/base';
 
@@ -25,8 +25,7 @@ export const createMyDepositsSelector = ({
           depositIndex,
         });
 
-        const key = precommitment.toString();
-        const deposit = depositsMap.get(key);
+        const deposit = depositsMap.get(precommitment);
 
         if (!deposit) {
           break;
@@ -40,13 +39,33 @@ export const createMyDepositsSelector = ({
   );
 };
 
-export const createMyDepositsCountSelector = (params: Pick<BaseSelectorParams, 'secretManager' | 'entrypointAddress'>) => {
-  const myDepositsSelector = createMyDepositsSelector(params);
+export const createMyDepositsCountSelector = (
+  ...params: Parameters<typeof createMyDepositsSelector>
+) => {
+  const myDepositsSelector = createMyDepositsSelector(...params);
 
   return createSelector(
     [myDepositsSelector],
     (myDeposits): number => {
       return myDeposits.length;
+    }
+  );
+};
+
+export const createMyEntrypointDepositsSelector = (
+  ...params: Parameters<typeof createMyDepositsSelector>
+) => {
+  const myDepositsSelector = createMyDepositsSelector(...params);
+
+  return createSelector(
+    [
+      myDepositsSelector,
+      (state: RootState) => state.entrypointDeposits.entrypointDeposits,
+    ],
+    (myDeposits, entrypointDepositsMap): IEntrypointDepositEvent[] => {
+      return myDeposits
+        .map(({ commitment }) => entrypointDepositsMap.get(commitment))
+        .filter((e) => e !== undefined);
     }
   );
 };
