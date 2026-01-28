@@ -1,5 +1,5 @@
 import { EventTypes } from "../abis/events.abi";
-import { IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IWithdrawalEvent } from "./events.interface";
+import { IAsset, IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IWithdrawalEvent } from "./events.interface";
 
 export interface IGetEventsParams<T extends EventTypes> {
     events?: T | T[];
@@ -26,4 +26,5 @@ export type GetEventsFn = <const T extends EventTypes>(params: IGetEventsParams<
 
 export interface IDataService {
     getEvents: GetEventsFn;
+    getAsset(assetAddress: string): Promise<IAsset>;
 }

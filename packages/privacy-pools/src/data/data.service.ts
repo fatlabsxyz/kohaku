@@ -4,6 +4,7 @@ import { parseEventLogs } from "viem";
 import { EVENTS_SIGNATURES } from "./abis/events.abi";
 import { EVENTS_PARSERS } from "./utils/events-parsers.util";
 import { EthClient } from "./eth-client";
+import type { IAsset } from "./interfaces/events.interface";
 
 export interface DataServiceParams {
     provider: EthProvider
@@ -35,5 +36,15 @@ export class DataService implements IDataService {
             fromBlock: params.fromBlock,
             toBlock: Number(logs.at(-1)?.blockNumber) || params.fromBlock,
         } satisfies Pick<Awaited<ReturnType<GetEventsFn>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GetEventsFn>>;
+    }
+
+    async getAsset(assetAddress: string): Promise<IAsset> {
+        const address = BigInt(assetAddress);
+        const [name, decimals, symbol] = await Promise.all([
+            this.ethClient.makeContractRequest(address, 'erc20', 'name'),
+            this.ethClient.makeContractRequest(address, 'erc20', 'decimals'),
+            this.ethClient.makeContractRequest(address, 'erc20', 'symbol'),
+        ]);
+        return { name, decimals, symbol, address: assetAddress };
     }
 }
