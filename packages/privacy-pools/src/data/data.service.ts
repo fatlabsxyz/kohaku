@@ -8,6 +8,8 @@ export interface DataServiceParams {
     provider: EthereumProvider
 }
 
+const depositEvents = new Set(['PoolDeposited', 'EntrypointDeposited']);
+
 export class DataService implements IDataService {
     private readonly provider!: EthereumProvider;
 
@@ -15,7 +17,7 @@ export class DataService implements IDataService {
         Object.assign(this, params);
     }
 
-    getEvents: GetEventsFn = async ({events, ...params}) => {
+    getEvents: GetEventsFn = async ({events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn'], ...params}) => {
         const logs = await this.provider.getLogs({
             ...params
         });
@@ -25,9 +27,12 @@ export class DataService implements IDataService {
             [eventType]: parseEventLogs({
                 logs: logs as never,
                 abi: [EVENTS_SIGNATURES[eventType]] as const,
-                eventName: eventType as never,
+                eventName: (depositEvents.has(eventType) ? 'Deposited' : eventType) as never,
                 strict: true
             } as const).map((parsedLog) => EVENTS_PARSERS[eventType](parsedLog as never))
-        }), {} as Awaited<ReturnType<GetEventsFn>>);
+        }), {
+            fromBlock: params.fromBlock,
+            toBlock: logs.at(-1)?.blockNumber || params.fromBlock,
+        } satisfies Pick<Awaited<ReturnType<GetEventsFn>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GetEventsFn>>;
     }
 }
