@@ -27,3 +27,15 @@ export interface IEntrypointDepositEvent extends IBaseEvent {
     poolAddress: bigint;
     commitment: bigint;
 }
+
+export interface IPool {
+  address: string;
+  assetAddress: string;
+}
+
+export interface IAsset {
+  name: string;
+  decimals: number;
+  address: string;
+  symbol: string;
+}

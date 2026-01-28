@@ -6,8 +6,11 @@ export { registerWithdrawal, registerWithdrawals } from './slices/withdrawalsSli
 export type { WithdrawalsState } from './slices/withdrawalsSlice';
 export { registerRagequit, registerRagequits } from './slices/ragequitsSlice';
 export type { RagequitsState } from './slices/ragequitsSlice';
+export { registerPool, registerPools } from './slices/poolsSlice';
+export type { PoolsState } from './slices/poolsSlice';
+export { registerAsset, registerAssets } from './slices/assetsSlice';
+export type { AssetsState } from './slices/assetsSlice';
 export { createMyDepositsSelector, createMyDepositsCountSelector } from './selectors/deposits.selector';
 export { selectLastSyncedBlock } from './selectors/last-synced-block.selector';
-export { selectDepositCount } from './selectors/depositCount.selector';
 export { syncThunk } from './thunks/syncThunk';
 export type { SyncThunkParams } from './thunks/syncThunk';
