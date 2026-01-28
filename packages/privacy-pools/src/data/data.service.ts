@@ -1,9 +1,9 @@
 import { EthProvider } from "@kohaku-eth/plugins";
-import { TxLog } from "@kohaku-eth/provider";
 import { GetEventsFn, IDataService } from "./interfaces/data.service.interface";
 import { parseEventLogs } from "viem";
-import { EVENTS_SIGNATURES, EventTypes } from "./abis/events.abi";
+import { EVENTS_SIGNATURES } from "./abis/events.abi";
 import { EVENTS_PARSERS } from "./utils/events-parsers.util";
+import { EthClient } from "./eth-client";
 
 export interface DataServiceParams {
     provider: EthProvider
@@ -12,29 +12,28 @@ export interface DataServiceParams {
 const depositEvents = new Set(['PoolDeposited', 'EntrypointDeposited']);
 
 export class DataService implements IDataService {
-    private readonly provider!: EthProvider;
+    private readonly ethClient!: EthClient;
 
-    constructor(params: DataServiceParams) {
-        Object.assign(this, params);
+    constructor({ provider }: DataServiceParams) {
+        this.ethClient = new EthClient(provider);
     }
 
     getEvents: GetEventsFn = async ({events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn'], ...params}) => {
-        // const logs = await this.provider.getLogs({
-        //     ...params
-        // });
-        const logs: TxLog[] = [];
+        const logs = await this.ethClient.getLogs({
+            ...params
+        });
         const allEvents = events instanceof Array ? events : [events];
         return allEvents.reduce((parsedEvents, eventType) => ({
             ...parsedEvents,
             [eventType]: parseEventLogs({
-                logs: logs as never,
+                logs,
                 abi: [EVENTS_SIGNATURES[eventType]] as const,
                 eventName: (depositEvents.has(eventType) ? 'Deposited' : eventType) as never,
                 strict: true
             } as const).map((parsedLog) => EVENTS_PARSERS[eventType](parsedLog as never))
         }), {
             fromBlock: params.fromBlock,
-            toBlock: logs.at(-1)?.blockNumber || params.fromBlock,
+            toBlock: Number(logs.at(-1)?.blockNumber) || params.fromBlock,
         } satisfies Pick<Awaited<ReturnType<GetEventsFn>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GetEventsFn>>;
     }
 }
