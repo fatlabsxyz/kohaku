@@ -3,16 +3,17 @@ import { RootState } from '../store';
 import { IIndexedWithdrawalEvent } from '../../data/interfaces/events.interface';
 import { createMyDepositsSelector } from './deposits.selector';
 import { Precommitment } from '../../interfaces/types.interface';
+import { ISecretManager } from '../../account/keys';
 
 export type DepositsWithdrawals = Map<Precommitment, IIndexedWithdrawalEvent[]>;
 
 export const createMyWithdrawalsSelector = ({
   secretManager,
-}: Parameters<typeof createMyDepositsSelector>[number]) => {
-  const myDepositsSelector = createMyDepositsSelector({
-    secretManager,
-  });
-
+  myDepositsSelector
+}: {
+  secretManager: ISecretManager;
+  myDepositsSelector: ReturnType<typeof createMyDepositsSelector>;
+}) => {
   /**
    * Returns the withdrawals grouped by deposit precommitment
    */
