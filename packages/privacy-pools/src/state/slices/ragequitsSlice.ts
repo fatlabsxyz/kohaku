@@ -3,33 +3,27 @@ import { IRagequitEvent } from '../../data/interfaces/events.interface';
 import { Label } from '../../interfaces/types.interface';
 
 export interface RagequitsState {
-  ragequits: Map<Label, IRagequitEvent>;
+  ragequitsTuples: [Label, IRagequitEvent][];
 }
 
 const initialState: RagequitsState = {
-  ragequits: new Map(),
+  ragequitsTuples: [],
 };
 
 export const ragequitsSlice = createSlice({
   name: 'ragequits',
   initialState,
   reducers: {
-    registerRagequit: (state, action: PayloadAction<IRagequitEvent>) => {
-      const key = action.payload.label;
-      const newRagequits = new Map(state.ragequits);
-      newRagequits.set(key, action.payload);
-      return { ragequits: newRagequits };
-    },
-    registerRagequits: (state, action: PayloadAction<IRagequitEvent[]>) => {
-      const newRagequits = new Map(state.ragequits);
+    registerRagequits: ({ ragequitsTuples }, action: PayloadAction<IRagequitEvent[]>) => {
+      const newRagequits = new Map(ragequitsTuples);
       action.payload.forEach((ragequit) => {
         const key = ragequit.label;
         newRagequits.set(key, ragequit);
       });
-      return { ragequits: newRagequits };
+      return { ragequitsTuples: Array.from(newRagequits) };
     },
   },
 });
 
-export const { registerRagequit, registerRagequits } = ragequitsSlice.actions;
+export const { registerRagequits } = ragequitsSlice.actions;
 export default ragequitsSlice.reducer;
