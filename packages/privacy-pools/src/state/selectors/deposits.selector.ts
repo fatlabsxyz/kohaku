@@ -1,27 +1,24 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { IPoolDepositEvent, IEntrypointDepositEvent, IPool } from '../../data/interfaces/events.interface';
+import { IEntrypointDepositEvent, IDepositWithAsset, IIndexedDepositEvent } from '../../data/interfaces/events.interface';
 import { BaseSelectorParams } from '../interfaces/selectors.interface';
-import { EvmChainId } from '../../types/base';
-
-const selectChainId = (state: RootState, chainId: EvmChainId) => chainId;
+import { Precommitment } from '../../interfaces/types.interface';
 
 export const createMyDepositsSelector = ({
   secretManager,
-  entrypointAddress
-}: Pick<BaseSelectorParams, 'secretManager' | 'entrypointAddress'>) => {
+}: Pick<BaseSelectorParams, 'secretManager'>) => {
   return createSelector(
     [
       (state: RootState) => state.deposits.deposits,
-      selectChainId,
+      (state: RootState) => state.poolInfo
     ],
-    (depositsMap, chainId): IPoolDepositEvent[] => {
-      const myDeposits: IPoolDepositEvent[] = [];
+    (depositsMap, {chainId, entrypointAddress}): Map<Precommitment, IIndexedDepositEvent> => {
+      const myDeposits: IIndexedDepositEvent[] = [];
 
       for (let depositIndex = 0; ; depositIndex++) {
         const { precommitment } = secretManager.getDepositSecrets({
-          entrypointAddress: entrypointAddress(chainId),
-          chainId: chainId.chainId,
+          entrypointAddress,
+          chainId,
           depositIndex,
         });
 
@@ -31,10 +28,13 @@ export const createMyDepositsSelector = ({
           break;
         }
 
-        myDeposits.push(deposit);
+        myDeposits.push({
+          ...deposit,
+          index: depositIndex,
+        });
       }
 
-      return myDeposits;
+      return new Map(myDeposits.map((deposit) => [deposit.precommitment, deposit] as const));
     }
   );
 };
@@ -47,7 +47,7 @@ export const createMyDepositsCountSelector = (
   return createSelector(
     [myDepositsSelector],
     (myDeposits): number => {
-      return myDeposits.length;
+      return myDeposits.size;
     }
   );
 };
@@ -62,10 +62,44 @@ export const createMyEntrypointDepositsSelector = (
       myDepositsSelector,
       (state: RootState) => state.entrypointDeposits.entrypointDeposits,
     ],
-    (myDeposits, entrypointDepositsMap): IEntrypointDepositEvent[] => {
-      return myDeposits
-        .map(({ commitment }) => entrypointDepositsMap.get(commitment))
+    (myDeposits, entrypointDepositsMap): Map<Precommitment, IEntrypointDepositEvent> => {
+      const entrypointDepositByPrecommitment = Array.from(myDeposits)
+        .map(([precommitment, { commitment }]) => [precommitment, entrypointDepositsMap.get(commitment)] as const)
+        .filter(([_, e]) => e !== undefined);
+
+      return new Map(entrypointDepositByPrecommitment as [Precommitment, IEntrypointDepositEvent][])
+    }
+  );
+};
+
+export const createMyDepositsWithAssetSelector = (
+  ...params: Parameters<typeof createMyDepositsSelector>
+) => {
+  const myDepositsSelector = createMyDepositsSelector(...params);
+
+  return createSelector(
+    [
+      myDepositsSelector,
+      (state: RootState) => state.entrypointDeposits.entrypointDeposits,
+      (state: RootState) => state.pools.pools,
+    ],
+    (myDeposits, entrypointDepositsMap, poolsMap): Map<Precommitment, IDepositWithAsset> => {
+      const depositsWithAssets = Array.from(myDeposits)
+        .map(([precommitment, deposit]) => {
+          const entrypointDeposit = entrypointDepositsMap.get(deposit.commitment);
+          if (!entrypointDeposit) return undefined;
+
+          const pool = poolsMap.get(entrypointDeposit.poolAddress);
+          if (!pool) return undefined;
+
+          return [precommitment, {
+            ...deposit,
+            assetAddress: pool.assetAddress,
+          }] as const;
+        })
         .filter((e) => e !== undefined);
+
+      return new Map(depositsWithAssets)
     }
   );
 };

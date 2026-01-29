@@ -1,6 +1,6 @@
 import { toBigInt } from 'ethers';
 import { poseidon } from "maci-crypto/build/ts/hashing.js";
-import { Eip155ChainId, Host } from '@kohaku-eth/plugins';
+import { Host } from '@kohaku-eth/plugins';
 
 /** BIP32-BIP43 - Privacy Pools v1
  *   2**31
@@ -19,8 +19,8 @@ export type Secret = {
 };
 
 type BaseDeriveSecretParams = {
-  entrypointAddress: string;
-  chainId: Eip155ChainId;
+  entrypointAddress: bigint;
+  chainId: bigint;
 };
 
 type DeriveDepositSecretParams = BaseDeriveSecretParams & {
@@ -52,11 +52,11 @@ export function SecretManager({
   accountIndex = 0
 }: SecretManagerParams): ISecretManager {
 
-  const deriveSecrets = ({ chainId: { reference }, entrypointAddress, depositIndex, secretIndex }: DeriveSecretsParams) => {
+  const deriveSecrets = ({ chainId, entrypointAddress, depositIndex, secretIndex }: DeriveSecretsParams) => {
     const saltSecret = keystore.deriveAt(ppPath({ secretType: "salt", accountIndex, depositIndex, secretIndex }));
     const nullifierSecret = keystore.deriveAt(ppPath({ accountIndex, secretType: "nullifier", depositIndex, secretIndex }));
-    const nullifier = hashToSnarkField([reference.toString(), toBigInt(entrypointAddress), toBigInt(nullifierSecret)]);
-    const salt = hashToSnarkField([reference.toString(), toBigInt(entrypointAddress), toBigInt(saltSecret)]);
+    const nullifier = hashToSnarkField([chainId.toString(), toBigInt(entrypointAddress), toBigInt(nullifierSecret)]);
+    const salt = hashToSnarkField([chainId.toString(), toBigInt(entrypointAddress), toBigInt(saltSecret)]);
     const precommitment = hashToSnarkField([nullifier, salt]);
 
     return { nullifier, salt, precommitment };

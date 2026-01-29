@@ -1,41 +1,56 @@
+import { Address, Commitment, Label, Nullifier, Precommitment } from "../../interfaces/types.interface";
+
 interface IBaseEvent {
-    blockNumber: bigint;
-    transactionHash: bigint;
-    value: bigint
+  blockNumber: bigint;
+  transactionHash: bigint;
+  value: bigint;
 }
 
 export interface IPoolDepositEvent extends IBaseEvent {
-  depositor: bigint;
-  commitment: bigint;
-  label: bigint;
-  precommitment: bigint;
+  depositor: Address;
+  commitment: Commitment;
+  label: Label;
+  precommitment: Precommitment;
+}
+
+export interface IIndexedDepositEvent extends IPoolDepositEvent {
+  index: number;
+}
+
+export interface IDepositWithAsset extends IIndexedDepositEvent {
+  assetAddress: Address;
 }
 
 export interface IWithdrawalEvent extends IBaseEvent {
-  spentNullifier: bigint;
-  newCommitment: bigint;
+  spentNullifier: Nullifier;
+  newCommitment: Commitment;
+}
+
+export interface IIndexedWithdrawalEvent extends IWithdrawalEvent {
+  index: number;
+  label: Label;
 }
 
 export interface IRagequitEvent extends IBaseEvent {
-  ragequitter: bigint;
-  commitment: bigint;
-  label: bigint;
+  ragequitter: Address;
+  commitment: Commitment;
+  label: Label;
 }
 
 export interface IEntrypointDepositEvent extends IBaseEvent {
-    depositor: bigint;
-    poolAddress: bigint;
-    commitment: bigint;
+  depositor: Address;
+  poolAddress: Address;
+  commitment: Commitment;
 }
 
 export interface IPool {
-  address: bigint;
-  assetAddress: bigint;
+  address: Address;
+  assetAddress: Address;
 }
 
 export interface IAsset {
   name: string;
   decimals: number;
-  address: bigint;
+  address: Address;
   symbol: string;
 }
