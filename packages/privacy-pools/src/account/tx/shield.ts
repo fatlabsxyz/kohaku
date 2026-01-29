@@ -57,7 +57,7 @@ export function prepareErc20Shield({ precommitment, amount, tokenAddress, entryp
 }
 
 type PrepareShieldContextWithEntrypoint = PrepareShieldContext & {
-  entrypointAddress: string;
+  entrypointAddress: bigint;
 };
 
 export async function prepareShield({ secret: { precommitment }, shield, entrypointAddress }: PrepareShieldContextWithEntrypoint) {

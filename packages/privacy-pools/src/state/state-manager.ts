@@ -7,7 +7,11 @@ import { storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
 import { AssetId, Eip155ChainId } from "@kohaku-eth/plugins";
 
-const storeByChainAndEntrypoint = (params: Omit<BaseSelectorParams, 'dataService'>) => {
+export interface StoreFactoryParams extends BaseSelectorParams {
+    entrypointAddress: (chainId: Eip155ChainId) => bigint;
+}
+
+const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService'>) => {
     const {
         entrypointAddress,
     } = params;
@@ -15,10 +19,14 @@ const storeByChainAndEntrypoint = (params: Omit<BaseSelectorParams, 'dataService
     return {
         getChainStore: (chainId: Eip155ChainId) => {
             const chainKey = chainId.toString();
-            const computedChainKey = `${chainKey}-${entrypointAddress(chainId)}}`;
+            const entrypoint = entrypointAddress(chainId);
+            const computedChainKey = `${chainKey}-${entrypoint}`;
             let store = chainStoreMap.get(computedChainKey);
             if (!store) {
-                store = storeFactory();
+                store = storeFactory({
+                    chainId: BigInt(chainId.reference),
+                    entrypointAddress: BigInt(entrypoint),
+                });
                 chainStoreMap.set(computedChainKey, store);
             }
             // We need to tie the selectors instances to a specific store
@@ -29,9 +37,9 @@ const storeByChainAndEntrypoint = (params: Omit<BaseSelectorParams, 'dataService
             return {
                 ...store,
                 selectors: {
-                    depositsCount: () => depositsCountSelector(store.getState(), chainId),
-                    myUnsyncedAssetsSelector: () => myUnsyncedAssetsSelector(store.getState(), chainId),
-                    myUnsyncedPoolsSelector: () => myUnsyncedPoolsSelector(store.getState(), chainId),
+                    depositsCount: () => depositsCountSelector(store.getState()),
+                    myUnsyncedAssetsSelector: () => myUnsyncedAssetsSelector(store.getState()),
+                    myUnsyncedPoolsSelector: () => myUnsyncedPoolsSelector(store.getState()),
                 }
             };
         }
@@ -41,14 +49,13 @@ const storeByChainAndEntrypoint = (params: Omit<BaseSelectorParams, 'dataService
 export const storeStateManager = ({
     dataService,
     ...params
-}: BaseSelectorParams): IStateManager => {
+}: StoreFactoryParams): IStateManager => {
     const { getChainStore } = storeByChainAndEntrypoint(params);
     return {
         sync: async (chainId): Promise<void> => {
             const store = getChainStore(chainId);
             await store.dispatch(syncThunk({
                 dataService,
-                entrypointAddress: params.entrypointAddress(chainId),
                 ...store.selectors
             }));
         },
