@@ -13,19 +13,18 @@ export interface SyncThunkParams extends
   SyncPoolsThunkParams,
   SyncAssetsThunkParams {
     dataService: IDataService;
-    entrypointAddress: string;
 }
 
 export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootState }>(
   'sync/fetchEvents',
-  async ({ dataService, entrypointAddress, ...params }, { getState, dispatch }) => {
+  async ({ dataService, ...params }, { getState, dispatch }) => {
     const state = getState();
     const lastSyncedBlock = selectLastSyncedBlock(state);
     const fromBlock = lastSyncedBlock + 1;
 
     const events = await dataService.getEvents({
       fromBlock,
-      address: entrypointAddress,
+      address: state.poolInfo.entrypointAddress,
     });
 
     if (events.PoolDeposited.length > 0) {
