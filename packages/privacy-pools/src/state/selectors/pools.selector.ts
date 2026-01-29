@@ -15,7 +15,7 @@ export const createMyPoolsSelector = (
     ],
     (myEntrypointDeposits, pools): IPool[] => {
       return Array.from(new Set(
-        myEntrypointDeposits.map(({poolAddress}) => poolAddress)
+        myEntrypointDeposits.map(({ poolAddress }) => poolAddress)
       ))
         .map((poolAddress) => pools.get(poolAddress))
         .filter((pool) => !!pool);
