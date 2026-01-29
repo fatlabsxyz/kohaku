@@ -1,6 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./pools.selector";
+import { createMyPoolsSelector } from "./pools.selector";
 
 export const createAreAssetsSyncedSelector = (
   ...params: Parameters<typeof createMyPoolsSelector>
