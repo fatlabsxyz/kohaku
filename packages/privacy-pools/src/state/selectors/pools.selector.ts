@@ -4,10 +4,8 @@ import { RootState } from "../store";
 import { createMyDepositsSelector, createMyEntrypointDepositsSelector } from "./deposits.selector";
 
 export const createMyPoolsSelector = (
-  ...params: Parameters<typeof createMyDepositsSelector>
+  myEntrypointDepositsSelector: ReturnType<typeof createMyEntrypointDepositsSelector>
 ) => {
-  const myEntrypointDepositsSelector = createMyEntrypointDepositsSelector(...params);
-
   return createSelector(
     [
       myEntrypointDepositsSelector,
@@ -25,10 +23,8 @@ export const createMyPoolsSelector = (
 };
 
 export const createMyUnsyncedPoolsAddresses = (
-  ...params: Parameters<typeof createMyDepositsSelector>
+  myEntrypointDepositsSelector: ReturnType<typeof createMyEntrypointDepositsSelector>
 ) => {
-  const myEntrypointDepositsSelector = createMyEntrypointDepositsSelector(...params);
-
   return createSelector(
     [
       myEntrypointDepositsSelector,

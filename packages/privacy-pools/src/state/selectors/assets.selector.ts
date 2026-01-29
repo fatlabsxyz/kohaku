@@ -3,10 +3,8 @@ import { RootState } from "../store";
 import { createMyPoolsSelector } from "./pools.selector";
 
 export const createAreAssetsSyncedSelector = (
-  ...params: Parameters<typeof createMyPoolsSelector>
+  myPoolsSelector: ReturnType<typeof createMyPoolsSelector>
 ) => {
-  const myPoolsSelector = createMyPoolsSelector(...params);
-
   return createSelector(
     [
       myPoolsSelector,
@@ -22,10 +20,8 @@ export const createAreAssetsSyncedSelector = (
 };
 
 export const createMyUnsyncedAssetsSelector = (
-  ...params: Parameters<typeof createMyPoolsSelector>
+  myPoolsSelector: ReturnType<typeof createMyPoolsSelector>
 ) => {
-  const myPoolsSelector = createMyPoolsSelector(...params);
-
   return createSelector(
     [
       myPoolsSelector,
