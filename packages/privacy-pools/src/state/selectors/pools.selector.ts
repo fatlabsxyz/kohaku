@@ -15,7 +15,8 @@ export const createMyPoolsSelector = (
     ],
     (myEntrypointDeposits, pools): IPool[] => {
       return Array.from(new Set(
-        myEntrypointDeposits.map(({ poolAddress }) => poolAddress)
+        Array.from(myEntrypointDeposits.values())
+          .map(({ poolAddress }) => poolAddress)
       ))
         .map((poolAddress) => pools.get(poolAddress))
         .filter((pool) => !!pool);
@@ -35,7 +36,8 @@ export const createMyUnsyncedPoolsAddresses = (
     ],
     (myEntrypointDeposits, pools): bigint[] => {
       const uniquePoolAddresses = new Set(
-        myEntrypointDeposits.map(({ poolAddress }) => poolAddress)
+        Array.from(myEntrypointDeposits.values())
+          .map(({ poolAddress }) => poolAddress)
       );
 
       return Array.from(uniquePoolAddresses).filter(

@@ -5,7 +5,7 @@ export interface IGetEventsParams<T extends EventTypes> {
     events?: T | T[];
     fromBlock: number;
     toBlock?: number;
-    address: string;
+    address: bigint;
 }
 
 interface IEventNameToEvent {

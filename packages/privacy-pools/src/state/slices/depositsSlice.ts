@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IPoolDepositEvent } from '../../data/interfaces/events.interface';
+import { Precommitment } from '../../interfaces/types.interface';
 
 export interface DepositsState {
-  deposits: Map<bigint, IPoolDepositEvent>;
+  deposits: Map<Precommitment, IPoolDepositEvent>;
 }
 
 const initialState: DepositsState = {
