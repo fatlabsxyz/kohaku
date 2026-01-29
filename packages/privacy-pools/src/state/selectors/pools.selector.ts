@@ -1,7 +1,10 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { IPool } from "../../data/interfaces/events.interface";
 import { RootState } from "../store";
-import { createMyDepositsSelector, createMyEntrypointDepositsSelector } from "./deposits.selector";
+import { createMyEntrypointDepositsSelector } from "./deposits.selector";
+import { selectEntityMap } from "../utils/selectors.utils";
+
+export const poolsSelector = selectEntityMap((s) => s.pools.poolsTuples);
 
 export const createMyPoolsSelector = (
   myEntrypointDepositsSelector: ReturnType<typeof createMyEntrypointDepositsSelector>
@@ -9,7 +12,7 @@ export const createMyPoolsSelector = (
   return createSelector(
     [
       myEntrypointDepositsSelector,
-      (state: RootState) => state.pools.pools,
+      poolsSelector,
     ],
     (myEntrypointDeposits, pools): IPool[] => {
       return Array.from(new Set(
@@ -28,7 +31,7 @@ export const createMyUnsyncedPoolsAddresses = (
   return createSelector(
     [
       myEntrypointDepositsSelector,
-      (state: RootState) => state.pools.pools,
+      poolsSelector,
     ],
     (myEntrypointDeposits, pools): bigint[] => {
       const uniquePoolAddresses = new Set(
