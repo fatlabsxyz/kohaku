@@ -5,10 +5,8 @@ import { createMyDepositsSelector } from './deposits.selector';
 import { Precommitment } from '../../interfaces/types.interface';
 
 export const createMyRagequitsSelector = (
-  ...params: Parameters<typeof createMyDepositsSelector>
+  myDepositsSelector: ReturnType<typeof createMyDepositsSelector>
 ) => {
-  const myDepositsSelector = createMyDepositsSelector(...params);
-
   return createSelector(
     [
       myDepositsSelector,

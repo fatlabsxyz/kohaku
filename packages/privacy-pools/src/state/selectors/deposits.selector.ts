@@ -9,7 +9,7 @@ export const createMyDepositsSelector = ({
 }: Pick<BaseSelectorParams, 'secretManager'>) => {
   return createSelector(
     [
-      (state: RootState) => state.deposits.deposits,
+      (state: RootState) => state.deposits.depositsMap,
       (state: RootState) => state.poolInfo
     ],
     (depositsMap, {chainId, entrypointAddress}): Map<Precommitment, IIndexedDepositEvent> => {
@@ -40,10 +40,8 @@ export const createMyDepositsSelector = ({
 };
 
 export const createMyDepositsCountSelector = (
-  ...params: Parameters<typeof createMyDepositsSelector>
+  myDepositsSelector: ReturnType<typeof createMyDepositsSelector>,
 ) => {
-  const myDepositsSelector = createMyDepositsSelector(...params);
-
   return createSelector(
     [myDepositsSelector],
     (myDeposits): number => {
@@ -53,10 +51,8 @@ export const createMyDepositsCountSelector = (
 };
 
 export const createMyEntrypointDepositsSelector = (
-  ...params: Parameters<typeof createMyDepositsSelector>
+  myDepositsSelector: ReturnType<typeof createMyDepositsSelector>,
 ) => {
-  const myDepositsSelector = createMyDepositsSelector(...params);
-
   return createSelector(
     [
       myDepositsSelector,
@@ -73,10 +69,8 @@ export const createMyEntrypointDepositsSelector = (
 };
 
 export const createMyDepositsWithAssetSelector = (
-  ...params: Parameters<typeof createMyDepositsSelector>
+  myDepositsSelector: ReturnType<typeof createMyDepositsSelector>,
 ) => {
-  const myDepositsSelector = createMyDepositsSelector(...params);
-
   return createSelector(
     [
       myDepositsSelector,

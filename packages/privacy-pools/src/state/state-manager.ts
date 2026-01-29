@@ -1,8 +1,8 @@
 import { IStateManager, Note } from "../plugin/interfaces/protocol-params.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
-import { createMyDepositsCountSelector } from "./selectors/deposits.selector";
-import { createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
+import { createMyDepositsCountSelector, createMyDepositsSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
+import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
 import { storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
 import { AssetId, Eip155ChainId } from "@kohaku-eth/plugins";
@@ -31,9 +31,13 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
             }
             // We need to tie the selectors instances to a specific store
             // so they can memoize correctly
-            const depositsCountSelector = createMyDepositsCountSelector(params);
-            const myUnsyncedAssetsSelector = createMyUnsyncedAssetsSelector(params);
-            const myUnsyncedPoolsSelector = createMyUnsyncedPoolsAddresses(params);
+            const myDepositsSelector = createMyDepositsSelector(params);
+            const depositsCountSelector = createMyDepositsCountSelector(myDepositsSelector);
+            const myEntrypointDepositsSelector = createMyEntrypointDepositsSelector(myDepositsSelector);
+            const myPoolsSelector = createMyPoolsSelector(myEntrypointDepositsSelector);
+            const myUnsyncedAssetsSelector = createMyUnsyncedAssetsSelector(myPoolsSelector);
+            const myUnsyncedPoolsSelector = createMyUnsyncedPoolsAddresses(myEntrypointDepositsSelector);
+
             return {
                 ...store,
                 selectors: {
@@ -67,6 +71,7 @@ export const storeStateManager = ({
             chainId,
         }): string {
             const store = getChainStore(chainId as Eip155ChainId);
+            
             return '';
         },
         getNote: function (asset: AssetId, amount: bigint): Note | undefined {
