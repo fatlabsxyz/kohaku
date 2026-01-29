@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IPool } from '../../data/interfaces/events.interface';
+import { Address } from '../../interfaces/types.interface';
 
 export interface PoolsState {
-  pools: Map<bigint, IPool>;
+  pools: Map<Address, IPool>;
 }
 
 const initialState: PoolsState = {

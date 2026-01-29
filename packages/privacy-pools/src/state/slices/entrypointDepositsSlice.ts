@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IEntrypointDepositEvent } from '../../data/interfaces/events.interface';
+import { Commitment } from '../../interfaces/types.interface';
 
 export interface EntrypointDepositsState {
-  entrypointDeposits: Map<bigint, IEntrypointDepositEvent>;
+  entrypointDeposits: Map<Commitment, IEntrypointDepositEvent>;
 }
 
 const initialState: EntrypointDepositsState = {

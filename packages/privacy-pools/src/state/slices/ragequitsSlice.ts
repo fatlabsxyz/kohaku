@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IRagequitEvent } from '../../data/interfaces/events.interface';
+import { Label } from '../../interfaces/types.interface';
 
 export interface RagequitsState {
-  ragequits: Map<bigint, IRagequitEvent>;
+  ragequits: Map<Label, IRagequitEvent>;
 }
 
 const initialState: RagequitsState = {

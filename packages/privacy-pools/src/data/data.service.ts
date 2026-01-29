@@ -1,6 +1,6 @@
 import { EthProvider } from "@kohaku-eth/plugins";
 import { GetEventsFn, IDataService } from "./interfaces/data.service.interface";
-import { parseEventLogs } from "viem";
+import { parseEventLogs, pad, toHex } from "viem";
 import { EVENTS_SIGNATURES } from "./abis/events.abi";
 import { EVENTS_PARSERS } from "./utils/events-parsers.util";
 import { EthClient } from "./eth-client";
@@ -19,8 +19,9 @@ export class DataService implements IDataService {
         this.ethClient = new EthClient(provider);
     }
 
-    getEvents: GetEventsFn = async ({events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn'], ...params}) => {
+    getEvents: GetEventsFn = async ({events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn'], address, ...params}) => {
         const logs = await this.ethClient.getLogs({
+            address: pad(toHex(address), { size: 20 }),
             ...params
         });
         const allEvents = events instanceof Array ? events : [events];

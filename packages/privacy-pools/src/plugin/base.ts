@@ -7,7 +7,7 @@ import { storeStateManager } from '../state/state-manager';
 import { DataService } from '../data/data.service';
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {
-  entrypointAddress: (_chainId: ChainId) => `0x0${_chainId}`
+  entrypointAddress: (_chainId: ChainId) => 0n
 };
 
 const chainIsEvmChain = (chainId: ChainId): chainId is Eip155ChainId => 
@@ -68,7 +68,7 @@ export class PrivacyPoolsV1Protocol implements Plugin {
 
     const depositCount = await this.stateManager.getDepositCount(chainId);
     const secret = this.secretManager.getDepositSecrets({
-      entrypointAddress, depositIndex: depositCount, chainId
+      entrypointAddress, depositIndex: depositCount, chainId: BigInt(chainId.reference)
     });
     const { tx } = await prepareShield({
       host: this.host, secret, shield: { asset, amount }, entrypointAddress
@@ -87,6 +87,8 @@ export class PrivacyPoolsV1Protocol implements Plugin {
     if (!chainIsEvmChain(chainId)) {
       throw new Error("Only support evm assets");
     }
+
+    const actualChainId = BigInt(chainId.reference);
     
     const entrypointAddress = this.context.entrypointAddress(chainId);
     await this.stateManager.sync(chainId, entrypointAddress);
@@ -103,13 +105,13 @@ export class PrivacyPoolsV1Protocol implements Plugin {
       entrypointAddress,
       depositIndex: deposit,
       withdrawIndex: withdraw,
-      chainId,
+      chainId: actualChainId,
     });
     const newNoteSecrets = this.secretManager.getSecrets({
       entrypointAddress,
       depositIndex: deposit,
       withdrawIndex: withdraw + 1,
-      chainId,
+      chainId: actualChainId,
     });
 
     return {
