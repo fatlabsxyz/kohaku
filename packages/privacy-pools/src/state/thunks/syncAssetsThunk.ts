@@ -1,4 +1,4 @@
-import { createAsyncThunk, Selector } from '@reduxjs/toolkit';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import { IDataService } from '../../data/interfaces/data.service.interface';
 import { IAsset } from '../../data/interfaces/events.interface';
 import { registerAssets } from '../slices/assetsSlice';
