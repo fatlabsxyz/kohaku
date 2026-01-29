@@ -3,33 +3,27 @@ import { IAsset } from '../../data/interfaces/events.interface';
 import { Address } from '../../interfaces/types.interface';
 
 export interface AssetsState {
-  assets: Map<Address, IAsset>;
+  assetsTuples: [Address, IAsset][];
 }
 
 const initialState: AssetsState = {
-  assets: new Map(),
+  assetsTuples: [],
 };
 
 export const assetsSlice = createSlice({
   name: 'assets',
   initialState,
   reducers: {
-    registerAsset: (state, action: PayloadAction<IAsset>) => {
-      const key = action.payload.address;
-      const newAssets = new Map(state.assets);
-      newAssets.set(key, action.payload);
-      return { assets: newAssets };
-    },
-    registerAssets: (state, action: PayloadAction<IAsset[]>) => {
-      const newAssets = new Map(state.assets);
-      action.payload.forEach((asset) => {
+    registerAssets: ({ assetsTuples }, { payload: assets }: PayloadAction<IAsset[]>) => {
+      const newAssets = new Map(assetsTuples);
+      assets.forEach((asset) => {
         const key = asset.address;
         newAssets.set(key, asset);
       });
-      return { assets: newAssets };
+      return { assetsTuples: Array.from(newAssets) };
     },
   },
 });
 
-export const { registerAsset, registerAssets } = assetsSlice.actions;
+export const { registerAssets } = assetsSlice.actions;
 export default assetsSlice.reducer;
