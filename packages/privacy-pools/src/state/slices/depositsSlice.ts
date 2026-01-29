@@ -3,33 +3,27 @@ import { IPoolDepositEvent } from '../../data/interfaces/events.interface';
 import { Precommitment } from '../../interfaces/types.interface';
 
 export interface DepositsState {
-  deposits: Map<Precommitment, IPoolDepositEvent>;
+  depositsTuples: [Precommitment, IPoolDepositEvent][];
 }
 
 const initialState: DepositsState = {
-  deposits: new Map(),
+  depositsTuples: [],
 };
 
 export const depositsSlice = createSlice({
   name: 'deposits',
   initialState,
   reducers: {
-    registerDeposit: (state, action: PayloadAction<IPoolDepositEvent>) => {
-      const key = action.payload.precommitment;
-      const newDeposits = new Map(state.deposits);
-      newDeposits.set(key, action.payload);
-      return { deposits: newDeposits };
-    },
-    registerDeposits: (state, action: PayloadAction<IPoolDepositEvent[]>) => {
-      const newDeposits = new Map(state.deposits);
-      action.payload.forEach((deposit) => {
+    registerDeposits: ({ depositsTuples }, { payload: deposits }: PayloadAction<IPoolDepositEvent[]>) => {
+      const newDeposits = new Map(depositsTuples);
+      deposits.forEach((deposit) => {
         const key = deposit.precommitment;
         newDeposits.set(key, deposit);
       });
-      return { deposits: newDeposits };
+      return { depositsTuples: Array.from(newDeposits) };
     },
   },
 });
 
-export const { registerDeposit, registerDeposits } = depositsSlice.actions;
+export const { registerDeposits } = depositsSlice.actions;
 export default depositsSlice.reducer;

@@ -3,13 +3,18 @@ import { RootState } from '../store';
 import { IEntrypointDepositEvent, IDepositWithAsset, IIndexedDepositEvent } from '../../data/interfaces/events.interface';
 import { BaseSelectorParams } from '../interfaces/selectors.interface';
 import { Precommitment } from '../../interfaces/types.interface';
+import { selectEntityMap } from '../utils/selectors.utils';
+import { poolsSelector } from './pools.selector';
+
+export const depositsSelector = selectEntityMap((s) => s.deposits.depositsTuples);
+export const entrypointDepositSelector = selectEntityMap((s) => s.entrypointDeposits.entrypointDepositsTuples);
 
 export const createMyDepositsSelector = ({
   secretManager,
 }: Pick<BaseSelectorParams, 'secretManager'>) => {
   return createSelector(
     [
-      (state: RootState) => state.deposits.depositsMap,
+      depositsSelector,
       (state: RootState) => state.poolInfo
     ],
     (depositsMap, {chainId, entrypointAddress}): Map<Precommitment, IIndexedDepositEvent> => {
@@ -56,7 +61,7 @@ export const createMyEntrypointDepositsSelector = (
   return createSelector(
     [
       myDepositsSelector,
-      (state: RootState) => state.entrypointDeposits.entrypointDeposits,
+      entrypointDepositSelector,
     ],
     (myDeposits, entrypointDepositsMap): Map<Precommitment, IEntrypointDepositEvent> => {
       const entrypointDepositByPrecommitment = Array.from(myDeposits)
@@ -74,8 +79,8 @@ export const createMyDepositsWithAssetSelector = (
   return createSelector(
     [
       myDepositsSelector,
-      (state: RootState) => state.entrypointDeposits.entrypointDeposits,
-      (state: RootState) => state.pools.pools,
+      entrypointDepositSelector,
+      poolsSelector,
     ],
     (myDeposits, entrypointDepositsMap, poolsMap): Map<Precommitment, IDepositWithAsset> => {
       const depositsWithAssets = Array.from(myDeposits)

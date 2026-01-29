@@ -3,33 +3,27 @@ import { IPool } from '../../data/interfaces/events.interface';
 import { Address } from '../../interfaces/types.interface';
 
 export interface PoolsState {
-  pools: Map<Address, IPool>;
+  poolsTuples: [Address, IPool][];
 }
 
 const initialState: PoolsState = {
-  pools: new Map(),
+  poolsTuples: [],
 };
 
 export const poolsSlice = createSlice({
   name: 'pools',
   initialState,
   reducers: {
-    registerPool: (state, action: PayloadAction<IPool>) => {
-      const key = action.payload.address;
-      const newPools = new Map(state.pools);
-      newPools.set(key, action.payload);
-      return { pools: newPools };
-    },
-    registerPools: (state, action: PayloadAction<IPool[]>) => {
-      const newPools = new Map(state.pools);
-      action.payload.forEach((pool) => {
+    registerPools: ({ poolsTuples }, { payload: pools }: PayloadAction<IPool[]>) => {
+      const newPools = new Map(poolsTuples);
+      pools.forEach((pool) => {
         const key = pool.address;
         newPools.set(key, pool);
       });
-      return { pools: newPools };
+      return { poolsTuples: Array.from(newPools) };
     },
   },
 });
 
-export const { registerPool, registerPools } = poolsSlice.actions;
+export const { registerPools } = poolsSlice.actions;
 export default poolsSlice.reducer;

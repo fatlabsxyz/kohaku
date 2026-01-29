@@ -1,6 +1,9 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { createMyPoolsSelector } from "./pools.selector";
+import { selectEntityMap } from "../utils/selectors.utils";
+
+export const assetSelector = selectEntityMap((state) => state.assets.assetsTuples)
 
 export const createAreAssetsSyncedSelector = (
   myPoolsSelector: ReturnType<typeof createMyPoolsSelector>
@@ -8,7 +11,7 @@ export const createAreAssetsSyncedSelector = (
   return createSelector(
     [
       myPoolsSelector,
-      (state: RootState) => state.assets.assets,
+      assetSelector,
     ],
     (myPools, assets): boolean => {
       const uniqueAssetAddresses = new Set(
@@ -25,7 +28,7 @@ export const createMyUnsyncedAssetsSelector = (
   return createSelector(
     [
       myPoolsSelector,
-      (state: RootState) => state.assets.assets,
+      assetSelector,
     ],
     (myPools, assets): bigint[] => {
       const uniqueAssetAddresses = new Set(
