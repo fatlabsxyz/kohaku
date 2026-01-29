@@ -1,9 +1,9 @@
+import { Eip155ChainId } from "@kohaku-eth/plugins";
 import { ISecretManager } from "../../account/keys";
 import { IDataService } from "../../data/interfaces/data.service.interface";
-import { EvmChainId } from "../../types/base";
 
 export interface BaseSelectorParams {
   secretManager: ISecretManager;
-  entrypointAddress: (chainId: EvmChainId) => string;
+  entrypointAddress: (chainId: Eip155ChainId) => string;
   dataService: IDataService;
 }
