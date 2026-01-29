@@ -1,11 +1,14 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
+import { depositsSelector } from './deposits.selector';
+import { withdrawalsSelector } from './withdrawals.selector';
+import { ragequitsSelector } from './ragequits.selector';
 
 export const selectLastSyncedBlock = createSelector(
   [
-    (state: RootState) => state.deposits.deposits,
-    (state: RootState) => state.withdrawals.withdrawals,
-    (state: RootState) => state.ragequits.ragequits,
+    depositsSelector,
+    withdrawalsSelector,
+    ragequitsSelector,
   ],
   (depositsMap, withdrawalsMap, ragequitsMap): number => {
     let maxBlock = 0n;

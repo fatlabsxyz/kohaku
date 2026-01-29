@@ -1,34 +1,29 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IWithdrawalEvent } from '../../data/interfaces/events.interface';
+import { Nullifier } from '../../interfaces/types.interface';
 
 export interface WithdrawalsState {
-  withdrawals: Map<bigint, IWithdrawalEvent>;
+  withdrawalsTuples: [Nullifier, IWithdrawalEvent][];
 }
 
 const initialState: WithdrawalsState = {
-  withdrawals: new Map(),
+  withdrawalsTuples: [],
 };
 
 export const withdrawalsSlice = createSlice({
   name: 'withdrawals',
   initialState,
   reducers: {
-    registerWithdrawal: (state, action: PayloadAction<IWithdrawalEvent>) => {
-      const key = action.payload.spentNullifier;
-      const newWithdrawals = new Map(state.withdrawals);
-      newWithdrawals.set(key, action.payload);
-      return { withdrawals: newWithdrawals };
-    },
-    registerWithdrawals: (state, action: PayloadAction<IWithdrawalEvent[]>) => {
-      const newWithdrawals = new Map(state.withdrawals);
+    registerWithdrawals: ({ withdrawalsTuples }, action: PayloadAction<IWithdrawalEvent[]>) => {
+      const newWithdrawals = new Map(withdrawalsTuples);
       action.payload.forEach((withdrawal) => {
         const key = withdrawal.spentNullifier;
         newWithdrawals.set(key, withdrawal);
       });
-      return { withdrawals: newWithdrawals };
+      return { withdrawalsTuples: Array.from(newWithdrawals) };
     },
   },
 });
 
-export const { registerWithdrawal, registerWithdrawals } = withdrawalsSlice.actions;
+export const { registerWithdrawals } = withdrawalsSlice.actions;
 export default withdrawalsSlice.reducer;
