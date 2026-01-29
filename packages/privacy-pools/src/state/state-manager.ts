@@ -1,12 +1,11 @@
 import { IStateManager, Note } from "../plugin/interfaces/protocol-params.interface";
-import { EvmChainId } from "../types/base";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import { createMyDepositsCountSelector } from "./selectors/deposits.selector";
 import { createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
 import { storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
-import { AssetId } from "@kohaku-eth/plugins";
+import { AssetId, Eip155ChainId } from "@kohaku-eth/plugins";
 
 const storeByChainAndEntrypoint = (params: Omit<BaseSelectorParams, 'dataService'>) => {
     const {
@@ -14,8 +13,8 @@ const storeByChainAndEntrypoint = (params: Omit<BaseSelectorParams, 'dataService
     } = params;
     const chainStoreMap = new Map<string, ReturnType<typeof storeFactory>>();
     return {
-        getChainStore: (chainId: EvmChainId) => {
-            const chainKey = chainId.chainId.toString();
+        getChainStore: (chainId: Eip155ChainId) => {
+            const chainKey = chainId.toString();
             const computedChainKey = `${chainKey}-${entrypointAddress(chainId)}}`;
             let store = chainStoreMap.get(computedChainKey);
             if (!store) {
@@ -58,9 +57,9 @@ export const storeStateManager = ({
             return store.selectors.depositsCount();
         },
         getBalance: function ({
-            chainId, assetType,
+            chainId,
         }): string {
-            const store = getChainStore(chainId);
+            const store = getChainStore(chainId as Eip155ChainId);
             return '';
         },
         getNote: function (asset: AssetId, amount: bigint): Note | undefined {
