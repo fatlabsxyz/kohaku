@@ -3,18 +3,17 @@ import { Eip155ChainId } from '@kohaku-eth/plugins';
 import { StoreFactoryParams } from "../../state/state-manager";
 import { Address } from "../../interfaces/types.interface";
 
-export interface PrivacyPoolsV1ProtocolContext {
-  entrypointAddress: (chainId: Eip155ChainId) => bigint;
-}
+export interface PrivacyPoolsV1ProtocolContext { }
 
 export interface PrivacyPoolsV1ProtocolParams {
   context: PrivacyPoolsV1ProtocolContext;
   secretManager: (params: SecretManagerParams) => ISecretManager;
   stateManager: (params: StoreFactoryParams) => IStateManager;
+  chainsEntrypoints: Record<string, bigint>;
 }
 
 interface IBaseOperationParams {
-  chainId: Eip155ChainId;
+  chainId: Eip155ChainId<number>;
   entrypoint: Address;
 }
 
