@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Address } from '../../interfaces/types.interface';
 
 export interface PoolInfoState {
   chainId: bigint;
-  entrypointAddress: bigint;
+  entrypointAddress: Address;
 }
 
 const initialState: PoolInfoState = {
