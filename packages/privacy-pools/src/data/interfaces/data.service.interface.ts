@@ -1,3 +1,4 @@
+import { Address } from "../../interfaces/types.interface";
 import { EventTypes } from "../abis/events.abi";
 import { IAsset, IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IWithdrawalEvent } from "./events.interface";
 
@@ -24,8 +25,16 @@ export type GetEventsFn = <const T extends EventTypes>(params: IGetEventsParams<
     toBlock: number;
 }>
 
+export interface IPoolConfig {
+    poolAddress: Address;
+    minimumDepositAmount: bigint;
+    vettingFeeBPS: bigint;
+    maxRelayFeeBPS: bigint;
+}
+
 export interface IDataService {
     getEvents: GetEventsFn;
     getAsset(assetAddress: bigint): Promise<IAsset>;
     getPoolAsset(poolAddress: bigint): Promise<bigint>;
+    getPoolForAsset(entrypointAddress: Address, assetAddress: Address): Promise<IPoolConfig>;
 }
