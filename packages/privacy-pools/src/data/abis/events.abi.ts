@@ -24,3 +24,40 @@ export const poolAbi = [
     "stateMutability": "view"
   }
 ] as const satisfies Abi;
+
+export const entrypointAbi = [
+  {
+    "type": "function",
+    "name": "assetConfig",
+    "inputs": [
+      {
+        "name": "_asset",
+        "type": "address",
+        "internalType": "contract IERC20"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "pool",
+        "type": "address",
+        "internalType": "contract IPrivacyPool"
+      },
+      {
+        "name": "minimumDepositAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "vettingFeeBPS",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "maxRelayFeeBPS",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  }
+] as const satisfies Abi;

@@ -1,10 +1,11 @@
 import { EthProvider } from "@kohaku-eth/plugins";
-import { GetEventsFn, IDataService } from "./interfaces/data.service.interface";
+import { GetEventsFn, IDataService, IPoolConfig } from "./interfaces/data.service.interface";
 import { parseEventLogs, pad, toHex } from "viem";
 import { EVENTS_SIGNATURES } from "./abis/events.abi";
 import { EVENTS_PARSERS } from "./utils/events-parsers.util";
 import { EthClient } from "./eth-client";
 import type { IAsset } from "./interfaces/events.interface";
+import { Address } from "../interfaces/types.interface";
 
 export interface DataServiceParams {
     provider: EthProvider
@@ -39,7 +40,7 @@ export class DataService implements IDataService {
         } satisfies Pick<Awaited<ReturnType<GetEventsFn>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GetEventsFn>>;
     }
 
-    async getAsset(address: bigint): Promise<IAsset> {
+    async getAsset(address: Address): Promise<IAsset> {
         const [name, decimals, symbol] = await Promise.all([
             this.ethClient.makeContractRequest(address, 'erc20', 'name'),
             this.ethClient.makeContractRequest(address, 'erc20', 'decimals'),
@@ -48,7 +49,28 @@ export class DataService implements IDataService {
         return { name, decimals, symbol, address };
     }
 
-    async getPoolAsset(poolAddress: bigint) {
+    async getPoolAsset(poolAddress: Address) {
         return BigInt(await this.ethClient.makeContractRequest(poolAddress, 'pool', 'ASSET'));
+    }
+
+    async getPoolForAsset(entrypointAddress: Address, assetAddress: Address): Promise<IPoolConfig> {
+        const [
+            poolAddress,
+            minimumDepositAmount,
+            vettingFeeBPS,
+            maxRelayFeeBPS
+        ] = await this.ethClient.makeContractRequest(
+            entrypointAddress,
+            'entrypoint',
+            'assetConfig',
+            toHex(assetAddress)
+        );
+
+        return {
+            poolAddress: BigInt(poolAddress),
+            minimumDepositAmount,
+            vettingFeeBPS,
+            maxRelayFeeBPS,
+        };
     }
 }

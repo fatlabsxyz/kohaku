@@ -1,6 +1,7 @@
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
-import { AssetId, Eip155ChainId } from '@kohaku-eth/plugins';
+import { Eip155ChainId } from '@kohaku-eth/plugins';
 import { StoreFactoryParams } from "../../state/state-manager";
+import { Address } from "../../interfaces/types.interface";
 
 export interface PrivacyPoolsV1ProtocolContext {
   entrypointAddress: (chainId: Eip155ChainId) => bigint;
@@ -12,11 +13,21 @@ export interface PrivacyPoolsV1ProtocolParams {
   stateManager: (params: StoreFactoryParams) => IStateManager;
 }
 
+interface IBaseOperationParams {
+  chainId: Eip155ChainId;
+  entrypointAddress: Address;
+}
+
+export type ISyncOperationParams = IBaseOperationParams;
+export interface IDepositOperationParams extends IBaseOperationParams {
+  assetAddress: Address;
+  amount: bigint;
+}
+
 export interface IStateManager {
-  getNote(asset: AssetId, amount: bigint): Note | undefined;
-  sync: (chainId: Eip155ChainId, entrypointAddress: bigint) => Promise<void>;
-  getDepositCount: (chainId: Eip155ChainId) => Promise<number>;
-  getBalance: (asset: AssetId) => string;
+  sync: (params: ISyncOperationParams) => Promise<void>;
+  deposit: (chainId: Eip155ChainId) => Promise<void>;
+  getBalances: () => Map<Address, bigint>;
 }
 
 export type Note = {

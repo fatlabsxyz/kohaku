@@ -1,6 +1,7 @@
 import type { EthProvider } from "@kohaku-eth/plugins";
 import { ContractFunctionName, decodeFunctionResult, DecodeFunctionResultReturnType, encodeFunctionData, EncodeFunctionDataParameters, erc20Abi, type RpcLog, toHex } from 'viem';
-import { poolAbi } from "./abis/events.abi";
+import { entrypointAbi, poolAbi } from "./abis/events.abi";
+import { Address } from "../interfaces/types.interface";
 
 export interface GetLogsParams {
     address: string;
@@ -11,6 +12,7 @@ export interface GetLogsParams {
 const abis = {
     erc20: erc20Abi,
     pool: poolAbi,
+    entrypoint: entrypointAbi,
 } as const;
 
 export class EthClient {
@@ -44,15 +46,19 @@ export class EthClient {
         Contract extends keyof typeof abis,
         Abi extends typeof abis[Contract],
         FunctionName extends ContractFunctionName<Abi>,
+        Args extends EncodeFunctionDataParameters<Abi, FunctionName>['args'],
+        ArgsArray extends Args extends undefined ? [] : Args extends ReadonlyArray<any> ? Args : []
     >(
-        contractAddress: bigint,
+        contractAddress: Address,
         contractName: Contract,
-        functionName: FunctionName
+        functionName: FunctionName,
+        ...args: ArgsArray
     ): Promise<DecodeFunctionResultReturnType<Abi, FunctionName, any>> {
         const abi = abis[contractName];
         const data = encodeFunctionData({
             abi,
             functionName,
+            args,
         } as never);
 
         const result = await this.request({
