@@ -15,19 +15,56 @@ export interface PrivacyPoolsV1ProtocolParams {
 
 interface IBaseOperationParams {
   chainId: Eip155ChainId;
-  entrypointAddress: Address;
+  entrypoint: Address;
 }
 
 export type ISyncOperationParams = IBaseOperationParams;
 export interface IDepositOperationParams extends IBaseOperationParams {
-  assetAddress: Address;
+  asset: Address;
   amount: bigint;
 }
 
+export interface IGetBalancesOperationParams extends IBaseOperationParams {
+  assets?: Address[];
+}
+
+export interface IRelayerConfig {
+  url: string;
+}
+
+export interface IWithdrawapOperationParams extends Omit<IDepositOperationParams, 'amount'> {
+  amount?: bigint;
+  recipient: Address;
+  relayerConfig: IRelayerConfig;
+}
+
+export interface IRagequitOperationParams extends IBaseOperationParams {
+  assets?: Address[];
+}
+
 export interface IStateManager {
+  /**
+   * Queries the chain and updates its state
+   */
   sync: (params: ISyncOperationParams) => Promise<void>;
-  deposit: (chainId: Eip155ChainId) => Promise<void>;
-  getBalances: () => Map<Address, bigint>;
+  /**
+   * Generates a deposit payload for the signer
+   */
+  getDepositPayload: (params: IDepositOperationParams) => Promise<unknown>;
+  /**
+   * Generates the relayer quotes and withdrawals payloads for the specified amount
+   */
+  getWithdrawalPayloads: (params: IWithdrawapOperationParams) => Promise<unknown[]>;
+  /**
+   * Generates the ragequit payloads for the specified assets. Only unapproved
+   * amount will be ragequitted.
+   */
+  getRagequitPayloads: (params: IRagequitOperationParams) => Promise<unknown[]>;
+  /**
+   * Gets the balance of the specified assets.
+   * All assets if not specified.
+   */
+  getBalances: (params: IGetBalancesOperationParams) => Map<Address, bigint>;
 }
 
 export type Note = {
