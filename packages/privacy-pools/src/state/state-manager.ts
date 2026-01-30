@@ -1,31 +1,29 @@
-import { IStateManager, Note } from "../plugin/interfaces/protocol-params.interface";
+import { Address } from "../interfaces/types.interface";
+import { IDepositOperationParams, IGetBalancesOperationParams, IRagequitOperationParams, IStateManager, ISyncOperationParams, IWithdrawapOperationParams, Note } from "../plugin/interfaces/protocol-params.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
-import { createMyDepositsCountSelector, createMyDepositsSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
+import { createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
+import { createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
 import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
+import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
+import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
 import { AssetId, Eip155ChainId } from "@kohaku-eth/plugins";
 
-export interface StoreFactoryParams extends BaseSelectorParams {
-    entrypointAddress: (chainId: Eip155ChainId) => bigint;
-}
+export type StoreFactoryParams = BaseSelectorParams;
 
 const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService'>) => {
-    const {
-        entrypointAddress,
-    } = params;
     const chainStoreMap = new Map<string, ReturnType<typeof storeFactory>>();
     return {
-        getChainStore: (chainId: Eip155ChainId) => {
+        getChainStore: ({ chainId, entrypoint }:{chainId: Eip155ChainId<number>; entrypoint: Address}) => {
             const chainKey = chainId.toString();
-            const entrypoint = entrypointAddress(chainId);
             const computedChainKey = `${chainKey}-${entrypoint}`;
             let store = chainStoreMap.get(computedChainKey);
             if (!store) {
                 store = storeFactory({
                     chainId: BigInt(chainId.reference),
-                    entrypointAddress: BigInt(entrypoint),
+                    entrypointAddress: entrypoint,
                 });
                 chainStoreMap.set(computedChainKey, store);
             }
@@ -33,10 +31,20 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
             // so they can memoize correctly
             const myDepositsSelector = createMyDepositsSelector(params);
             const depositsCountSelector = createMyDepositsCountSelector(myDepositsSelector);
+            const myRagequitsSelector = createMyRagequitsSelector(myDepositsSelector);
             const myEntrypointDepositsSelector = createMyEntrypointDepositsSelector(myDepositsSelector);
+            const myDepositsWithAssetSelector = createMyDepositsWithAssetSelector(myDepositsSelector);
+            const myWithdrawalsSelector = createMyWithdrawalsSelector({myDepositsSelector, ...params});
+
             const myPoolsSelector = createMyPoolsSelector(myEntrypointDepositsSelector);
-            const myUnsyncedAssetsSelector = createMyUnsyncedAssetsSelector(myPoolsSelector);
             const myUnsyncedPoolsSelector = createMyUnsyncedPoolsAddresses(myEntrypointDepositsSelector);
+            const myUnsyncedAssetsSelector = createMyUnsyncedAssetsSelector(myPoolsSelector);
+            const myDepositsBalanceSelector = createMyDepositsBalanceSelector({
+                myDepositsWithAssetSelector,
+                myRagequitsSelector,
+                myWithdrawalsSelector
+            });
+            const myAssetsBalanceSelector = createMyAssetsBalanceSelector({myDepositsBalanceSelector});
 
             return {
                 ...store,
@@ -44,6 +52,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
                     depositsCount: () => depositsCountSelector(store.getState()),
                     myUnsyncedAssetsSelector: () => myUnsyncedAssetsSelector(store.getState()),
                     myUnsyncedPoolsSelector: () => myUnsyncedPoolsSelector(store.getState()),
+                    myAssetsBalanceSelector: () => myAssetsBalanceSelector(store.getState()),
                 }
             };
         }
@@ -56,25 +65,31 @@ export const storeStateManager = ({
 }: StoreFactoryParams): IStateManager => {
     const { getChainStore } = storeByChainAndEntrypoint(params);
     return {
-        sync: async (chainId): Promise<void> => {
-            const store = getChainStore(chainId);
+        sync: async ({ chainId, entrypoint }): Promise<void> => {
+            const store = getChainStore({ chainId, entrypoint });
             await store.dispatch(syncThunk({
                 dataService,
                 ...store.selectors
             }));
         },
-        getDepositCount: async (chainId): Promise<number> => {
-            const store = getChainStore(chainId);
-            return store.selectors.depositsCount();
+        getBalances: ({
+            assets = [], ...params
+        }): Map<Address, bigint> => {
+            const store = getChainStore(params);
+            const balances = store.selectors.myAssetsBalanceSelector();
+            if (assets.length === 0) {
+                return balances;
+            }
+
+            return new Map(assets.map((address) => [address, balances.get(address) || 0n]));
         },
-        getBalance: function ({
-            chainId,
-        }): string {
-            const store = getChainStore(chainId as Eip155ChainId);
-            
-            return '';
+        getDepositPayload: (params: IDepositOperationParams): Promise<unknown> => {
+            throw new Error("Function not implemented.");
         },
-        getNote: function (asset: AssetId, amount: bigint): Note | undefined {
+        getWithdrawalPayloads: function (params: IWithdrawapOperationParams): Promise<unknown[]> {
+            throw new Error("Function not implemented.");
+        },
+        getRagequitPayloads: function (params: IRagequitOperationParams): Promise<unknown[]> {
             throw new Error("Function not implemented.");
         },
     };
