@@ -5,7 +5,7 @@ import { createMyRagequitsSelector } from './ragequits.selector';
 import { createMyDepositsWithAssetSelector } from './deposits.selector';
 import { Address, Precommitment } from '../../interfaces/types.interface';
 
-interface IDepositWithBalance extends IDepositWithAsset {
+export interface IDepositWithBalance extends IDepositWithAsset {
   balance: bigint;
 }
 
