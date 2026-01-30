@@ -1,72 +1,71 @@
-import { Address } from 'viem';
-import { Interface } from 'ethers';
-import { createTx, TxData } from '@kohaku-eth/provider';
-import { PPv1NetworkConfig } from '../../config';
-import { CommitmentActions } from '../actions/commitment';
-import { Nullifier } from '../types';
+import { encodeFunctionData, getAddress } from 'viem';
 
-export type UnshieldFn = (token: Address, value: bigint, recipient: Address) => {
-  nullifiers: Nullifier[];
-  tx: TxData;
-};
-export type Unshield = { unshield: UnshieldFn };
+import { Circuits } from '@fatsolutions/privacy-pools-core-circuits';
+import { AssetId, AssetType, createTx, Erc20Asset } from '@kohaku-eth/provider';
+import { Host } from '@kohaku-eth/plugins';
 
-const POOL_ABI = [
-  'function unshield(bytes proof, bytes32[] nullifiers, address recipient, address token, uint256 value) external'
-];
+import { entrypointAbi } from '../../data/abis/entrypoint.abi';
+import { Note } from '../../plugin/interfaces/protocol-params.interface';
+import { generateProof } from '../../proofs';
+import { Secret } from '../keys';
 
-const POOL_INTERFACE = new Interface(POOL_ABI);
-
-// Mock proof generation (stub)
-const generateMockProof = (): string => {
-  // Return dummy 128 bytes (typical zk-SNARK proof size)
-  return '0x' + '00'.repeat(128);
-};
-
-export const makeUnshield = (
-  network: PPv1NetworkConfig,
-  actions: CommitmentActions
-): Unshield => {
-
-  const unshield: UnshieldFn = (token, value, recipient) => {
-    // 1. Select unspent commitments
-    const unspent = actions.getUnspentCommitments(token);
-
-    let total = 0n;
-    const selectedCommitments = [];
-
-    for (const commitment of unspent) {
-      selectedCommitments.push(commitment);
-      total += commitment.value;
-
-      if (total >= value) break;
-    }
-
-    if (total < value) {
-      throw new Error(`Insufficient balance. Need ${value}, have ${total}`);
-    }
-
-    // 2. Generate nullifiers
-    const nullifiers = selectedCommitments.map(c => actions.generateNullifier(c));
-
-    // 3. Generate mock proof
-    const proof = generateMockProof();
-
-    // 4. Encode transaction
-    const data = POOL_INTERFACE.encodeFunctionData('unshield', [
-      proof,
-      nullifiers.map(n => n.hash),
-      recipient,
-      token,
-      value
-    ]);
-
-    const tx = createTx(network.POOL_ADDRESS, data);
-
-    // Return nullifiers and tx
-    // User should: 1) submit tx, 2) wait for confirmation, 3) call markSpent() for each nullifier
-    return { nullifiers, tx };
+type PrepareUnShieldContext = {
+  host: Host;
+  notes: {
+    existing: Note & Secret;
+    new: Note & Secret;
   };
-
-  return { unshield };
+  unshield: { asset: AssetId; amount: bigint; };
 };
+
+type PrepareUnShieldContextWithEntrypoint = PrepareUnShieldContext & {
+  entrypointAddress: string;
+};
+
+function isErc20(at: AssetType): at is Erc20Asset {
+  return at.kind === "Erc20";
+}
+
+export async function prepareUnshield({ notes, unshield, entrypointAddress }: PrepareUnShieldContextWithEntrypoint) {
+
+  // XXX: we assume we have enough balance for now
+  const { asset: { assetType: token, chainId }, amount } = unshield;
+
+  if (!isErc20(token)) {
+    throw new Error(`Asset type \`${token.kind}\` not supported.`);
+  }
+
+  const scope = await getScopeFromToken(entrypointAddress, token.address);
+
+  const circuits = new Circuits();
+  await circuits.initArtifacts("latest");
+
+  // 3. Generate mock proof
+  const proof = generateProof({ existingNote: notes.existing, newNote: notes.new });
+
+  // 4. Encode transaction
+  const data = encodeFunctionData({
+    abi: entrypointAbi,
+    functionName: "relay",
+    args: [
+      {
+        // TODO: set entrypoint address
+        processooor: getAddress(entrypointAddress),
+        // TODO: set relay data
+        data: "0x0",
+      },
+      proof,
+      scope
+    ]
+  });
+
+  const tx = createTx(entrypointAddress, data);
+
+  // Return nullifiers and tx
+  // User should: 1) submit tx, 2) wait for confirmation, 3) call markSpent() for each nullifier
+  return { tx };
+}
+
+async function getScopeFromToken(entrypointAddress: string, token: string): Promise<bigint> {
+  throw new Error('Function not implemented.');
+}
