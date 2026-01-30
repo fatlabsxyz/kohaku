@@ -1,7 +1,8 @@
-import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { Eip155ChainId } from '@kohaku-eth/plugins';
-import { StoreFactoryParams } from "../../state/state-manager";
+import { TxData } from '@kohaku-eth/provider';
+import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { Address } from "../../interfaces/types.interface";
+import { StoreFactoryParams } from "../../state/state-manager";
 
 export interface PrivacyPoolsV1ProtocolContext { }
 
@@ -49,7 +50,7 @@ export interface IStateManager {
   /**
    * Generates a deposit payload for the signer
    */
-  getDepositPayload: (params: IDepositOperationParams) => Promise<unknown>;
+  getDepositPayload: (params: IDepositOperationParams) => Promise<TxData>;
   /**
    * Generates the relayer quotes and withdrawals payloads for the specified amount
    */

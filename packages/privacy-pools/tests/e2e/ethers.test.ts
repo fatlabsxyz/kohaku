@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { E_ADDRESS } from '../../src/config/constants';
 import { MAINNET_CONFIG } from '../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../src/index';
-import { AssetId, ChainId } from '@kohaku-eth/plugins';
+import { Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
 import { createMockHost } from '../utils/mock-host';
@@ -15,7 +15,8 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_CHAIN_ID: ChainId = { kind: 'Evm', chainId: 1n };
+  const MAINNET_CHAIN_ID = new Eip155ChainId(1);
+  const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
 
   beforeAll(async () => {
     anvil = defineAnvil({
@@ -32,19 +33,16 @@ describe('PrivacyPools v1 E2E Flow', () => {
   });
 
   it('[prepareShield] generates valid native ETH deposit transaction', async () => {
-    const pool = anvil.pool(1);
     const host = createMockHost();
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      context: {
-        entrypointAddress: (_chainId: ChainId) => MAINNET_CONFIG.ENTRYPOINT_ADDRESS
+      chainsEntrypoints: {
+        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
       }
     });
 
-    const nativeAsset: AssetId = {
-      chainId: MAINNET_CHAIN_ID,
-      assetType: { kind: 'Erc20', address: E_ADDRESS }
-    };
+    // E_ADDRESS represents native ETH in Privacy Pools
+    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
 
     const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: 1000000000000000000n } // 1 ETH
@@ -53,7 +51,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     expect(txns).toHaveLength(1);
     const tx = txns[0];
 
-    expect(tx.to).toBe(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
+    expect(tx.to?.toLowerCase()).toBe(MAINNET_CONFIG.ENTRYPOINT_ADDRESS.toLowerCase());
     expect(tx.value).toBe(1000000000000000000n);
     expect(tx.data).toMatch(/^0x/);
   });
@@ -70,15 +68,13 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const host = createMockHost();
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      context: {
-        entrypointAddress: (_chainId: ChainId) => MAINNET_CONFIG.ENTRYPOINT_ADDRESS
+      chainsEntrypoints: {
+        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
       }
     });
 
-    const nativeAsset: AssetId = {
-      chainId: MAINNET_CHAIN_ID,
-      assetType: { kind: 'Erc20', address: E_ADDRESS }
-    };
+    // E_ADDRESS represents native ETH in Privacy Pools
+    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
 
     const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: 1000000000000000000n } // 1 ETH
@@ -100,20 +96,16 @@ describe('PrivacyPools v1 E2E Flow', () => {
   });
 
   it('[prepareShield] generates valid ERC20 deposit transaction', async () => {
-    const pool = anvil.pool(3);
     const host = createMockHost();
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      context: {
-        entrypointAddress: (_chainId: ChainId) => MAINNET_CONFIG.ENTRYPOINT_ADDRESS
+      chainsEntrypoints: {
+        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
       }
     });
 
     const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
-    const usdcAsset: AssetId = {
-      chainId: MAINNET_CHAIN_ID,
-      assetType: { kind: 'Erc20', address: USDC_ADDRESS }
-    };
+    const usdcAsset = new Erc20Id(USDC_ADDRESS, MAINNET_CHAIN_ID);
 
     const { txns } = await protocol.prepareShield(
       { asset: usdcAsset, amount: 100000000n } // 100 USDC
@@ -122,7 +114,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     expect(txns).toHaveLength(1);
     const [tx] = txns;
 
-    expect(tx.to).toBe(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
+    expect(tx.to?.toLowerCase()).toBe(MAINNET_CONFIG.ENTRYPOINT_ADDRESS.toLowerCase());
     expect(tx.value).toBe(0n); // ERC20 has no ETH value
     expect(tx.data).toMatch(/^0x/);
   });
@@ -139,8 +131,8 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const host = createMockHost();
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      context: {
-        entrypointAddress: (_chainId: ChainId) => MAINNET_CONFIG.ENTRYPOINT_ADDRESS
+      chainsEntrypoints: {
+        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
       }
     });
 
@@ -154,10 +146,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // Approve entrypoint to spend USDC
     await approveERC20(alice, USDC_ADDRESS, MAINNET_CONFIG.ENTRYPOINT_ADDRESS, DEPOSIT_AMOUNT);
 
-    const usdcAsset: AssetId = {
-      chainId: MAINNET_CHAIN_ID,
-      assetType: { kind: 'Erc20', address: USDC_ADDRESS }
-    };
+    const usdcAsset = new Erc20Id(USDC_ADDRESS, MAINNET_CHAIN_ID);
 
     const { txns } = await protocol.prepareShield(
       { asset: usdcAsset, amount: DEPOSIT_AMOUNT }
