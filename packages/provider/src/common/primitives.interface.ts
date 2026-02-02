@@ -20,7 +20,7 @@ export interface AssetId {
 
 export interface AccountId {
   chainId: ChainId;
-  accountId: String;
+  accountId: string;
 }
 
 export interface Slip44Asset { kind: "Slip44"; coinType: bigint }
