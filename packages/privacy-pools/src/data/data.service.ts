@@ -20,7 +20,11 @@ export class DataService implements IDataService {
         this.ethClient = new EthClient(provider);
     }
 
-    getEvents: GetEventsFn = async ({events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn'], address, ...params}) => {
+    getEvents: GetEventsFn = async ({
+        events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn', 'RootUpdated'],
+        address,
+        ...params
+    }) => {
         const logs = await this.ethClient.getLogs({
             address: pad(toHex(address), { size: 20 }),
             ...params
