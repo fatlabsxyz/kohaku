@@ -2,9 +2,13 @@ import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { IEntrypointDepositEvent, IDepositWithAsset, IIndexedDepositEvent } from '../../data/interfaces/events.interface';
 import { BaseSelectorParams } from '../interfaces/selectors.interface';
-import { Precommitment } from '../../interfaces/types.interface';
+import { Address, Precommitment } from '../../interfaces/types.interface';
 import { selectEntityMap } from '../utils/selectors.utils';
 import { poolsSelector } from './pools.selector';
+import { TxData } from '@kohaku-eth/provider';
+import { prepareErc20Shield, prepareNativeShield } from '../../account/tx/shield';
+import { E_ADDRESS } from '../../config';
+import { addressToHex } from '../../utils';
 
 export const depositsSelector = selectEntityMap((s) => s.deposits.depositsTuples);
 export const entrypointDepositSelector = selectEntityMap((s) => s.entrypointDeposits.entrypointDepositsTuples);
@@ -99,6 +103,63 @@ export const createMyDepositsWithAssetSelector = (
         .filter((e) => e !== undefined);
 
       return new Map(depositsWithAssets)
+    }
+  );
+};
+
+export const createGetNextDepositSecretsSelector = ({
+  depositsCountSelector,
+  secretManager,
+}: {
+  depositsCountSelector: ReturnType<typeof createMyDepositsCountSelector>;
+  secretManager: BaseSelectorParams['secretManager'];
+}) => {
+  return createSelector(
+    [
+      depositsCountSelector,
+      (state: RootState) => state.poolInfo,
+    ],
+    (depositCount, { chainId, entrypointAddress }) => {
+      return secretManager.getDepositSecrets({
+        entrypointAddress,
+        chainId,
+        depositIndex: depositCount + 1,
+      });
+    }
+  );
+};
+
+export const createGetNextDepositPayloadSelector = ({
+  getNextDepositSecretsSelector,
+}: {
+  getNextDepositSecretsSelector: ReturnType<typeof createGetNextDepositSecretsSelector>;
+}) => {
+  return createSelector(
+    [
+      getNextDepositSecretsSelector,
+      (_state: RootState, asset: Address, _amount: bigint) => asset,
+      (_state: RootState, _asset: Address, amount: bigint) => amount,
+      (state: RootState) => state.poolInfo.entrypointAddress,
+    ],
+    ({ precommitment }, asset, amount, entrypoint): TxData => {
+      const assetHex = addressToHex(asset);
+      const entrypointHex = addressToHex(entrypoint);
+      const isNative = assetHex.toLowerCase() === E_ADDRESS;
+
+      if (isNative) {
+        return prepareNativeShield({
+          precommitment,
+          amount,
+          entrypointAddress: entrypointHex,
+        });
+      } else {
+        return prepareErc20Shield({
+          precommitment,
+          amount,
+          tokenAddress: assetHex,
+          entrypointAddress: entrypointHex,
+        });
+      }
     }
   );
 };
