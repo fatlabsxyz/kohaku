@@ -16,10 +16,10 @@ export interface SyncThunkParams extends
   SyncPoolsThunkParams,
   SyncAssetsThunkParams,
   SyncAspThunkParams {
-    dataService: IDataService;
+  dataService: IDataService;
 }
 
-export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootState }>(
+export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootState; }>(
   'sync/fetchEvents',
   async ({ dataService, ...params }, { getState, dispatch }) => {
     const state = getState();
@@ -27,6 +27,13 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
     const fromBlock = lastSyncedBlock + 1n;
 
     const events = await dataService.getEvents({
+      events: [
+        "PoolDeposited",
+        "EntrypointDeposited",
+        "Withdrawn",
+        "Ragequit",
+        "RootUpdated",
+      ],
       fromBlock,
       address: state.poolInfo.entrypointAddress,
     });
@@ -52,10 +59,10 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
     }
 
     await dispatch(syncPoolsThunk({ dataService, ...params }));
-    
+
     await dispatch(syncAssetsThunk({ dataService, ...params }));
 
-    await dispatch(syncAspThunk({...params}));
+    await dispatch(syncAspThunk({ ...params }));
 
     dispatch(setLastSyncedBlock(events.toBlock));
   }
