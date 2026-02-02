@@ -3,7 +3,7 @@ import { EventTypes } from "../abis/events.abi";
 import { IAsset, IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IRootUpdatedEvent, IWithdrawalEvent } from "./events.interface";
 
 export interface IGetEventsParams<T extends EventTypes> {
-    events?: T | T[];
+    events: T | T[];
     fromBlock: bigint;
     toBlock?: bigint;
     address: bigint;
@@ -21,7 +21,7 @@ type IGroupedEvents = {
     [key in keyof IEventNameToEvent]: IEventNameToEvent[key][];
 };
 
-export type GetEventsFn = <const T extends EventTypes>(params: IGetEventsParams<T>) => Promise<Pick<IGroupedEvents, T> & {
+export type GetEventsFn = <const T extends EventTypes = never>(params: IGetEventsParams<T>) => Promise<Pick<IGroupedEvents, T> & {
     fromBlock: bigint;
     toBlock: bigint;
 }>
