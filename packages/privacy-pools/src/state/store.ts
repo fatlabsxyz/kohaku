@@ -8,6 +8,7 @@ import poolsReducer from './slices/poolsSlice';
 import poolInfoReducer, { PoolInfoState, setPoolInfo } from './slices/poolInfoSlice';
 import aspReducer from './slices/aspSlice';
 import updateRootEventsReducer from './slices/updateRootEventsSlice';
+import syncReducer from './slices/syncSlice';
 
 export const storeFactory = (poolInfo: PoolInfoState) => {
   const store = configureStore({
@@ -20,7 +21,8 @@ export const storeFactory = (poolInfo: PoolInfoState) => {
       pools: poolsReducer,
       poolInfo: poolInfoReducer,
       asp: aspReducer,
-      updateRootEvents: updateRootEventsReducer
+      updateRootEvents: updateRootEventsReducer,
+      sync: syncReducer
     },
   });
   store.dispatch(setPoolInfo(poolInfo));
