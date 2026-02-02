@@ -104,3 +104,26 @@ export const createNextNoteDeriver = ({
     };
   };
 };
+
+/**
+ * Creates a deriver function that gets secrets for an existing note.
+ * Used to retrieve the secrets needed for spending an existing note in a withdrawal.
+ */
+export const createExistingNoteSecretsDeriver = ({
+  secretManager,
+}: {
+  secretManager: ISecretManager;
+}) => {
+  return (
+    note: Note,
+    chainId: bigint,
+    entrypointAddress: Address
+  ): Secret => {
+    return secretManager.getSecrets({
+      entrypointAddress,
+      chainId,
+      depositIndex: note.deposit,
+      withdrawIndex: note.withdraw,
+    });
+  };
+};

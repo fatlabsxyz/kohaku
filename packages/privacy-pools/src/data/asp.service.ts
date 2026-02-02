@@ -10,6 +10,7 @@ export class AspService {
 
     async getAspTree(ipfsCID: string): Promise<bigint[][]> {
         const response = await this.fetch(`${this.providerUrl}${ipfsCID}`);
+
         return response.json();
     }
 }
