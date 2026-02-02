@@ -1,15 +1,11 @@
 import { Eip155ChainId } from "@kohaku-eth/plugins";
-import { TxData } from '@kohaku-eth/provider';
 
-import { prepareErc20Shield, prepareNativeShield } from "../account/tx/shield";
-import { E_ADDRESS } from "../config";
 import { Address } from "../interfaces/types.interface";
 import { IDepositOperationParams, IRagequitOperationParams, IStateManager, IWithdrawapOperationParams } from "../plugin/interfaces/protocol-params.interface";
-import { addressToHex } from "../utils";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import { createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
-import { createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
+import { createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector, createGetNextDepositSecretsSelector, createGetNextDepositPayloadSelector } from "./selectors/deposits.selector";
 import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
 import { createGetNoteSelector, createNextNoteDeriver } from "./selectors/notes.selector";
 import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
@@ -64,6 +60,15 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
         secretManager: params.secretManager,
       });
 
+      // Deposit payload selectors
+      const getNextDepositSecretsSelector = createGetNextDepositSecretsSelector({
+        depositsCountSelector,
+        secretManager: params.secretManager,
+      });
+      const getNextDepositPayloadSelector = createGetNextDepositPayloadSelector({
+        getNextDepositSecretsSelector,
+      });
+
       return {
         ...store,
         selectors: {
@@ -74,6 +79,8 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
           getNote: (assetAddress: Address, minAmount: bigint) =>
             getNoteSelector(store.getState(), assetAddress, minAmount),
           getNextNote,
+          getNextDepositPayload: (asset: Address, amount: bigint) =>
+            getNextDepositPayloadSelector(store.getState(), asset, amount),
         }
       };
     }
@@ -107,38 +114,9 @@ export const storeStateManager = ({
 
       return new Map(assets.map((address) => [address, balances.get(address) || 0n]));
     },
-    getDepositPayload: ({ chainId, entrypoint, asset, amount }: IDepositOperationParams) => {
+    getDepositPayload: async ({ chainId, entrypoint, asset, amount }: IDepositOperationParams) => {
       const store = getChainStore({ chainId, entrypoint });
-      const depositCount = store.selectors.depositsCount();
-
-      const { precommitment } = params.secretManager.getDepositSecrets({
-        entrypointAddress: entrypoint,
-        chainId: BigInt(chainId.reference),
-        depositIndex: depositCount,
-      });
-
-      const assetHex = addressToHex(asset);
-      const entrypointHex = addressToHex(entrypoint);
-      const isNative = assetHex.toLowerCase() === E_ADDRESS;
-
-      let txData: TxData;
-
-      if (isNative) {
-        txData = prepareNativeShield({
-          precommitment,
-          amount,
-          entrypointAddress: entrypointHex,
-        });
-      } else {
-        txData = prepareErc20Shield({
-          precommitment,
-          amount,
-          tokenAddress: assetHex,
-          entrypointAddress: entrypointHex,
-        });
-      }
-
-      return Promise.resolve(txData);
+      return store.selectors.getNextDepositPayload(asset, amount);
     },
     getWithdrawalPayloads: ({ chainId, entrypoint, asset, amount, recipient }: IWithdrawapOperationParams) => {
       const store = getChainStore({ chainId, entrypoint });

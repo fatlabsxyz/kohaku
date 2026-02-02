@@ -5,6 +5,7 @@ export const EVENTS_SIGNATURES = {
   Withdrawn: parseAbiItem('event Withdrawn(address indexed _processooor, uint256 _value, uint256 _spentNullifier, uint256 _newCommitment)'),
   Ragequit: parseAbiItem('event Ragequit(address indexed _ragequitter, uint256 _commitment, uint256 _label, uint256 _value)'),
   EntrypointDeposited: parseAbiItem('event Deposited(address indexed _depositor, address indexed _pool, uint256 _commitment, uint256 _amount)'),
+  RootUpdated: parseAbiItem('event RootUpdated(uint256 _root, string _ipfsCID, uint256 _timestamp)')
 } as const;
 
 export type EventTypes = keyof typeof EVENTS_SIGNATURES;
@@ -22,7 +23,20 @@ export const poolAbi = [
       }
     ],
     "stateMutability": "view"
-  }
+  },
+  {
+    "type": "function",
+    "name": "SCOPE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "_scope",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
 ] as const satisfies Abi;
 
 export const entrypointAbi = [

@@ -34,7 +34,8 @@ export interface IPoolConfig {
 
 export interface IDataService {
     getEvents: GetEventsFn;
-    getAsset(assetAddress: bigint): Promise<IAsset>;
-    getPoolAsset(poolAddress: bigint): Promise<bigint>;
+    getAsset(assetAddress: Address): Promise<IAsset>;
+    getPoolAsset(poolAddress: Address): Promise<Address>;
     getPoolForAsset(entrypointAddress: Address, assetAddress: Address): Promise<IPoolConfig>;
+    getPoolScope(poolAddress: Address): Promise<bigint>;
 }

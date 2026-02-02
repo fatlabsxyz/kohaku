@@ -1,12 +1,13 @@
-import { ContractEventName, Hash, Log, ParseEventLogsReturnType } from "viem";
+import { ContractEventName, ParseEventLogsReturnType } from "viem";
 import { EVENTS_SIGNATURES } from "../abis/events.abi";
-import { IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IWithdrawalEvent } from "../interfaces/events.interface";
+import { IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IRootUpdatedEvent, IWithdrawalEvent } from "../interfaces/events.interface";
 
 interface EventsParsersResultsByKey {
   PoolDeposited: IPoolDepositEvent;
   Withdrawn: IWithdrawalEvent;
   Ragequit: IRagequitEvent;
   EntrypointDeposited: IEntrypointDepositEvent;
+  RootUpdated: IRootUpdatedEvent;
 }
 
 export const EVENTS_PARSERS: {
@@ -80,5 +81,22 @@ export const EVENTS_PARSERS: {
             commitment,
             value,
         }
-    }
+    },
+    RootUpdated: ({
+        blockNumber,
+        transactionHash,
+        args: {
+            _root: root,
+            _ipfsCID: ipfsCID,
+            _timestamp: timestamp
+        }
+    }) => {
+        return {
+            blockNumber,
+            transactionHash: BigInt(transactionHash),
+            root,
+            ipfsCID,
+            timestamp,
+        }
+    },
 }
