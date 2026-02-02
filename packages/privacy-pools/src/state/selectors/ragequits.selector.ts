@@ -19,9 +19,11 @@ export const createMyRagequitsSelector = (
       return Array.from(myDeposits.values())
         .reduce((ragequitsByPrecommitment, deposit) => {
           const ragequit = ragequitsMap.get(deposit.label);
+
           if (ragequit) {
             ragequitsByPrecommitment.set(deposit.precommitment, ragequit);
           }
+
           return ragequitsByPrecommitment; 
         }, new Map<Precommitment, IRagequitEvent>());
     }
