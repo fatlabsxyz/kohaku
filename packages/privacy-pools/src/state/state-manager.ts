@@ -7,12 +7,14 @@ import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
 import { createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector, createGetNextDepositSecretsSelector, createGetNextDepositPayloadSelector } from "./selectors/deposits.selector";
 import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
-import { createGetNoteSelector, createNextNoteDeriver } from "./selectors/notes.selector";
+import { createGetNoteSelector, createNextNoteDeriver, createExistingNoteSecretsDeriver } from "./selectors/notes.selector";
+import { createStateLeavesSelector, createAspLeavesSelector, createStateMerkleProofSelector, createAspMerkleProofSelector } from "./selectors/merkle.selector";
 import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
 import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
 import { SyncAspThunkParams } from "./thunks/syncAspThunk";
+import { withdrawThunk } from "./thunks/withdrawThunk";
 
 export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams {}
 
@@ -61,6 +63,15 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
       const getNextNote = createNextNoteDeriver({
         secretManager: params.secretManager,
       });
+      const getExistingNoteSecrets = createExistingNoteSecretsDeriver({
+        secretManager: params.secretManager,
+      });
+
+      // Merkle proof selectors (mocked for now)
+      const stateLeavesSelector = createStateLeavesSelector();
+      const aspLeavesSelector = createAspLeavesSelector();
+      const stateMerkleProofSelector = createStateMerkleProofSelector(stateLeavesSelector);
+      const aspMerkleProofSelector = createAspMerkleProofSelector(aspLeavesSelector);
 
       // Deposit payload selectors
       const getNextDepositSecretsSelector = createGetNextDepositSecretsSelector({
@@ -82,6 +93,11 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
           getNote: (assetAddress: Address, minAmount: bigint) =>
             getNoteSelector(store.getState(), assetAddress, minAmount),
           getNextNote,
+          getExistingNoteSecrets,
+          getStateMerkleProof: (note: Parameters<typeof stateMerkleProofSelector>[1]) =>
+            stateMerkleProofSelector(store.getState(), note),
+          getAspMerkleProof: (label: bigint) =>
+            aspMerkleProofSelector(store.getState(), label),
           getNextDepositPayload: (asset: Address, amount: bigint) =>
             getNextDepositPayloadSelector(store.getState(), asset, amount),
         }
@@ -118,35 +134,27 @@ export const storeStateManager = ({
     },
     getDepositPayload: async ({ chainId, entrypoint, asset, amount }: IDepositOperationParams) => {
       const store = getChainStore({ chainId, entrypoint });
+
       return store.selectors.getNextDepositPayload(asset, amount);
     },
-    getWithdrawalPayloads: ({ chainId, entrypoint, asset, amount, recipient }: IWithdrawapOperationParams) => {
+    getWithdrawalPayloads: async ({ chainId, entrypoint, asset, amount, recipient, relayerConfig }: IWithdrawapOperationParams) => {
       const store = getChainStore({ chainId, entrypoint });
 
-      // Get note with sufficient balance (smallest sufficient)
-      const note = store.selectors.getNote(asset, amount ?? 0n);
-
-      if (!note) {
-        throw new Error("No note with sufficient balance for withdrawal");
-      }
-
-      // Get the change note (next note in the label lineage)
-      const { note: changeNote, secrets } = store.selectors.getNextNote(
-        note,
-        amount ?? 0n,
-        BigInt(chainId.reference),
-        entrypoint
-      );
-
-      // TODO: ZK proof generation deferred
-      // Return the payload structure for now
-      return Promise.resolve([{
-        note,
-        changeNote,
-        secrets,
+      // Dispatch the withdraw thunk which handles note selection and proof generation
+      const result = await store.dispatch(withdrawThunk({
+        getNote: store.selectors.getNote,
+        getNextNote: store.selectors.getNextNote,
+        getExistingNoteSecrets: store.selectors.getExistingNoteSecrets,
+        getStateMerkleProof: store.selectors.getStateMerkleProof,
+        getAspMerkleProof: store.selectors.getAspMerkleProof,
+        getScope: () => entrypoint, // TODO: Add proper scope selector
+        asset,
+        amount: amount ?? 0n,
         recipient,
-        amount,
-      }]);
+        withdrawalData: '0x', // TODO: encode from relayerConfig
+      }));
+
+      return [result.payload];
     },
     getRagequitPayloads: function (params: IRagequitOperationParams): Promise<unknown[]> {
       throw new Error("Function not implemented.");
