@@ -38,6 +38,7 @@ export async function prepareUnshield({ notes, unshield, entrypointAddress }: Pr
   const scope = await getScopeFromToken(entrypointAddress, token.address);
 
   const circuits = new Circuits();
+
   await circuits.initArtifacts("latest");
 
   // 3. Generate mock proof

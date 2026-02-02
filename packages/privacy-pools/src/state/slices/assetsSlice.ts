@@ -16,10 +16,13 @@ export const assetsSlice = createSlice({
   reducers: {
     registerAssets: ({ assetsTuples }, { payload: assets }: PayloadAction<IAsset[]>) => {
       const newAssets = new Map(assetsTuples);
+
       assets.forEach((asset) => {
         const key = asset.address;
+
         newAssets.set(key, asset);
       });
+
       return { assetsTuples: Array.from(newAssets) };
     },
   },

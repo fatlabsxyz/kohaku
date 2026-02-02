@@ -16,10 +16,13 @@ export const entrypointDepositsSlice = createSlice({
   reducers: {
     registerEntrypointDeposits: ({ entrypointDepositsTuples }, { payload: entrypointDeposits }: PayloadAction<IEntrypointDepositEvent[]>) => {
       const newDeposits = new Map(entrypointDepositsTuples);
+
       entrypointDeposits.forEach((deposit) => {
         const key = deposit.commitment;
+
         newDeposits.set(key, deposit);
       });
+
       return { entrypointDepositsTuples: Array.from(newDeposits) };
     },
   },
