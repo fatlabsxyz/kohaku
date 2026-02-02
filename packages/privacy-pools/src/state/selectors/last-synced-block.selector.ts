@@ -9,8 +9,9 @@ export const selectLastSyncedBlock = createSelector(
     depositsSelector,
     withdrawalsSelector,
     ragequitsSelector,
+    (state: RootState) => state.sync.lastSyncedBlock,
   ],
-  (depositsMap, withdrawalsMap, ragequitsMap): number => {
+  (depositsMap, withdrawalsMap, ragequitsMap, lastSyncedBlock): bigint => {
     let maxBlock = 0n;
 
     for (const deposit of depositsMap.values()) {
@@ -31,6 +32,10 @@ export const selectLastSyncedBlock = createSelector(
       }
     }
 
-    return Number(maxBlock);
+    if (lastSyncedBlock > maxBlock) {
+      maxBlock = lastSyncedBlock;
+    }
+
+    return maxBlock;
   }
 );

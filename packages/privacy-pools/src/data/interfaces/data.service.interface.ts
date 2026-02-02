@@ -4,8 +4,8 @@ import { IAsset, IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IRo
 
 export interface IGetEventsParams<T extends EventTypes> {
     events?: T | T[];
-    fromBlock: number;
-    toBlock?: number;
+    fromBlock: bigint;
+    toBlock?: bigint;
     address: bigint;
 }
 
@@ -22,8 +22,8 @@ type IGroupedEvents = {
 };
 
 export type GetEventsFn = <const T extends EventTypes>(params: IGetEventsParams<T>) => Promise<Pick<IGroupedEvents, T> & {
-    fromBlock: number;
-    toBlock: number;
+    fromBlock: bigint;
+    toBlock: bigint;
 }>
 
 export interface IPoolConfig {
