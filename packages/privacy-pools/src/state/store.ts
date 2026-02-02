@@ -6,6 +6,7 @@ import ragequitsReducer from './slices/ragequitsSlice';
 import assetsReducer from './slices/assetsSlice';
 import poolsReducer from './slices/poolsSlice';
 import poolInfoReducer, { PoolInfoState, setPoolInfo } from './slices/poolInfoSlice';
+import aspReducer from './slices/aspSlice';
 
 export const storeFactory = (poolInfo: PoolInfoState) => {
   const store = configureStore({
@@ -16,7 +17,8 @@ export const storeFactory = (poolInfo: PoolInfoState) => {
       ragequits: ragequitsReducer,
       assets: assetsReducer,
       pools: poolsReducer,
-      poolInfo: poolInfoReducer
+      poolInfo: poolInfoReducer,
+      asp: aspReducer
     },
   });
   store.dispatch(setPoolInfo(poolInfo));
