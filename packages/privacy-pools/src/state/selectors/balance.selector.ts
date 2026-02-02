@@ -40,6 +40,7 @@ export const createMyDepositsBalanceSelector = ({
           }
     
           const ragequit = ragequitsMap.get(depositData.precommitment);
+
           if (ragequit) {
             return [precommitment, {
               ...depositData,

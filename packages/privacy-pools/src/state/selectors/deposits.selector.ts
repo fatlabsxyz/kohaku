@@ -93,9 +93,11 @@ export const createMyDepositsWithAssetSelector = (
       const depositsWithAssets = Array.from(myDeposits)
         .map(([precommitment, deposit]) => {
           const entrypointDeposit = entrypointDepositsMap.get(deposit.commitment);
+
           if (!entrypointDeposit) return undefined;
 
           const pool = poolsMap.get(entrypointDeposit.poolAddress);
+
           if (!pool) return undefined;
 
           return [precommitment, {

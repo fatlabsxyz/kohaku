@@ -13,6 +13,7 @@ export function createMockKeystore(phrase: string = TEST_MNEMONIC): Keystore {
   return {
     deriveAt(path: string) {
       const derived = masterNode.derivePath(path);
+
       // Return the private key as hex (32 bytes)
       return derived.privateKey as `0x${string}`;
     }
@@ -21,6 +22,7 @@ export function createMockKeystore(phrase: string = TEST_MNEMONIC): Keystore {
 
 const createMockStorage = (): PluginStorage => {
   const storageMap = new Map<string, string>();
+
   return {
     set: storageMap.set,
     get: (key) => storageMap.get(key) || null,
@@ -29,6 +31,7 @@ const createMockStorage = (): PluginStorage => {
 
 const createEthProvider = (rpcUrl = 'http://127.0.0.1:8545'): EthProvider => {
   const publicClient = createPublicClient({transport: http(rpcUrl)});
+
   return {
     request: publicClient.request as never
   }

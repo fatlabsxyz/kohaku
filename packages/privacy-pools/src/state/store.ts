@@ -25,7 +25,9 @@ export const storeFactory = (poolInfo: PoolInfoState) => {
       sync: syncReducer
     },
   });
+
   store.dispatch(setPoolInfo(poolInfo));
+
   return store;
 }
 

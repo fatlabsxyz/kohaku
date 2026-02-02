@@ -16,10 +16,13 @@ export const poolsSlice = createSlice({
   reducers: {
     registerPools: ({ poolsTuples }, { payload: pools }: PayloadAction<IPool[]>) => {
       const newPools = new Map(poolsTuples);
+
       pools.forEach((pool) => {
         const key = pool.address;
+
         newPools.set(key, pool);
       });
+
       return { poolsTuples: Array.from(newPools) };
     },
   },
