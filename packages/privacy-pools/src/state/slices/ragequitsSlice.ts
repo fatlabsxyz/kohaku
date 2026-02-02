@@ -16,10 +16,13 @@ export const ragequitsSlice = createSlice({
   reducers: {
     registerRagequits: ({ ragequitsTuples }, action: PayloadAction<IRagequitEvent[]>) => {
       const newRagequits = new Map(ragequitsTuples);
+
       action.payload.forEach((ragequit) => {
         const key = ragequit.label;
+
         newRagequits.set(key, ragequit);
       });
+
       return { ragequitsTuples: Array.from(newRagequits) };
     },
   },

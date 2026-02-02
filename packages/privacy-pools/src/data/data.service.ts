@@ -32,6 +32,7 @@ export class DataService implements IDataService {
             ...(toBlock ? { toBlock: Number(toBlock) } : {})
         });
         const allEvents = events instanceof Array ? events : [events];
+
         return allEvents.reduce((parsedEvents, eventType) => ({
             ...parsedEvents,
             [eventType]: parseEventLogs({
@@ -52,6 +53,7 @@ export class DataService implements IDataService {
             this.ethClient.makeContractRequest(address, 'erc20', 'decimals'),
             this.ethClient.makeContractRequest(address, 'erc20', 'symbol'),
         ]);
+
         return { name, decimals, symbol, address };
     }
 

@@ -32,6 +32,7 @@ export const createMyWithdrawalsSelector = ({
       for (const [, deposit] of myDeposits) {
         const mapKey = deposit.precommitment;
         const depositWithdrawals = myWithdrawals.get(mapKey) || [];
+
         for (let withdrawIndex = 0; ; withdrawIndex++) {
           const { nullifier } = secretManager.getSecrets({
             entrypointAddress,

@@ -16,10 +16,13 @@ export const depositsSlice = createSlice({
   reducers: {
     registerDeposits: ({ depositsTuples }, { payload: deposits }: PayloadAction<IPoolDepositEvent[]>) => {
       const newDeposits = new Map(depositsTuples);
+
       deposits.forEach((deposit) => {
         const key = deposit.precommitment;
+
         newDeposits.set(key, deposit);
       });
+
       return { depositsTuples: Array.from(newDeposits) };
     },
   },

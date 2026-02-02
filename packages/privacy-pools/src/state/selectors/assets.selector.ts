@@ -17,6 +17,7 @@ export const createAreAssetsSyncedSelector = (
       const uniqueAssetAddresses = new Set(
         myPools.map(({ assetAddress }) => assetAddress.toString())
       );
+
       return uniqueAssetAddresses.size === assets.size;
     }
   );
