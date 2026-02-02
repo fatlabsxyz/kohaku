@@ -10,6 +10,7 @@ import { syncPoolsThunk, SyncPoolsThunkParams } from './syncPoolsThunk';
 import { syncAssetsThunk, SyncAssetsThunkParams } from './syncAssetsThunk';
 import { registerLastUpdateRootEvent } from '../slices/updateRootEventsSlice';
 import { syncAspThunk, SyncAspThunkParams } from './syncAspThunk';
+import { setLastSyncedBlock } from '../slices/syncSlice';
 
 export interface SyncThunkParams extends
   SyncPoolsThunkParams,
@@ -23,7 +24,7 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
   async ({ dataService, ...params }, { getState, dispatch }) => {
     const state = getState();
     const lastSyncedBlock = selectLastSyncedBlock(state);
-    const fromBlock = lastSyncedBlock + 1;
+    const fromBlock = lastSyncedBlock + 1n;
 
     const events = await dataService.getEvents({
       fromBlock,
@@ -55,5 +56,7 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
     await dispatch(syncAssetsThunk({ dataService, ...params }));
 
     await dispatch(syncAspThunk({...params}));
+
+    dispatch(setLastSyncedBlock(events.toBlock));
   }
 );

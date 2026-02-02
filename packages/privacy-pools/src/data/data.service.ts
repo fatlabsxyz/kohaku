@@ -23,11 +23,13 @@ export class DataService implements IDataService {
     getEvents: GetEventsFn = async ({
         events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn', 'RootUpdated'],
         address,
-        ...params
+        fromBlock,
+        toBlock,
     }) => {
         const logs = await this.ethClient.getLogs({
             address: pad(toHex(address), { size: 20 }),
-            ...params
+            fromBlock: Number(fromBlock),
+            ...(toBlock ? { toBlock: Number(toBlock) } : {})
         });
         const allEvents = events instanceof Array ? events : [events];
         return allEvents.reduce((parsedEvents, eventType) => ({
@@ -39,8 +41,8 @@ export class DataService implements IDataService {
                 strict: true
             } as const).map((parsedLog) => EVENTS_PARSERS[eventType](parsedLog as never))
         }), {
-            fromBlock: params.fromBlock,
-            toBlock: Number(logs.at(-1)?.blockNumber) || params.fromBlock,
+            fromBlock: fromBlock,
+            toBlock: BigInt(logs.at(-1)?.blockNumber || 0n) || fromBlock,
         } satisfies Pick<Awaited<ReturnType<GetEventsFn>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GetEventsFn>>;
     }
 
