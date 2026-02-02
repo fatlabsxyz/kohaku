@@ -4,6 +4,7 @@ import { DataService } from '../data/data.service';
 import { Address } from "../interfaces/types.interface";
 import { storeStateManager } from '../state/state-manager';
 import { IStateManager, ISyncOperationParams, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
+import { AspService } from "../data/asp.service";
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {};
 
@@ -35,6 +36,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
     });
     this.stateManager = stateManager({
       secretManager: this.secretManager,
+      aspService: new AspService(host.network),
       dataService: new DataService({ provider: host.ethProvider })
     });
     this.chainsEntrypoints = new Map<string, bigint>(Object.entries(chainsEntrypoints));
