@@ -18,6 +18,7 @@ export const syncPoolsThunk = createAsyncThunk<void, SyncPoolsThunkParams, { sta
     const pools: IPool[] = await Promise.all(
       myUnsyncedPools.map(async (poolAddress) => {
         const [assetAddress, scope] = await Promise.all([dataService.getPoolAsset(poolAddress), dataService.getPoolScope(poolAddress)]);
+
         return {
           address: poolAddress,
           assetAddress,
