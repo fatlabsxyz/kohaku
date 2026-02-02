@@ -8,10 +8,13 @@ import { RootState } from '../store';
 import { registerEntrypointDeposits } from '../slices/entrypointDepositsSlice';
 import { syncPoolsThunk, SyncPoolsThunkParams } from './syncPoolsThunk';
 import { syncAssetsThunk, SyncAssetsThunkParams } from './syncAssetsThunk';
+import { registerLastUpdateRootEvent } from '../slices/updateRootEventsSlice';
+import { syncAspThunk, SyncAspThunkParams } from './syncAspThunk';
 
 export interface SyncThunkParams extends
   SyncPoolsThunkParams,
-  SyncAssetsThunkParams {
+  SyncAssetsThunkParams,
+  SyncAspThunkParams {
     dataService: IDataService;
 }
 
@@ -43,8 +46,14 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
       dispatch(registerEntrypointDeposits(events.EntrypointDeposited));
     }
 
+    if (events.RootUpdated.length) {
+      dispatch(registerLastUpdateRootEvent(events.RootUpdated.at(-1)!));
+    }
+
     await dispatch(syncPoolsThunk({ dataService, ...params }));
     
     await dispatch(syncAssetsThunk({ dataService, ...params }));
+
+    await dispatch(syncAspThunk({...params}));
   }
 );

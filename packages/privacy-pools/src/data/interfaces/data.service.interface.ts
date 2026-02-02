@@ -1,6 +1,6 @@
 import { Address } from "../../interfaces/types.interface";
 import { EventTypes } from "../abis/events.abi";
-import { IAsset, IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IWithdrawalEvent } from "./events.interface";
+import { IAsset, IEntrypointDepositEvent, IPoolDepositEvent, IRagequitEvent, IRootUpdatedEvent, IWithdrawalEvent } from "./events.interface";
 
 export interface IGetEventsParams<T extends EventTypes> {
     events?: T | T[];
@@ -14,6 +14,7 @@ interface IEventNameToEvent {
     EntrypointDeposited: IEntrypointDepositEvent;
     Withdrawn: IWithdrawalEvent;
     Ragequit: IRagequitEvent;
+    RootUpdated: IRootUpdatedEvent;
 }
 
 type IGroupedEvents = {

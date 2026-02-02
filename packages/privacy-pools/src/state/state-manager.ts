@@ -12,8 +12,9 @@ import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
 import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
+import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 
-export type StoreFactoryParams = BaseSelectorParams;
+export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams {}
 
 const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService'>) => {
   const chainStoreMap = new Map<string, ReturnType<typeof storeFactory>>();
@@ -88,7 +89,6 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
 };
 
 export const storeStateManager = ({
-  dataService,
   ...params
 }: StoreFactoryParams): IStateManager => {
   const { getChainStore } = storeByChainAndEntrypoint(params);
@@ -98,7 +98,7 @@ export const storeStateManager = ({
       const store = getChainStore({ chainId, entrypoint });
 
       await store.dispatch(syncThunk({
-        dataService,
+        ...params,
         ...store.selectors
       }));
     },
