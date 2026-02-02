@@ -5,18 +5,18 @@ import { IDepositOperationParams, IRagequitOperationParams, IStateManager, IWith
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
-import { createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector, createGetNextDepositSecretsSelector, createGetNextDepositPayloadSelector } from "./selectors/deposits.selector";
+import { createGetNextDepositPayloadSelector, createGetNextDepositSecretsSelector, createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
+import { createAspLeavesSelector, createAspMerkleProofSelector, createStateLeavesSelector, createStateMerkleProofSelector } from "./selectors/merkle.selector";
+import { createExistingNoteSecretsDeriver, createGetNoteSelector, createNextNoteDeriver } from "./selectors/notes.selector";
 import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
-import { createGetNoteSelector, createNextNoteDeriver, createExistingNoteSecretsDeriver } from "./selectors/notes.selector";
-import { createStateLeavesSelector, createAspLeavesSelector, createStateMerkleProofSelector, createAspMerkleProofSelector } from "./selectors/merkle.selector";
 import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
 import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { storeFactory } from "./store";
-import { syncThunk } from "./thunks/syncThunk";
 import { SyncAspThunkParams } from "./thunks/syncAspThunk";
+import { syncThunk } from "./thunks/syncThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
 
-export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams {}
+export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams { }
 
 const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService'>) => {
   const chainStoreMap = new Map<string, ReturnType<typeof storeFactory>>();
@@ -53,7 +53,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
         myWithdrawalsSelector
       });
       const myAssetsBalanceSelector = createMyAssetsBalanceSelector({ myDepositsBalanceSelector });
-      const myApprovedAssetBalanceSelector = createMyApprovedAssetBalanceSelector(myAssetsBalanceSelector)
+      const myApprovedAssetBalanceSelector = createMyApprovedAssetBalanceSelector(myAssetsBalanceSelector);
 
       // Note selectors for withdrawals
       const getNoteSelector = createGetNoteSelector({
