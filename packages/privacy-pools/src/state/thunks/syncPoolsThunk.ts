@@ -17,10 +17,11 @@ export const syncPoolsThunk = createAsyncThunk<void, SyncPoolsThunkParams, { sta
     // Fetch asset address for each pool and create IPool objects
     const pools: IPool[] = await Promise.all(
       myUnsyncedPools.map(async (poolAddress) => {
-        const assetAddress = await dataService.getPoolAsset(poolAddress);
+        const [assetAddress, scope] = await Promise.all([dataService.getPoolAsset(poolAddress), dataService.getPoolScope(poolAddress)]);
         return {
           address: poolAddress,
           assetAddress,
+          scope,
         };
       })
     );

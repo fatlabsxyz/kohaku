@@ -43,9 +43,16 @@ export interface IEntrypointDepositEvent extends IBaseEvent {
   commitment: Commitment;
 }
 
+export interface IRootUpdatedEvent extends Omit<IBaseEvent, 'value'> {
+  root: bigint;
+  ipfsCID: string;
+  timestamp: bigint;
+}
+
 export interface IPool {
   address: Address;
   assetAddress: Address;
+  scope: bigint;
 }
 
 export interface IAsset {

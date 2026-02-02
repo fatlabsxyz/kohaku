@@ -73,4 +73,8 @@ export class DataService implements IDataService {
             maxRelayFeeBPS,
         };
     }
+
+    async getPoolScope(poolAddress: Address) {
+        return this.ethClient.makeContractRequest(poolAddress, 'pool', 'SCOPE');
+    }
 }
