@@ -9,6 +9,7 @@ import { TxData } from '@kohaku-eth/provider';
 import { prepareErc20Shield, prepareNativeShield } from '../../account/tx/shield';
 import { E_ADDRESS } from '../../config';
 import { addressToHex } from '../../utils';
+import { aspLeavesSelector } from './asp.selector';
 
 export const depositsSelector = selectEntityMap((s) => s.deposits.depositsTuples);
 export const entrypointDepositSelector = selectEntityMap((s) => s.entrypointDeposits.entrypointDepositsTuples);
@@ -19,9 +20,10 @@ export const createMyDepositsSelector = ({
   return createSelector(
     [
       depositsSelector,
-      (state: RootState) => state.poolInfo
+      aspLeavesSelector,
+      (state: RootState) => state.poolInfo,
     ],
-    (depositsMap, {chainId, entrypointAddress}): Map<Precommitment, IIndexedDepositEvent> => {
+    (depositsMap, approvedLabels, {chainId, entrypointAddress}): Map<Precommitment, IIndexedDepositEvent> => {
       const myDeposits: IIndexedDepositEvent[] = [];
 
       for (let depositIndex = 0; ; depositIndex++) {
@@ -39,6 +41,7 @@ export const createMyDepositsSelector = ({
 
         myDeposits.push({
           ...deposit,
+          approved: approvedLabels.has(deposit.label),
           index: depositIndex,
         });
       }
