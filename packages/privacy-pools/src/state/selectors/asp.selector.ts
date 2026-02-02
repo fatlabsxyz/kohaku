@@ -18,3 +18,8 @@ export const isAspRootUpToDateSelector = createSelector(
            asp.blockNumber === lastUpdateRootEvent.blockNumber;
   }
 );
+
+export const aspLeavesSelector = createSelector(
+  [aspSelector],
+  ({ leaves }) => new Set(leaves)
+);

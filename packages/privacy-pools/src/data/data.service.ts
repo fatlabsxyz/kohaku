@@ -21,7 +21,7 @@ export class DataService implements IDataService {
     }
 
     getEvents: GetEventsFn = async ({
-        events = ['EntrypointDeposited', 'PoolDeposited', 'Ragequit', 'Withdrawn', 'RootUpdated'],
+        events,
         address,
         fromBlock,
         toBlock,

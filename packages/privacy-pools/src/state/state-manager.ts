@@ -4,7 +4,7 @@ import { Address } from "../interfaces/types.interface";
 import { IDepositOperationParams, IRagequitOperationParams, IStateManager, IWithdrawapOperationParams } from "../plugin/interfaces/protocol-params.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
-import { createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
+import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
 import { createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector, createGetNextDepositSecretsSelector, createGetNextDepositPayloadSelector } from "./selectors/deposits.selector";
 import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
 import { createGetNoteSelector, createNextNoteDeriver } from "./selectors/notes.selector";
@@ -51,6 +51,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
         myWithdrawalsSelector
       });
       const myAssetsBalanceSelector = createMyAssetsBalanceSelector({ myDepositsBalanceSelector });
+      const myApprovedAssetBalanceSelector = createMyApprovedAssetBalanceSelector(myAssetsBalanceSelector)
 
       // Note selectors for withdrawals
       const getNoteSelector = createGetNoteSelector({
@@ -77,6 +78,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
           myUnsyncedAssetsSelector: () => myUnsyncedAssetsSelector(store.getState()),
           myUnsyncedPoolsSelector: () => myUnsyncedPoolsSelector(store.getState()),
           myAssetsBalanceSelector: () => myAssetsBalanceSelector(store.getState()),
+          myApprovedAssetBalanceSelector: () => myApprovedAssetBalanceSelector(store.getState()),
           getNote: (assetAddress: Address, minAmount: bigint) =>
             getNoteSelector(store.getState(), assetAddress, minAmount),
           getNextNote,
@@ -106,7 +108,7 @@ export const storeStateManager = ({
       assets = [], ...params
     }): Map<Address, bigint> => {
       const store = getChainStore(params);
-      const balances = store.selectors.myAssetsBalanceSelector();
+      const balances = store.selectors.myApprovedAssetBalanceSelector();
 
       if (assets.length === 0) {
         return balances;
