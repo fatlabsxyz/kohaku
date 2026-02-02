@@ -15,6 +15,7 @@ export interface IPoolDepositEvent extends IBaseEvent {
 
 export interface IIndexedDepositEvent extends IPoolDepositEvent {
   index: number;
+  approved: boolean;
 }
 
 export interface IDepositWithAsset extends IIndexedDepositEvent {
