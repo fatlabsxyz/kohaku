@@ -16,10 +16,13 @@ export const withdrawalsSlice = createSlice({
   reducers: {
     registerWithdrawals: ({ withdrawalsTuples }, action: PayloadAction<IWithdrawalEvent[]>) => {
       const newWithdrawals = new Map(withdrawalsTuples);
+
       action.payload.forEach((withdrawal) => {
         const key = withdrawal.spentNullifier;
+
         newWithdrawals.set(key, withdrawal);
       });
+
       return { withdrawalsTuples: Array.from(newWithdrawals) };
     },
   },
