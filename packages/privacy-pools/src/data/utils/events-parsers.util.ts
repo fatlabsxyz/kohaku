@@ -29,13 +29,13 @@ export const EVENTS_PARSERS: {
     },
     Withdrawn: (log) => {
         const {
-            _value: value, _spentNullifier: spentNullifier, _newCommitment: newCommitment,
+            _value: value, _spentNullifier: spentNullifier, _newCommitment: commitment,
         } = log.args;
 
         return {
             value,
             spentNullifier: spentNullifier,
-            newCommitment: newCommitment,
+            commitment,
             blockNumber: log.blockNumber,
             transactionHash: BigInt(log.transactionHash),
         };
