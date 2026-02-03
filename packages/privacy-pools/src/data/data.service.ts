@@ -1,7 +1,7 @@
 import { EthProvider } from "@kohaku-eth/plugins";
-import { GetEventsFn, IDataService, IPoolConfig } from "./interfaces/data.service.interface";
+import { GetEventsFn, IDataService, IEntrypointEvents, IPoolConfig, IPoolEvents } from "./interfaces/data.service.interface";
 import { parseEventLogs, pad, toHex } from "viem";
-import { EVENTS_SIGNATURES } from "./abis/events.abi";
+import { ENTRYPOINT_EVENTS_SIGNATURES, EVENTS_SIGNATURES, POOL_EVENTS_SIGNATURES } from "./abis/events.abi";
 import { EVENTS_PARSERS } from "./utils/events-parsers.util";
 import { EthClient } from "./eth-client";
 import type { IAsset } from "./interfaces/events.interface";
@@ -13,6 +13,8 @@ export interface DataServiceParams {
 
 const depositEvents = new Set(['PoolDeposited', 'EntrypointDeposited']);
 
+type GenericGetEvents = GetEventsFn<typeof EVENTS_SIGNATURES, IPoolEvents & IEntrypointEvents>;
+
 export class DataService implements IDataService {
     private readonly ethClient!: EthClient;
 
@@ -20,7 +22,7 @@ export class DataService implements IDataService {
         this.ethClient = new EthClient(provider);
     }
 
-    getEvents: GetEventsFn = async ({
+    private getEvents: GenericGetEvents = async ({
         events,
         address,
         fromBlock,
@@ -44,8 +46,11 @@ export class DataService implements IDataService {
         }), {
             fromBlock: fromBlock,
             toBlock: BigInt(logs.at(-1)?.blockNumber || 0n) || fromBlock,
-        } satisfies Pick<Awaited<ReturnType<GetEventsFn>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GetEventsFn>>;
+        } satisfies Pick<Awaited<ReturnType<GenericGetEvents>>, 'fromBlock' | 'toBlock'>) as Awaited<ReturnType<GenericGetEvents>>;
     }
+
+    getPoolEvents: GetEventsFn<typeof POOL_EVENTS_SIGNATURES, IPoolEvents> = this.getEvents;
+    getEntrypointEvents: GetEventsFn<typeof ENTRYPOINT_EVENTS_SIGNATURES, IEntrypointEvents> = this.getEvents;
 
     async getAsset(address: Address): Promise<IAsset> {
         const [name, decimals, symbol] = await Promise.all([

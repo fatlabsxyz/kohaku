@@ -15,7 +15,7 @@ export const createAreAssetsSyncedSelector = (
     ],
     (myPools, assets): boolean => {
       const uniqueAssetAddresses = new Set(
-        myPools.map(({ assetAddress }) => assetAddress.toString())
+        myPools.map(({ asset }) => asset)
       );
 
       return uniqueAssetAddresses.size === assets.size;
@@ -33,7 +33,7 @@ export const createMyUnsyncedAssetsSelector = (
     ],
     (myPools, assets): bigint[] => {
       const uniqueAssetAddresses = new Set(
-        myPools.map(({ assetAddress }) => assetAddress)
+        myPools.map(({ asset }) => asset)
       );
 
       return Array.from(uniqueAssetAddresses).filter(
