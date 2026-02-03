@@ -1,9 +1,6 @@
-import { createAsyncThunk, Selector } from '@reduxjs/toolkit';
+import { createAsyncThunk, unwrapResult } from '@reduxjs/toolkit';
 import { IDataService } from '../../data/interfaces/data.service.interface';
 import { selectLastSyncedBlock } from '../selectors/last-synced-block.selector';
-import { registerDeposits } from '../slices/depositsSlice';
-import { registerWithdrawals } from '../slices/withdrawalsSlice';
-import { registerRagequits } from '../slices/ragequitsSlice';
 import { RootState } from '../store';
 import { registerEntrypointDeposits } from '../slices/entrypointDepositsSlice';
 import { syncPoolsThunk, SyncPoolsThunkParams } from './syncPoolsThunk';
@@ -11,9 +8,11 @@ import { syncAssetsThunk, SyncAssetsThunkParams } from './syncAssetsThunk';
 import { registerLastUpdateRootEvent } from '../slices/updateRootEventsSlice';
 import { syncAspThunk, SyncAspThunkParams } from './syncAspThunk';
 import { setLastSyncedBlock } from '../slices/syncSlice';
+import { syncEventsThunk, SyncEventsThunkParams } from './syncEventsThunk';
 
 export interface SyncThunkParams extends
-  SyncPoolsThunkParams,
+  SyncEventsThunkParams,
+  Omit<SyncPoolsThunkParams, 'poolsRegistered' | 'poolsWoundDown'>,
   SyncAssetsThunkParams,
   SyncAspThunkParams {
   dataService: IDataService;
@@ -26,44 +25,43 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
     const lastSyncedBlock = selectLastSyncedBlock(state);
     const fromBlock = lastSyncedBlock + 1n;
 
-    const events = await dataService.getEvents({
+    const {
+      EntrypointDeposited,
+      RootUpdated,
+      PoolRegistered: poolsRegistered,
+      PoolWindDown: poolsWoundDown
+    } = await dataService.getEntrypointEvents({
       events: [
-        "PoolDeposited",
         "EntrypointDeposited",
-        "Withdrawn",
-        "Ragequit",
         "RootUpdated",
+        "PoolRegistered",
+        "PoolWindDown"
       ],
       fromBlock,
       address: state.poolInfo.entrypointAddress,
     });
 
-    if (events.PoolDeposited.length > 0) {
-      dispatch(registerDeposits(events.PoolDeposited));
+    await dispatch(syncPoolsThunk({
+      poolsRegistered,
+      poolsWoundDown,
+    }));
+
+    if (EntrypointDeposited.length > 0) {
+      dispatch(registerEntrypointDeposits(EntrypointDeposited));
     }
 
-    if (events.Withdrawn.length > 0) {
-      dispatch(registerWithdrawals(events.Withdrawn));
+    if (RootUpdated.length) {
+      dispatch(registerLastUpdateRootEvent(RootUpdated.at(-1)!));
     }
 
-    if (events.Ragequit.length > 0) {
-      dispatch(registerRagequits(events.Ragequit));
-    }
+    const syncEventsResult = await dispatch(syncEventsThunk({ dataService, ...params }));
 
-    if (events.EntrypointDeposited.length > 0) {
-      dispatch(registerEntrypointDeposits(events.EntrypointDeposited));
-    }
-
-    if (events.RootUpdated.length) {
-      dispatch(registerLastUpdateRootEvent(events.RootUpdated.at(-1)!));
-    }
-
-    await dispatch(syncPoolsThunk({ dataService, ...params }));
+    const syncEventsLastBlock = unwrapResult(syncEventsResult);
 
     await dispatch(syncAssetsThunk({ dataService, ...params }));
 
     await dispatch(syncAspThunk({ ...params }));
 
-    dispatch(setLastSyncedBlock(events.toBlock));
+    dispatch(setLastSyncedBlock(syncEventsLastBlock));
   }
 );
