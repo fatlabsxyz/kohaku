@@ -8,7 +8,7 @@ import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, cr
 import { createGetNextDepositPayloadSelector, createGetNextDepositSecretsSelector, createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
 import { createAspLeavesSelector, createAspMerkleProofSelector, createStateLeavesSelector, createStateMerkleProofSelector } from "./selectors/merkle.selector";
 import { createExistingNoteSecretsDeriver, createGetNoteSelector, createNextNoteDeriver } from "./selectors/notes.selector";
-import { createMyPoolsSelector, createMyUnsyncedPoolsAddresses } from "./selectors/pools.selector";
+import { createMyPoolsSelector } from "./selectors/pools.selector";
 import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
 import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { storeFactory } from "./store";
@@ -45,7 +45,6 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
       const myWithdrawalsSelector = createMyWithdrawalsSelector({ myDepositsSelector, ...params });
 
       const myPoolsSelector = createMyPoolsSelector(myEntrypointDepositsSelector);
-      const myUnsyncedPoolsSelector = createMyUnsyncedPoolsAddresses(myEntrypointDepositsSelector);
       const myUnsyncedAssetsSelector = createMyUnsyncedAssetsSelector(myPoolsSelector);
       const myDepositsBalanceSelector = createMyDepositsBalanceSelector({
         myDepositsWithAssetSelector,
@@ -87,7 +86,6 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
         selectors: {
           depositsCount: () => depositsCountSelector(store.getState()),
           myUnsyncedAssetsSelector: () => myUnsyncedAssetsSelector(store.getState()),
-          myUnsyncedPoolsSelector: () => myUnsyncedPoolsSelector(store.getState()),
           myAssetsBalanceSelector: () => myAssetsBalanceSelector(store.getState()),
           myApprovedAssetBalanceSelector: () => myApprovedAssetBalanceSelector(store.getState()),
           getNote: (assetAddress: Address, minAmount: bigint) =>
@@ -100,6 +98,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
             aspMerkleProofSelector(store.getState(), label),
           getNextDepositPayload: (asset: Address, amount: bigint) =>
             getNextDepositPayloadSelector(store.getState(), asset, amount),
+          myPoolsSelector: () => myPoolsSelector(store.getState()),
         }
       };
     }
