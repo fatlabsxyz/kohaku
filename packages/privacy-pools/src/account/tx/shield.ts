@@ -1,21 +1,10 @@
 import { createTx, TxData } from '@kohaku-eth/provider';
-import { Interface } from 'ethers';
-import { Address } from "viem";
+import { Address, encodeFunctionData } from "viem";
 import { Commitment } from '../types';
+import { entrypointDepositErc20Abi, entrypointDepositNativeAbi } from '../../data/abis/entrypoint.abi';
 
 export type ShieldFn = (token: Address, value: bigint) => { commitment: Commitment; tx: TxData; };
 export type Shield = { shield: ShieldFn; };
-
-const ENTRYPOINT_ABI_NATIVE = [
-  'function deposit(uint256 _precommitment) external payable returns (uint256 _commitment)',
-];
-
-const ENTRYPOINT_ABI_ERC20 = [
-  'function deposit(address _asset, uint256 _value, uint256 _precommitment) external returns (uint256 _commitment)',
-];
-
-const ENTRYPOINT_INTERFACE_NATIVE = new Interface(ENTRYPOINT_ABI_NATIVE);
-const ENTRYPOINT_INTERFACE_ERC20 = new Interface(ENTRYPOINT_ABI_ERC20);
 
 type PrepareNativeShieldParam = {
   precommitment: bigint;
@@ -31,13 +20,21 @@ type PrepareErc20ShieldParam = {
 };
 
 export function prepareNativeShield({ precommitment, amount, entrypointAddress }: PrepareNativeShieldParam) {
-  const data = ENTRYPOINT_INTERFACE_NATIVE.encodeFunctionData('deposit', [precommitment]);
+  const data = encodeFunctionData({
+    abi: entrypointDepositNativeAbi,
+    functionName: 'deposit',
+    args: [precommitment]
+  });
 
   return createTx(entrypointAddress, data, amount);
 }
 
 export function prepareErc20Shield({ precommitment, amount, tokenAddress, entrypointAddress }: PrepareErc20ShieldParam) {
-  const data = ENTRYPOINT_INTERFACE_ERC20.encodeFunctionData('deposit', [tokenAddress, amount, precommitment]);
+  const data = encodeFunctionData({
+    abi: entrypointDepositErc20Abi,
+    functionName:'deposit',
+    args: [tokenAddress as `0x${string}`, amount, precommitment]
+  });
 
   return createTx(entrypointAddress, data);
 }
