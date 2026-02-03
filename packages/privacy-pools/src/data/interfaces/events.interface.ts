@@ -3,14 +3,18 @@ import { Address, Commitment, Label, Nullifier, Precommitment } from "../../inte
 interface IBaseEvent {
   blockNumber: bigint;
   transactionHash: bigint;
-  value: bigint;
 }
 
-export interface IPoolDepositEvent extends IBaseEvent {
+interface IPoolEvent extends IBaseEvent {
+  pool: Address;
+}
+
+export interface IPoolDepositEvent extends IPoolEvent {
   depositor: Address;
   commitment: Commitment;
   label: Label;
   precommitment: Precommitment;
+  value: bigint;
 }
 
 export interface IIndexedDepositEvent extends IPoolDepositEvent {
@@ -22,9 +26,10 @@ export interface IDepositWithAsset extends IIndexedDepositEvent {
   assetAddress: Address;
 }
 
-export interface IWithdrawalEvent extends IBaseEvent {
+export interface IWithdrawalEvent extends IPoolEvent {
   spentNullifier: Nullifier;
-  newCommitment: Commitment;
+  commitment: Commitment;
+  value: bigint;
 }
 
 export interface IIndexedWithdrawalEvent extends IWithdrawalEvent {
@@ -32,11 +37,16 @@ export interface IIndexedWithdrawalEvent extends IWithdrawalEvent {
   label: Label;
 }
 
-export interface IRagequitEvent extends IBaseEvent {
+export interface IRagequitEvent extends IPoolEvent {
   ragequitter: Address;
   commitment: Commitment;
   label: Label;
+  value: bigint;
 }
+
+export type IRawPoolDepositEvent = Omit<IPoolDepositEvent, 'pool'>;
+export type IRawWithdrawalEvent = Omit<IWithdrawalEvent, 'pool'>;
+export type IRawRagequitEvent = Omit<IRagequitEvent, 'pool'>;
 
 export interface IEntrypointDepositEvent extends IBaseEvent {
   depositor: Address;
@@ -44,16 +54,28 @@ export interface IEntrypointDepositEvent extends IBaseEvent {
   commitment: Commitment;
 }
 
-export interface IRootUpdatedEvent extends Omit<IBaseEvent, 'value'> {
+export interface IRootUpdatedEvent extends IBaseEvent {
   root: bigint;
   ipfsCID: string;
   timestamp: bigint;
 }
 
+export interface IPoolRegisteredEvent extends IBaseEvent {
+  pool: Address;
+  asset: Address;
+  scope: bigint;
+}
+
+export interface IPoolWindDownEvent extends IBaseEvent {
+  pool: Address;
+}
+
 export interface IPool {
   address: Address;
-  assetAddress: Address;
+  asset: Address;
   scope: bigint;
+  registeredBlock: bigint;
+  woundDownAtBlock: bigint | null;
 }
 
 export interface IAsset {
