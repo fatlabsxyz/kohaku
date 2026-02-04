@@ -15,11 +15,13 @@ import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { storeFactory } from "./store";
 import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
+import { quoteThunk, QuoteResult } from "./thunks/quoteThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
 import { Store } from "@reduxjs/toolkit";
 
 export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams {
-  relayerClient: IRelayerClient
+  relayerClient: IRelayerClient;
+  relayersList: Map<string, string>;
 }
 
 const initializeSelectors = <const T extends Store>({ store, ...params}: Omit<StoreFactoryParams, 'dataService'> & { store: T }) => {
@@ -158,12 +160,23 @@ export const storeStateManager = ({
 
       return store.selectors.getNextDepositPayload(asset, amount);
     },
-    getWithdrawalPayloads: async ({ chainId, entrypoint, asset, amount, recipient, relayerConfig }: IWithdrawapOperationParams) => {
+    getWithdrawalPayloads: async ({ chainId, entrypoint, asset, amount, recipient }: IWithdrawapOperationParams) => {
       const store = getChainStore({ chainId, entrypoint });
 
-      //const quoteResult = store.dispatch(quoteThunk(...));
-      // const quote = unwrap(quoteResult);
-      // const { context, relayDataObject, quoteData: IQuoteResponse, } = quote;
+      // Get best quote from relayers
+      const quoteResultAction = await store.dispatch(quoteThunk({
+        relayerClient: params.relayerClient,
+        relayers: params.relayersList,
+        asset,
+        amount: amount ?? 0n,
+        recipient,
+      }));
+
+      if (quoteResultAction.meta.requestStatus === 'rejected') {
+        throw new Error('Failed to get quote from relayers');
+      }
+
+      const { quote, relayerId } = quoteResultAction.payload as QuoteResult;
 
       // Dispatch the withdraw thunk which handles note selection and proof generation
       const result = await store.dispatch(withdrawThunk({
@@ -176,10 +189,13 @@ export const storeStateManager = ({
         asset,
         amount: amount ?? 0n,
         recipient,
-        withdrawalData: '0x', // TODO: encode from relayerConfig
+        relayDataObject: quote.feeCommitment,
       }));
 
-      return [result.payload];
+      return [{
+        payload: result.payload,
+        relayData: { quote, relayerId },
+      }];
     },
     getRagequitPayloads: function (params: IRagequitOperationParams): Promise<unknown[]> {
       throw new Error("Function not implemented.");
