@@ -22,7 +22,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   beforeAll(async () => {
     anvil = defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: 8545,
+      port: 8546,
       chainId: 1,
     });
 
