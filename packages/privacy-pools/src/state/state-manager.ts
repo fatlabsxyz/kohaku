@@ -5,7 +5,7 @@ import { IDepositOperationParams, IRagequitOperationParams, IStateManager, IWith
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
-import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector, createMyDepositsWithAssetSelector } from "./selectors/balance.selector";
+import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector, createMyDepositsWithAssetSelector, createMyUnapprovedAssetBalanceSelector } from "./selectors/balance.selector";
 import { createGetNextDepositPayloadSelector, createGetNextDepositSecretsSelector, createMyDepositsCountSelector, createMyDepositsSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
 import { createAspLeavesSelector, createAspMerkleProofSelector, createStateLeavesSelector, createStateMerkleProofSelector } from "./selectors/merkle.selector";
 import { createExistingNoteSecretsDeriver, createGetNoteSelector, createNextNoteDeriver } from "./selectors/notes.selector";
@@ -16,28 +16,13 @@ import { storeFactory } from "./store";
 import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
+import { Store } from "@reduxjs/toolkit";
 
 export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams {
   relayerClient: IRelayerClient
 }
 
-const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService'>) => {
-  const chainStoreMap = new Map<string, ReturnType<typeof storeFactory>>();
-
-  return {
-    getChainStore: ({ chainId, entrypoint }: { chainId: Eip155ChainId<number>; entrypoint: Address; }) => {
-      const chainKey = chainId.toString();
-      const computedChainKey = `${chainKey}-${entrypoint}`;
-      let store = chainStoreMap.get(computedChainKey);
-
-      if (!store) {
-        store = storeFactory({
-          chainId: BigInt(chainId.reference),
-          entrypointAddress: entrypoint,
-        });
-        chainStoreMap.set(computedChainKey, store);
-      }
-
+const initializeSelectors = <const T extends Store>({ store, ...params}: Omit<StoreFactoryParams, 'dataService'> & { store: T }) => {
       // We need to tie the selectors instances to a specific store
       // so they can memoize correctly
       const myDepositsSelector = createMyDepositsSelector(params);
@@ -56,6 +41,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
       });
       const myAssetsBalanceSelector = createMyAssetsBalanceSelector({ myDepositsBalanceSelector });
       const myApprovedAssetBalanceSelector = createMyApprovedAssetBalanceSelector(myAssetsBalanceSelector);
+      const myUnapprovedAssetBalanceSelector = createMyUnapprovedAssetBalanceSelector(myAssetsBalanceSelector);
 
       // Note selectors for withdrawals
       const getNoteSelector = createGetNoteSelector({
@@ -89,6 +75,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
         selectors: {
           depositsCount: () => depositsCountSelector(store.getState()),
 
+          myUnapprovedAssetBalanceSelector: () => myUnapprovedAssetBalanceSelector(store.getState()),
           myApprovedAssetBalanceSelector: () => myApprovedAssetBalanceSelector(store.getState()),
           myAssetsBalanceSelector: () => myAssetsBalanceSelector(store.getState()),
 
@@ -104,6 +91,27 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
           getStateMerkleProof: (note: Parameters<typeof stateMerkleProofSelector>[1]) => stateMerkleProofSelector(store.getState(), note),
         }
       };
+}
+
+const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService'>) => {
+  const chainStoreMap = new Map<string, ReturnType<typeof initializeSelectors<ReturnType<typeof storeFactory>>>>();
+
+  return {
+    getChainStore: ({ chainId, entrypoint }: { chainId: Eip155ChainId<number>; entrypoint: Address; }) => {
+      const chainKey = chainId.toString();
+      const computedChainKey = `${chainKey}-${entrypoint}`;
+      let storeWithSelectors = chainStoreMap.get(computedChainKey);
+
+      if (!storeWithSelectors) {
+        const store = storeFactory({
+          chainId: BigInt(chainId.reference),
+          entrypointAddress: entrypoint,
+        });
+
+        storeWithSelectors = initializeSelectors({ ...params, store});
+        chainStoreMap.set(computedChainKey, storeWithSelectors);
+      }
+      return storeWithSelectors;
     }
   };
 };
@@ -128,10 +136,16 @@ export const storeStateManager = ({
       }));
     },
     getBalances: ({
-      assets = [], ...params
+      assets = [],
+      balanceType = 'approved',
+      ...params
     }): Map<Address, bigint> => {
-      const store = getChainStore(params);
-      const balances = store.selectors.myApprovedAssetBalanceSelector();
+      const { selectors: {
+        myApprovedAssetBalanceSelector,
+        myUnapprovedAssetBalanceSelector
+      } } = getChainStore(params);
+      const balanceSelector = balanceType === 'approved' ? myApprovedAssetBalanceSelector : myUnapprovedAssetBalanceSelector;
+      const balances = balanceSelector();
 
       if (assets.length === 0) {
         return balances;

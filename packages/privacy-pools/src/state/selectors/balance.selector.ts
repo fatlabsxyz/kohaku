@@ -190,3 +190,19 @@ export const createMyApprovedAssetBalanceSelector = (
     }
   );
 };
+
+export const createMyUnapprovedAssetBalanceSelector = (
+  myAssetsBalanceSelector: ReturnType<typeof createMyAssetsBalanceSelector>
+) => {
+  return createSelector(
+    [
+      myAssetsBalanceSelector,
+    ],
+    (assetsBalanceMap): Map<Address, bigint> => {
+      return new Map(
+        Array.from(assetsBalanceMap)
+        .map(([assetAddress, balance]) => [assetAddress, balance.unapproved] as const),
+      )
+    }
+  );
+};
