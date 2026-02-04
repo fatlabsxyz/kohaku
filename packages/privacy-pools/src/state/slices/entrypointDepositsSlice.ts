@@ -1,12 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IEntrypointDepositEvent } from '../../data/interfaces/events.interface';
 import { Commitment } from '../../interfaces/types.interface';
+import { Serializable } from '../interfaces/utils.interface';
+import { serialize } from '../utils/serialize.utils';
 
 export interface EntrypointDepositsState {
   entrypointDepositsTuples: [Commitment, IEntrypointDepositEvent][];
 }
 
-const initialState: EntrypointDepositsState = {
+type ActualEntrypointDepositsState = Serializable<EntrypointDepositsState>;
+
+const initialState: ActualEntrypointDepositsState = {
   entrypointDepositsTuples: [],
 };
 
@@ -20,7 +24,7 @@ export const entrypointDepositsSlice = createSlice({
       entrypointDeposits.forEach((deposit) => {
         const key = deposit.commitment;
 
-        newDeposits.set(key, deposit);
+        newDeposits.set(serialize(key), serialize(deposit));
       });
 
       return { entrypointDepositsTuples: Array.from(newDeposits) };

@@ -1,13 +1,9 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { IPool, IPoolDepositEvent, IRagequitEvent, IWithdrawalEvent } from "../../data/interfaces/events.interface";
+import { IPool } from "../../data/interfaces/events.interface";
 import { RootState } from "../store";
-import { createMyEntrypointDepositsSelector, depositsSelector } from "./deposits.selector";
-import { selectEntityMap } from "../utils/selectors.utils";
-import { withdrawalsSelector } from "./withdrawals.selector";
-import { ragequitsSelector } from "./ragequits.selector";
-import { Address, Commitment, Nullifier, Precommitment } from "../../interfaces/types.interface";
-
-export const poolsSelector = selectEntityMap((s) => s.pools.poolsTuples);
+import { createMyEntrypointDepositsSelector } from "./deposits.selector";
+import { Address, Commitment } from "../../interfaces/types.interface";
+import { depositsSelector, poolsSelector, ragequitsSelector, withdrawalsSelector } from "./slices.selectors";
 
 export const createMyPoolsSelector = (
   myEntrypointDepositsSelector: ReturnType<typeof createMyEntrypointDepositsSelector>

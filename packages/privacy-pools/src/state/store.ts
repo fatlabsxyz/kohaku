@@ -24,6 +24,11 @@ export const storeFactory = (poolInfo: PoolInfoState) => {
       updateRootEvents: updateRootEventsReducer,
       sync: syncReducer
     },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({
+      serializableCheck: {
+        ignoreActions: true,
+      }
+    })
   });
 
   store.dispatch(setPoolInfo(poolInfo));

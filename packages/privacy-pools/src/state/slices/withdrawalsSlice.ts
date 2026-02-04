@@ -1,12 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IWithdrawalEvent } from '../../data/interfaces/events.interface';
 import { Nullifier } from '../../interfaces/types.interface';
+import { Serializable } from '../interfaces/utils.interface';
+import { serialize } from '../utils/serialize.utils';
 
 export interface WithdrawalsState {
   withdrawalsTuples: [Nullifier, IWithdrawalEvent][];
 }
 
-const initialState: WithdrawalsState = {
+type ActualWithdrawalsState = Serializable<WithdrawalsState>;
+
+const initialState: ActualWithdrawalsState = {
   withdrawalsTuples: [],
 };
 
@@ -20,7 +24,7 @@ export const withdrawalsSlice = createSlice({
       action.payload.forEach((withdrawal) => {
         const key = withdrawal.spentNullifier;
 
-        newWithdrawals.set(key, withdrawal);
+        newWithdrawals.set(serialize(key), serialize(withdrawal));
       });
 
       return { withdrawalsTuples: Array.from(newWithdrawals) };

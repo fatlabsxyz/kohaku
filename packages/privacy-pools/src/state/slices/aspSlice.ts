@@ -1,15 +1,20 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Serializable } from '../interfaces/utils.interface';
+import { serialize } from '../utils/serialize.utils';
+import { Label } from '../../interfaces/types.interface';
 
 export interface AspState {
-  leaves: bigint[];
+  leaves: Label[];
   aspTreeRoot: bigint;
   blockNumber: bigint;
 }
 
-const initialState: AspState = {
+type ActualAspState = Serializable<AspState>;
+
+const initialState: ActualAspState = {
   leaves: [],
-  aspTreeRoot: 0n,
-  blockNumber: 0n,
+  aspTreeRoot: '0',
+  blockNumber: '0',
 };
 
 export const aspSlice = createSlice({
@@ -17,7 +22,7 @@ export const aspSlice = createSlice({
   initialState,
   reducers: {
     registerAspTree: (state, { payload }: PayloadAction<AspState>) => {
-      return payload;
+      return serialize(payload);
     },
   },
 });

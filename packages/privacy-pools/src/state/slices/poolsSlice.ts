@@ -1,12 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IPool } from '../../data/interfaces/events.interface';
 import { Address } from '../../interfaces/types.interface';
+import { Serializable } from '../interfaces/utils.interface';
+import { serialize } from '../utils/serialize.utils';
 
 export interface PoolsState {
   poolsTuples: [Address, IPool][];
 }
 
-const initialState: PoolsState = {
+type ActualPoolsState = Serializable<PoolsState>;
+
+const initialState: ActualPoolsState = {
   poolsTuples: [],
 };
 
@@ -20,7 +24,7 @@ export const poolsSlice = createSlice({
       pools.forEach((pool) => {
         const key = pool.address;
 
-        newPools.set(key, pool);
+        newPools.set(serialize(key), serialize(pool));
       });
 
       return { poolsTuples: Array.from(newPools) };

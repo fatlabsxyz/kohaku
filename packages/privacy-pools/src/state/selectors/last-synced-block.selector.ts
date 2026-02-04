@@ -1,8 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { depositsSelector } from './deposits.selector';
-import { withdrawalsSelector } from './withdrawals.selector';
-import { ragequitsSelector } from './ragequits.selector';
+import { depositsSelector, ragequitsSelector, withdrawalsSelector } from './slices.selectors';
 
 export const selectLastSyncedBlock = createSelector(
   [

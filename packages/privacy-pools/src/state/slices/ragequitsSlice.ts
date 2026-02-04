@@ -1,12 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IRagequitEvent } from '../../data/interfaces/events.interface';
 import { Label } from '../../interfaces/types.interface';
+import { Serializable } from '../interfaces/utils.interface';
+import { serialize } from '../utils/serialize.utils';
 
 export interface RagequitsState {
   ragequitsTuples: [Label, IRagequitEvent][];
 }
 
-const initialState: RagequitsState = {
+type ActualRagequitsState = Serializable<RagequitsState>;
+
+const initialState: ActualRagequitsState = {
   ragequitsTuples: [],
 };
 
@@ -20,7 +24,7 @@ export const ragequitsSlice = createSlice({
       action.payload.forEach((ragequit) => {
         const key = ragequit.label;
 
-        newRagequits.set(key, ragequit);
+        newRagequits.set(serialize(key), serialize(ragequit));
       });
 
       return { ragequitsTuples: Array.from(newRagequits) };

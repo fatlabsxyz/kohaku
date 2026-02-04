@@ -1,8 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "../store";
-
-export const aspSelector = (state: RootState) => state.asp;
-export const lastUpdateRootEventSelector = (state: RootState) => state.updateRootEvents.lastUpdateRootEvent;
+import { aspSelector, lastUpdateRootEventSelector } from "./slices.selectors";
 
 export const isAspRootUpToDateSelector = createSelector(
   [
