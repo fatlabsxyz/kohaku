@@ -27,6 +27,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
       context = DefaultContext,
       secretManager = SecretManager,
       stateManager = storeStateManager,
+      relayerClientFactory = () => new RelayerClient({ network: host.network, relayerUrl: "" }),
       chainsEntrypoints = {},
       relayersList = {},
       relayerClientFactory = () => new RelayerClient({ network: host.network }),
@@ -151,6 +152,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
     }
 
     await this.stateManager.sync({ chainId, entrypoint });
+
 
     const payloads = await this.stateManager.getWithdrawalPayloads({
       chainId,
