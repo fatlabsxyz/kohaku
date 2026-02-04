@@ -5,6 +5,7 @@ import { Address } from "../interfaces/types.interface";
 import { storeStateManager } from '../state/state-manager';
 import { IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 import { AspService } from "../data/asp.service";
+import { RelayerClient } from "../relayer/relayer-client";
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {};
 
@@ -19,6 +20,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
   private stateManager: IStateManager;
   private context: PrivacyPoolsV1ProtocolContext;
   private chainsEntrypoints: Map<string, Address>;
+  private relayersList: Map<string, string>;
 
   constructor(readonly host: Host,
     {
@@ -26,6 +28,8 @@ export class PrivacyPoolsV1Protocol extends Plugin {
       secretManager = SecretManager,
       stateManager = storeStateManager,
       chainsEntrypoints = {},
+      relayersList = {},
+      relayerClientFactory = () => new RelayerClient({ network: host.network }),
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     super();
     this.context = context;
@@ -37,9 +41,11 @@ export class PrivacyPoolsV1Protocol extends Plugin {
     this.stateManager = stateManager({
       secretManager: this.secretManager,
       aspService: new AspService(host.network),
-      dataService: new DataService({ provider: host.ethProvider })
+      dataService: new DataService({ provider: host.ethProvider }),
+      relayerClient: relayerClientFactory(),
     });
     this.chainsEntrypoints = new Map<string, bigint>(Object.entries(chainsEntrypoints));
+    this.relayersList = new Map<string, string>(Object.entries(relayersList));
   }
 
   account(): Promise<AccountId> {
