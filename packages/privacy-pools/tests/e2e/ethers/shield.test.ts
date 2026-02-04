@@ -79,7 +79,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
 
     // 1. Check initial balance is 0
-    const initialBalances = await protocol.balance([nativeAsset]);
+    const initialBalances = await protocol.balance([nativeAsset], 'unapproved');
 
     expect(initialBalances[0].amount).toBe(0n);
 
@@ -104,7 +104,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // 3. Verify state after deposit
     console.log("BEFORE ENTERING, blk num", await (await pool.getProvider()).getBlockNumber());
-    const postDepositBalances = await protocol.balance([nativeAsset]);
+    const postDepositBalances = await protocol.balance([nativeAsset], 'unapproved');
 
     // const r = protocol.stateManager.getBalances({
     //   assets: [BigInt(E_ADDRESS)],
