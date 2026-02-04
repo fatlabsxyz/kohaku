@@ -116,6 +116,7 @@ export const createMyAssetsBalanceSelector = ({
       for (const deposit of depositsMap.values()) {
         const currentBalance = assetsBalanceMap.get(deposit.assetAddress) || { approved: 0n, unapproved: 0n };
         const balanceKey = deposit.approved ? 'approved' : 'unapproved';
+
         assetsBalanceMap.set(deposit.assetAddress, {
           ...currentBalance,
           [balanceKey]: currentBalance[balanceKey] + deposit.value,

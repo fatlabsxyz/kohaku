@@ -85,20 +85,20 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
         ...store,
         selectors: {
           depositsCount: () => depositsCountSelector(store.getState()),
-          myUnsyncedAssetsSelector: () => myUnsyncedAssetsSelector(store.getState()),
-          myAssetsBalanceSelector: () => myAssetsBalanceSelector(store.getState()),
+
           myApprovedAssetBalanceSelector: () => myApprovedAssetBalanceSelector(store.getState()),
-          getNote: (assetAddress: Address, minAmount: bigint) =>
-            getNoteSelector(store.getState(), assetAddress, minAmount),
-          getNextNote,
+          myAssetsBalanceSelector: () => myAssetsBalanceSelector(store.getState()),
+
           getExistingNoteSecrets,
-          getStateMerkleProof: (note: Parameters<typeof stateMerkleProofSelector>[1]) =>
-            stateMerkleProofSelector(store.getState(), note),
-          getAspMerkleProof: (label: bigint) =>
-            aspMerkleProofSelector(store.getState(), label),
-          getNextDepositPayload: (asset: Address, amount: bigint) =>
-            getNextDepositPayloadSelector(store.getState(), asset, amount),
+          getNextDepositPayload: (asset: Address, amount: bigint) => getNextDepositPayloadSelector(store.getState(), asset, amount),
+          getNextNote,
+          getNote: (assetAddress: Address, minAmount: bigint) => getNoteSelector(store.getState(), assetAddress, minAmount),
+
           myPoolsSelector: () => myPoolsSelector(store.getState()),
+          myUnsyncedAssetsSelector: () => myUnsyncedAssetsSelector(store.getState()),
+
+          getAspMerkleProof: (label: bigint) => aspMerkleProofSelector(store.getState(), label),
+          getStateMerkleProof: (note: Parameters<typeof stateMerkleProofSelector>[1]) => stateMerkleProofSelector(store.getState(), note),
         }
       };
     }
@@ -110,7 +110,12 @@ export const storeStateManager = ({
 }: StoreFactoryParams): IStateManager => {
   const { getChainStore } = storeByChainAndEntrypoint(params);
 
+  const _mgr = {
+    _getChainStore: getChainStore,
+  };
+
   return {
+    ..._mgr,
     sync: async ({ chainId, entrypoint }): Promise<void> => {
       const store = getChainStore({ chainId, entrypoint });
 
