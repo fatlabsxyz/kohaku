@@ -4,7 +4,7 @@ import { TxData } from '@kohaku-eth/provider';
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { Address } from "../../interfaces/types.interface";
 import { StoreFactoryParams } from "../../state/state-manager";
-import { IQuoteResponse, IRelayerClient, IRelayerClient, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
+import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
 
 type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
 
@@ -30,6 +30,7 @@ export interface PrivacyPoolsV1ProtocolParams {
   stateManager: (params: StoreFactoryParams) => IStateManager;
   relayerClientFactory: () => IRelayerClient;
   chainsEntrypoints: Record<string, bigint>;
+  relayersList: Record<string, string>;
 }
 
 interface IBaseOperationParams {

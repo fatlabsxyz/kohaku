@@ -114,7 +114,7 @@ export interface IRelayRequest extends IBaseRelayerRequest {
   feeCommitment: IQuoteResponse['feeCommitment'];
 }
 
-export interface IRelayRequestBody extends Omit<IRelayRequest, 'scope' | 'chainId'> {
+export interface IRelayRequestBody extends Omit<IRelayRequest, 'scope' | 'chainId' | 'relayerUrl'> {
     scope: string;
     chainId: string;
 }
