@@ -49,14 +49,9 @@ export interface IGetBalancesOperationParams extends IBaseOperationParams {
   balanceType?: 'approved' | 'unapproved';
 }
 
-export interface IRelayerConfig {
-  url: string;
-}
-
 export interface IWithdrawapOperationParams extends Omit<IDepositOperationParams, 'amount'> {
   amount?: bigint;
   recipient: Address;
-  relayerConfig: IRelayerConfig;
 }
 
 export interface IRagequitOperationParams extends IBaseOperationParams {

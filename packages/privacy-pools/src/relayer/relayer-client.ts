@@ -47,6 +47,7 @@ export class RelayerClient implements IRelayerClient {
             ...body,
         })
     })
+
     return quoteRequest.json();
   }
 
@@ -77,10 +78,12 @@ export class RelayerClient implements IRelayerClient {
 
   async getFees({ assetAddress, chainId, relayerUrl }: IRelayFeesRequest): Promise<IRelayerFeeResponse> {
     const feesUrl = new URL(`${relayerUrl}/details`);
+
     feesUrl.searchParams.append('assetAddress', toHex(assetAddress));
     feesUrl.searchParams.append('chainId', chainId.toString(10));
 
     const feesResponse = await this.fetch(feesUrl);
+
     return feesResponse.json();
   }
 }
