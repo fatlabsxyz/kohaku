@@ -6,12 +6,15 @@ export const serialize = <const T>(data: T): Serializable<T> => {
       if (data === null) {
         return data as Serializable<T>;
       }
+
       if (data instanceof Array) {
         return data.map(serialize) as Serializable<T>;
       }
+
       return Object.entries(data).reduce((serializedObject, [key, value]) => {
         serializedObject[key as keyof typeof serializedObject] =
           serialize(value);
+
         return serializedObject;
       }, {} as Serializable<T>);
     }
@@ -28,13 +31,16 @@ export const deserialize = <T>(data: T): Deserialize<T> => {
       if (data === null) {
         return data as Deserialize<T>;
       }
+
       if (data instanceof Array) {
         return data.map(deserialize) as Deserialize<typeof data>;
       }
+
       return Object.entries(data).reduce(
         (deserializedObject, [key, value]) => {
           deserializedObject[key as keyof typeof deserializedObject] =
             deserialize(value);
+
           return deserializedObject;
         },
         {} as Deserialize<typeof data>,
