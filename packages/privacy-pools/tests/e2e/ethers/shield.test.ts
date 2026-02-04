@@ -1,15 +1,15 @@
 import { ethers } from '@kohaku-eth/provider/ethers';
 import { Wallet } from 'ethers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { E_ADDRESS } from '../../src/config/constants';
-import { MAINNET_CONFIG } from '../../src/config/index';
-import { PrivacyPoolsV1Protocol } from '../../src/index';
+import { E_ADDRESS } from '../../../src/config/constants';
+import { MAINNET_CONFIG } from '../../../src/config/index';
+import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
-import { defineAnvil, type AnvilInstance } from '../utils/anvil';
-import { getEnv } from '../utils/common';
-import { createMockHost } from '../utils/mock-host';
-import { TEST_ACCOUNTS } from '../utils/test-accounts';
-import { approveERC20, fundAccountWithETH, transferERC20FromWhale } from '../utils/test-helpers';
+import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { getEnv } from '../../utils/common';
+import { createMockHost } from '../../utils/mock-host';
+import { TEST_ACCOUNTS } from '../../utils/test-accounts';
+import { approveERC20, fundAccountWithETH, transferERC20FromWhale } from '../../utils/test-helpers';
 
 describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
