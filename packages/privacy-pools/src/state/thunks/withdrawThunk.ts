@@ -14,7 +14,7 @@ export type WithdrawProofResult = unknown;
 export interface WithdrawThunkParams {
   // Selector functions
   getNote: (assetAddress: Address, minAmount: bigint) => Note | undefined;
-  getNextNote: (note: Note, withdrawAmount: bigint, chainId: bigint, entrypoint: Address) => { note: Note; secrets: Secret };
+  getNextNote: (note: Note, withdrawAmount: bigint, chainId: bigint, entrypoint: Address) => { note: Note; secrets: Secret; };
   getExistingNoteSecrets: (note: Note, chainId: bigint, entrypoint: Address) => Secret;
   getStateMerkleProof: (note: Note & Secret) => MerkleProof;
   getAspMerkleProof: (label: bigint) => MerkleProof;
@@ -23,13 +23,13 @@ export interface WithdrawThunkParams {
   asset: Address;
   amount: bigint;
   recipient: Address;
-  withdrawalData: string;
+  relayDataObject: any;
 }
 
 export const withdrawThunk = createAsyncThunk<
   WithdrawProofResult,
   WithdrawThunkParams,
-  { state: RootState }
+  { state: RootState; }
 >(
   'withdraw/generateProof',
   async (params, { getState }) => {
@@ -68,7 +68,7 @@ export const withdrawThunk = createAsyncThunk<
     const scope = params.getScope(params.asset);
     const withdrawal = {
       processooor: addressToHex(entrypointAddress) as `0x${string}`,
-      data: params.withdrawalData as `0x${string}`,  // hacer abiencode de RelayDataObject
+      data: params.relayDataObject.withdrawalData as `0x${string}`,
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contextHex = calculateContext(withdrawal, scope as any);
