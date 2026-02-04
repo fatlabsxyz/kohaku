@@ -5,8 +5,8 @@ import { IDepositOperationParams, IRagequitOperationParams, IStateManager, IWith
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
-import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
-import { createGetNextDepositPayloadSelector, createGetNextDepositSecretsSelector, createMyDepositsCountSelector, createMyDepositsSelector, createMyDepositsWithAssetSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
+import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector, createMyDepositsWithAssetSelector } from "./selectors/balance.selector";
+import { createGetNextDepositPayloadSelector, createGetNextDepositSecretsSelector, createMyDepositsCountSelector, createMyDepositsSelector, createMyEntrypointDepositsSelector } from "./selectors/deposits.selector";
 import { createAspLeavesSelector, createAspMerkleProofSelector, createStateLeavesSelector, createStateMerkleProofSelector } from "./selectors/merkle.selector";
 import { createExistingNoteSecretsDeriver, createGetNoteSelector, createNextNoteDeriver } from "./selectors/notes.selector";
 import { createMyPoolsSelector } from "./selectors/pools.selector";

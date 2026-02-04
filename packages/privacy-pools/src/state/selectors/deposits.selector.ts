@@ -1,18 +1,14 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { IEntrypointDepositEvent, IDepositWithAsset, IIndexedDepositEvent } from '../../data/interfaces/events.interface';
+import { IEntrypointDepositEvent, IIndexedDepositEvent } from '../../data/interfaces/events.interface';
 import { BaseSelectorParams } from '../interfaces/selectors.interface';
 import { Address, Precommitment } from '../../interfaces/types.interface';
-import { selectEntityMap } from '../utils/selectors.utils';
-import { poolsSelector } from './pools.selector';
 import { TxData } from '@kohaku-eth/provider';
 import { prepareErc20Shield, prepareNativeShield } from '../../account/tx/shield';
 import { E_ADDRESS } from '../../config';
 import { addressToHex } from '../../utils';
+import { depositsSelector, entrypointDepositSelector, poolInfoSelector } from './slices.selectors';
 import { aspLeavesSelector } from './asp.selector';
-
-export const depositsSelector = selectEntityMap((s) => s.deposits.depositsTuples);
-export const entrypointDepositSelector = selectEntityMap((s) => s.entrypointDeposits.entrypointDepositsTuples);
 
 export const createMyDepositsSelector = ({
   secretManager,
@@ -21,7 +17,7 @@ export const createMyDepositsSelector = ({
     [
       depositsSelector,
       aspLeavesSelector,
-      (state: RootState) => state.poolInfo,
+      poolInfoSelector,
     ],
     (depositsMap, approvedLabels, {chainId, entrypointAddress}): Map<Precommitment, IIndexedDepositEvent> => {
       const myDeposits: IIndexedDepositEvent[] = [];
@@ -80,38 +76,6 @@ export const createMyEntrypointDepositsSelector = (
   );
 };
 
-export const createMyDepositsWithAssetSelector = (
-  myDepositsSelector: ReturnType<typeof createMyDepositsSelector>,
-) => {
-  return createSelector(
-    [
-      myDepositsSelector,
-      entrypointDepositSelector,
-      poolsSelector,
-    ],
-    (myDeposits, entrypointDepositsMap, poolsMap): Map<Precommitment, IDepositWithAsset> => {
-      const depositsWithAssets = Array.from(myDeposits)
-        .map(([precommitment, deposit]) => {
-          const entrypointDeposit = entrypointDepositsMap.get(deposit.commitment);
-
-          if (!entrypointDeposit) return undefined;
-
-          const pool = poolsMap.get(entrypointDeposit.poolAddress);
-
-          if (!pool) return undefined;
-
-          return [precommitment, {
-            ...deposit,
-            assetAddress: pool.assetAddress,
-          }] as const;
-        })
-        .filter((e) => e !== undefined);
-
-      return new Map(depositsWithAssets)
-    }
-  );
-};
-
 export const createGetNextDepositSecretsSelector = ({
   depositsCountSelector,
   secretManager,
@@ -122,7 +86,7 @@ export const createGetNextDepositSecretsSelector = ({
   return createSelector(
     [
       depositsCountSelector,
-      (state: RootState) => state.poolInfo,
+      poolInfoSelector,
     ],
     (depositCount, { chainId, entrypointAddress }) => {
       return secretManager.getDepositSecrets({
@@ -144,11 +108,11 @@ export const createGetNextDepositPayloadSelector = ({
       getNextDepositSecretsSelector,
       (_state: RootState, asset: Address, _amount: bigint) => asset,
       (_state: RootState, _asset: Address, amount: bigint) => amount,
-      (state: RootState) => state.poolInfo.entrypointAddress,
+      poolInfoSelector,
     ],
-    ({ precommitment }, asset, amount, entrypoint): TxData => {
+    ({ precommitment }, asset, amount, { entrypointAddress }): TxData => {
       const assetHex = addressToHex(asset);
-      const entrypointHex = addressToHex(entrypoint);
+      const entrypointHex = addressToHex(entrypointAddress);
       const isNative = assetHex.toLowerCase() === E_ADDRESS;
 
       if (isNative) {

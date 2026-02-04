@@ -3,9 +3,7 @@ import { RootState } from '../store';
 import { IRagequitEvent } from '../../data/interfaces/events.interface';
 import { createMyDepositsSelector } from './deposits.selector';
 import { Precommitment } from '../../interfaces/types.interface';
-import { selectEntityMap } from '../utils/selectors.utils';
-
-export const ragequitsSelector = selectEntityMap((s) => s.ragequits.ragequitsTuples);
+import { ragequitsSelector } from './slices.selectors';
 
 export const createMyRagequitsSelector = (
   myDepositsSelector: ReturnType<typeof createMyDepositsSelector>

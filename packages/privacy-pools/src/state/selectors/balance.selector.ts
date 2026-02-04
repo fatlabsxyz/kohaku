@@ -2,12 +2,45 @@ import { createSelector } from '@reduxjs/toolkit';
 import { IDepositWithAsset } from '../../data/interfaces/events.interface';
 import { createMyWithdrawalsSelector } from './withdrawals.selector';
 import { createMyRagequitsSelector } from './ragequits.selector';
-import { createMyDepositsWithAssetSelector } from './deposits.selector';
 import { Address, Precommitment } from '../../interfaces/types.interface';
+import { createMyDepositsSelector } from './deposits.selector';
+import { entrypointDepositSelector, poolsSelector } from './slices.selectors';
 
 export interface IDepositWithBalance extends IDepositWithAsset {
   balance: bigint;
 }
+
+export const createMyDepositsWithAssetSelector = (
+  myDepositsSelector: ReturnType<typeof createMyDepositsSelector>,
+) => {
+  return createSelector(
+    [
+      myDepositsSelector,
+      entrypointDepositSelector,
+      poolsSelector,
+    ],
+    (myDeposits, entrypointDepositsMap, poolsMap): Map<Precommitment, IDepositWithAsset> => {
+      const depositsWithAssets = Array.from(myDeposits)
+        .map(([precommitment, deposit]) => {
+          const entrypointDeposit = entrypointDepositsMap.get(deposit.commitment);
+
+          if (!entrypointDeposit) return undefined;
+
+          const pool = poolsMap.get(entrypointDeposit.poolAddress);
+
+          if (!pool) return undefined;
+
+          return [precommitment, {
+            ...deposit,
+            assetAddress: pool.address,
+          }] as const;
+        })
+        .filter((e) => e !== undefined);
+
+      return new Map(depositsWithAssets)
+    }
+  );
+};
 
 export const createMyDepositsBalanceSelector = ({
   myWithdrawalsSelector,
