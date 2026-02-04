@@ -19,7 +19,7 @@ export const createMyDepositsSelector = ({
       aspLeavesSelector,
       poolInfoSelector,
     ],
-    (depositsMap, approvedLabels, {chainId, entrypointAddress}): Map<Precommitment, IIndexedDepositEvent> => {
+    (depositsMap, approvedLabels, { chainId, entrypointAddress }): Map<Precommitment, IIndexedDepositEvent> => {
       const myDeposits: IIndexedDepositEvent[] = [];
 
       for (let depositIndex = 0; ; depositIndex++) {
@@ -92,7 +92,7 @@ export const createGetNextDepositSecretsSelector = ({
       return secretManager.getDepositSecrets({
         entrypointAddress,
         chainId,
-        depositIndex: depositCount + 1,
+        depositIndex: depositCount,
       });
     }
   );
