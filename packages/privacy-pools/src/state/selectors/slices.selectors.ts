@@ -38,7 +38,9 @@ export const lastUpdateRootEventSelector = ({
   if (!lastUpdateRootEvent) {
     return lastUpdateRootEvent;
   }
+
   const { ipfsCID, ...rest } = lastUpdateRootEvent;
+
   return {
     ...deserialize(rest),
     ipfsCID,
@@ -64,6 +66,7 @@ export const ragequitsSelector = selectEntityMap(
 export const assetSelector = selectEntityMap(({ assets: { assetsTuples } }) =>
   assetsTuples.map(([_, { address: stringAddress, ...asset }]) => {
     const address = deserialize(stringAddress) as Address;
+
     return [address, { address, ...asset } as IAsset];
   }),
 );

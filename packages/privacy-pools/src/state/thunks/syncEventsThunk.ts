@@ -35,6 +35,7 @@ export const syncEventsThunk = createAsyncThunk<
           lastSyncedBlock === 0n ? pool.registeredBlock : lastSyncedBlock + 1n,
         address: pool.address,
       });
+
       return {
         ...events,
         pool: pool.address,
@@ -52,6 +53,7 @@ export const syncEventsThunk = createAsyncThunk<
     if (result.status === "fulfilled") {
       const { PoolDeposited, Withdrawn, Ragequit, toBlock, pool } =
         result.value;
+
       allDeposits.push(...PoolDeposited.map((e) => ({ ...e, pool })));
       allWithdrawals.push(...Withdrawn.map((e) => ({ ...e, pool })));
       allRagequits.push(...Ragequit.map((e) => ({ ...e, pool })));

@@ -113,6 +113,7 @@ const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService
         storeWithSelectors = initializeSelectors({ ...params, store});
         chainStoreMap.set(computedChainKey, storeWithSelectors);
       }
+
       return storeWithSelectors;
     }
   };
