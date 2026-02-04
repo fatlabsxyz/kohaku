@@ -6,6 +6,7 @@ import { storeStateManager } from '../state/state-manager';
 import { IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 import { AspService } from "../data/asp.service";
 import { RelayerClient } from "../relayer/relayer-client";
+import { IQuoteResponse } from "../relayer/interfaces/relayer-client.interface";
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {};
 
@@ -27,7 +28,6 @@ export class PrivacyPoolsV1Protocol extends Plugin {
       context = DefaultContext,
       secretManager = SecretManager,
       stateManager = storeStateManager,
-      relayerClientFactory = () => new RelayerClient({ network: host.network, relayerUrl: "" }),
       chainsEntrypoints = {},
       relayersList = {},
       relayerClientFactory = () => new RelayerClient({ network: host.network }),
@@ -35,6 +35,8 @@ export class PrivacyPoolsV1Protocol extends Plugin {
     super();
     this.context = context;
     this.accountIndex = 0;
+    this.chainsEntrypoints = new Map<string, bigint>(Object.entries(chainsEntrypoints));
+    this.relayersList = new Map<string, string>(Object.entries(relayersList));
     this.secretManager = secretManager({
       host,
       accountIndex: this.accountIndex
@@ -44,9 +46,8 @@ export class PrivacyPoolsV1Protocol extends Plugin {
       aspService: new AspService(host.network),
       dataService: new DataService({ provider: host.ethProvider }),
       relayerClient: relayerClientFactory(),
+      relayersList: this.relayersList,
     });
-    this.chainsEntrypoints = new Map<string, bigint>(Object.entries(chainsEntrypoints));
-    this.relayersList = new Map<string, string>(Object.entries(relayersList));
   }
 
   account(): Promise<AccountId> {
@@ -153,21 +154,44 @@ export class PrivacyPoolsV1Protocol extends Plugin {
 
     await this.stateManager.sync({ chainId, entrypoint });
 
+    // Convert AccountId to Address
+    // AccountId format is "eip155:chainId:address" or has an address property
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const toAny = to as any;
+    const recipientAddress = toAny.address
+      ? BigInt(toAny.address)
+      : BigInt(String(to).split(':').pop() || '0');
 
-    const payloads = await this.stateManager.getWithdrawalPayloads({
+    const [result] = await this.stateManager.getWithdrawalPayloads({
       chainId,
       entrypoint,
       asset: getAssetAddress(asset),
       amount,
-      recipient: entrypoint, // TODO: convert AccountId to Address properly
-      relayerConfig: { url: '' }, // TODO: configure relayer
+      recipient: recipientAddress,
     });
 
-    // TODO: generate ZK proofs and construct PrivateOperation
+    const { payload, relayData } = result as {
+      payload: PPv1PrivateOperation['rawData']['proof'];
+      relayData: { quote: IQuoteResponse; relayerId: string };
+    };
+
     return {
-      relayData: {} as unknown,
-      txData: "0x"
-    } as any;
+      rawData: {
+        proof: payload,
+        withdrawalPayload: {
+          processooor: `0x${entrypoint.toString(16).padStart(40, '0')}`,
+          data: relayData.quote.feeCommitment.withdrawalData,
+        },
+        chainId: BigInt(chainId.reference),
+        scope: entrypoint,
+      },
+      txData: {
+        to: `0x${entrypoint.toString(16).padStart(40, '0')}`,
+        data: '0x', // TODO: encode actual withdrawal call
+        value: 0n,
+      },
+      relayData,
+    };
   }
 
   broadcast(operation: PPv1PrivateOperation): Promise<void> {

@@ -20,7 +20,7 @@ export interface SyncEventsThunkParams {
 export const syncEventsThunk = createAsyncThunk<
   bigint,
   SyncEventsThunkParams,
-  { state: RootState }
+  { state: RootState; }
 >("sync/syncEvents", async ({ dataService }, { getState, dispatch }) => {
   const state = getState();
   const myPools = poolsSelector(state);
