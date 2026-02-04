@@ -1,12 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IAsset } from '../../data/interfaces/events.interface';
 import { Address } from '../../interfaces/types.interface';
+import { Serializable } from '../interfaces/utils.interface';
+import { serialize } from '../utils/serialize.utils';
 
-export interface AssetsState {
+interface AssetsState {
   assetsTuples: [Address, IAsset][];
 }
 
-const initialState: AssetsState = {
+type ActualAssetState = Serializable<AssetsState>;
+
+const initialState: ActualAssetState = {
   assetsTuples: [],
 };
 
@@ -20,7 +24,7 @@ export const assetsSlice = createSlice({
       assets.forEach((asset) => {
         const key = asset.address;
 
-        newAssets.set(key, asset);
+        newAssets.set(serialize(key), serialize(asset));
       });
 
       return { assetsTuples: Array.from(newAssets) };
