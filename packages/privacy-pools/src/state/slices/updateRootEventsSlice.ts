@@ -1,11 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IRootUpdatedEvent } from '../../data/interfaces/events.interface';
+import { Serializable } from '../interfaces/utils.interface';
+import { serialize } from '../utils/serialize.utils';
 
 export interface UpdateRootEventsState {
   lastUpdateRootEvent: IRootUpdatedEvent | null;
 }
 
-const initialState: UpdateRootEventsState = {
+type ActualUpdateRootEventsState = Serializable<UpdateRootEventsState>;
+
+const initialState: ActualUpdateRootEventsState = {
   lastUpdateRootEvent: null,
 };
 
@@ -14,9 +18,9 @@ export const updateRootEventsSlice = createSlice({
   initialState,
   reducers: {
     registerLastUpdateRootEvent: (state, { payload }: PayloadAction<IRootUpdatedEvent>) => {
-      return {
+      return serialize({
         lastUpdateRootEvent: payload,
-      };
+      });
     },
   },
 });

@@ -4,11 +4,9 @@ import { IIndexedWithdrawalEvent } from '../../data/interfaces/events.interface'
 import { createMyDepositsSelector } from './deposits.selector';
 import { Precommitment } from '../../interfaces/types.interface';
 import { ISecretManager } from '../../account/keys';
-import { selectEntityMap } from '../utils/selectors.utils';
+import { poolInfoSelector, withdrawalsSelector } from './slices.selectors';
 
 export type DepositsWithdrawals = Map<Precommitment, IIndexedWithdrawalEvent[]>;
-
-export const withdrawalsSelector = selectEntityMap((s) => s.withdrawals.withdrawalsTuples);
 
 export const createMyWithdrawalsSelector = ({
   secretManager,
@@ -24,7 +22,7 @@ export const createMyWithdrawalsSelector = ({
     [
       myDepositsSelector,
       withdrawalsSelector,
-      (state: RootState) => state.poolInfo,
+      poolInfoSelector,
     ],
     (myDeposits, withdrawalsMap, {chainId, entrypointAddress}): DepositsWithdrawals => {
       const myWithdrawals: DepositsWithdrawals = new Map();

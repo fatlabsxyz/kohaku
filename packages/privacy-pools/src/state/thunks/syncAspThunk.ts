@@ -3,6 +3,7 @@ import { AspService } from '../../data/asp.service';
 import { isAspRootUpToDateSelector } from '../selectors/asp.selector';
 import { registerAspTree } from '../slices/aspSlice';
 import { RootState } from '../store';
+import { lastUpdateRootEventSelector } from '../selectors/slices.selectors';
 
 export interface SyncAspThunkParams {
   aspService: AspService;
@@ -18,7 +19,7 @@ export const syncAspThunk = createAsyncThunk<void, SyncAspThunkParams, { state: 
       return;
     }
 
-    const lastUpdateRootEvent = state.updateRootEvents.lastUpdateRootEvent;
+    const lastUpdateRootEvent = lastUpdateRootEventSelector(state);
 
     if (!lastUpdateRootEvent) {
       return;
