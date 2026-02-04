@@ -3,7 +3,7 @@ import { ISecretManager, SecretManager } from '../account/keys';
 import { DataService } from '../data/data.service';
 import { Address } from "../interfaces/types.interface";
 import { storeStateManager } from '../state/state-manager';
-import { IStateManager, ISyncOperationParams, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
+import { IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 import { AspService } from "../data/asp.service";
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {};
@@ -126,7 +126,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
     return { txns: [tx] };
   }
 
-  async prepareUnshield(assets: AssetAmount, to: AccountId): Promise<PrivateOperation> {
+  async prepareUnshield(assets: AssetAmount, to: AccountId): Promise<PPv1PrivateOperation> {
     const { asset, amount } = assets;
     const { chainId: _chainId } = asset;
 
@@ -154,11 +154,12 @@ export class PrivacyPoolsV1Protocol extends Plugin {
 
     // TODO: generate ZK proofs and construct PrivateOperation
     return {
-      inner: 1n
-    };
+      relayData: {} as unknown,
+      txData: "0x"
+    } as any;
   }
 
-  broadcast(operation: PrivateOperation): Promise<void> {
+  broadcast(operation: PPv1PrivateOperation): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
