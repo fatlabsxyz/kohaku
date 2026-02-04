@@ -22,6 +22,7 @@ export function createMockKeystore(phrase: string = TEST_MNEMONIC): Keystore {
 
 const createMockStorage = (): PluginStorage => {
   const storageMap = new Map<string, string>();
+
   return {
     _brand: "Storage",
     set: storageMap.set,
@@ -31,6 +32,7 @@ const createMockStorage = (): PluginStorage => {
 
 const createMockSecretStorage = (): PluginSecretStorage => {
   const storageMap = new Map<string, string>();
+
   return {
     _brand: "SecureStorage",
     set: storageMap.set,
