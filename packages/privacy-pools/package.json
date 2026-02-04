@@ -22,7 +22,7 @@
     "dev": "tsup --config tsup.config.ts --watch",
     "demo": "tsx demo/simple.ts",
     "test": "vitest run",
-    "test:e2e": "vitest run e2e",
+    "test:e2e": ". ./.env.e2e.tests && vitest --inspect-brk --no-file-parallelism run e2e",
     "test:watch": "vitest",
     "prepublishOnly": "pnpm -w -r build",
     "lint": "eslint .",
@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@0xbow/privacy-pools-core-sdk": "^1.0.2",
-    "@fatsolutions/privacy-pools-core-circuits": "1.0.1",
+    "@fatsolutions/privacy-pools-core-circuits": "1.0.3",
     "@kohaku-eth/plugins": "workspace:*",
     "@kohaku-eth/provider": "workspace:*",
     "@reduxjs/toolkit": "^2.11.2",

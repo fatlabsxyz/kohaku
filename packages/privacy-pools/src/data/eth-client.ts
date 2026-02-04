@@ -1,7 +1,8 @@
 import type { EthProvider } from "@kohaku-eth/plugins";
-import { ContractFunctionName, decodeFunctionResult, DecodeFunctionResultReturnType, encodeFunctionData, EncodeFunctionDataParameters, erc20Abi, type RpcLog, toHex } from 'viem';
-import { entrypointAbi, poolAbi } from "./abis/events.abi";
+import { ContractFunctionName, decodeFunctionResult, DecodeFunctionResultReturnType, encodeFunctionData, EncodeFunctionDataParameters, erc20Abi, toHex, type RpcLog } from 'viem';
 import { Address } from "../interfaces/types.interface";
+import { entrypointAbi } from "./abis/entrypoint.abi";
+import { poolAbi } from "./abis/pool.abi";
 
 export interface GetLogsParams {
     address: string;

@@ -1,16 +1,11 @@
+import { ContractProof } from "@fatsolutions/privacy-pools-core-circuits";
+
 /**
  * Proof generation utilities.
  *
  * Note: Real proof generation has been moved to the withdrawThunk in state/thunks/withdrawThunk.ts
  * This file is kept for backwards compatibility and mock proof generation.
  */
-
-export type ContractProof = {
-  pA: readonly [bigint, bigint];
-  pB: readonly [readonly [bigint, bigint], readonly [bigint, bigint]];
-  pC: readonly [bigint, bigint];
-  pubSignals: readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
-};
 
 // Mock proof generation (stub)
 export const generateMockProof = (): ContractProof => {

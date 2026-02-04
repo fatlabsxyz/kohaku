@@ -76,8 +76,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@fatsolutions/privacy-pools-core-circuits':
-        specifier: 1.0.1
-        version: 1.0.1
+        specifier: 1.0.3
+        version: 1.0.3
       '@kohaku-eth/plugins':
         specifier: workspace:*
         version: link:../plugins
@@ -987,8 +987,8 @@ packages:
   '@ethersproject/wordlists@5.8.0':
     resolution: {integrity: sha512-2df9bbXicZws2Sb5S6ET493uJ0Z84Fjr3pC4tu/qlnZERibZCeUVuqdtt+7Tv9xxhUxHoIekIA7avrKUWHrezg==}
 
-  '@fatsolutions/privacy-pools-core-circuits@1.0.1':
-    resolution: {integrity: sha512-ovz0pVDqbMj7xMK5175xsGe8kI6JCvhYGdcanf7iTxQptDBuV66HciGFPhaIDOsnJfxNQc6W5KCjWsXL5GaHFA==}
+  '@fatsolutions/privacy-pools-core-circuits@1.0.3':
+    resolution: {integrity: sha512-qeBMjszUDP+8l1TB//6PDa9E3zeABspbIpg9RtkpUChyWT8o3bUAIcGWG34/gfnWS4//KGh0pWX84eQYIAHw4A==}
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -7994,7 +7994,7 @@ snapshots:
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
 
-  '@fatsolutions/privacy-pools-core-circuits@1.0.1': {}
+  '@fatsolutions/privacy-pools-core-circuits@1.0.3': {}
 
   '@floating-ui/core@1.7.3':
     dependencies:

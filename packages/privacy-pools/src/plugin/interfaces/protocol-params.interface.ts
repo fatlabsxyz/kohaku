@@ -1,8 +1,26 @@
+import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
 import { Eip155ChainId } from '@kohaku-eth/plugins';
 import { TxData } from '@kohaku-eth/provider';
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { Address } from "../../interfaces/types.interface";
 import { StoreFactoryParams } from "../../state/state-manager";
+import { IQuoteResponse, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
+
+type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
+
+export interface PPv1PrivateOperation {
+  rawData: {
+    proof: ProveOutput;
+    withdrawalPayload: WithdrawalPayload;
+    chainId: bigint;
+    scope: bigint;
+  };
+  txData: TxData;
+  relayData: {
+    quote: IQuoteResponse;
+    relayerId: string;
+  };
+}
 
 export interface PrivacyPoolsV1ProtocolContext { }
 

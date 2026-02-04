@@ -1,3 +1,4 @@
+import { WithdrawPublicSignals, WithdrawPublicSignalsStringArray } from "@fatsolutions/privacy-pools-core-circuits";
 import { Address } from "../../interfaces/types.interface";
 
 export interface IRelayFeesRequest {
@@ -67,7 +68,7 @@ export interface IQuoteRequest {
   extraGas?: boolean;
 }
 
-interface WithdrawalPayload {
+export interface WithdrawalPayload {
   /** Relayer address (0xAdDrEsS) */
   processooor: string;
   /** Transaction data (hex encoded) */
