@@ -32,7 +32,7 @@ export const createMyDepositsWithAssetSelector = (
 
           return [precommitment, {
             ...deposit,
-            assetAddress: pool.address,
+            assetAddress: pool.asset,
           }] as const;
         })
         .filter((e) => e !== undefined);
