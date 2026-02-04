@@ -26,9 +26,9 @@ export const storeFactory = (poolInfo: PoolInfoState) => {
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({
       serializableCheck: {
-        ignoreActions: true,
+        ignoreActions: true
       }
-    })
+    }),
   });
 
   store.dispatch(setPoolInfo(poolInfo));

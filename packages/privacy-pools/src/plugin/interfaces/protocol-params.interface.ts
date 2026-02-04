@@ -46,6 +46,7 @@ export interface IDepositOperationParams extends IBaseOperationParams {
 
 export interface IGetBalancesOperationParams extends IBaseOperationParams {
   assets?: Address[];
+  balanceType?: 'approved' | 'unapproved';
 }
 
 export interface IRelayerConfig {

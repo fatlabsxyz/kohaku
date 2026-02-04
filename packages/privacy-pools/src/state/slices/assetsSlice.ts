@@ -4,7 +4,7 @@ import { Address } from '../../interfaces/types.interface';
 import { Serializable } from '../interfaces/utils.interface';
 import { serialize } from '../utils/serialize.utils';
 
-interface AssetsState {
+export interface AssetsState {
   assetsTuples: [Address, IAsset][];
 }
 

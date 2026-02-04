@@ -57,7 +57,9 @@ export class PrivacyPoolsV1Protocol extends Plugin {
    * Returns the balances of the requested assets.
    * The assets retain the provided order. If an asset is not supported its balance will be 0
    */
-  async balance(assets: AssetId[] = []): Promise<AssetAmount[]> {
+  async balance(assets: AssetId[] = [],
+    balanceType: 'approved' | 'unapproved' = 'approved'
+  ): Promise<AssetAmount[]> {
     const evmAssets = assets.filter(({ chainId }) => chainIsEvmChain(chainId)) as (AssetId & { chainId: Eip155ChainId<number>; })[];
 
     // Map keys are unique so only distinct chains will remain
@@ -80,6 +82,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
 
       const balancesMap = this.stateManager.getBalances({
         ...params,
+        balanceType,
         assets: assetsByChain[chainIdString]?.map(getAssetAddress),
       });
 

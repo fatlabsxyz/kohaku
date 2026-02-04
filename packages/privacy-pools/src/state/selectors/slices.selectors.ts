@@ -32,10 +32,18 @@ export const entrypointDepositSelector = selectEntityMap(
 );
 export const aspSelector = (state: RootState) =>
   deserialize(state.asp) as AspState;
-export const lastUpdateRootEventSelector = (state: RootState) =>
-  deserialize(
-    state.updateRootEvents.lastUpdateRootEvent,
-  ) as UpdateRootEventsState["lastUpdateRootEvent"];
+export const lastUpdateRootEventSelector = ({
+  updateRootEvents: { lastUpdateRootEvent },
+}: RootState) => {
+  if (!lastUpdateRootEvent) {
+    return lastUpdateRootEvent;
+  }
+  const { ipfsCID, ...rest } = lastUpdateRootEvent;
+  return {
+    ...deserialize(rest),
+    ipfsCID,
+  } as UpdateRootEventsState["lastUpdateRootEvent"];
+};
 export const poolInfoSelector = (state: RootState) =>
   deserialize(state.poolInfo) as PoolInfoState;
 export const poolsSelector = selectEntityMap(

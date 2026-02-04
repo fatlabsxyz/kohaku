@@ -9,6 +9,7 @@ import { registerLastUpdateRootEvent } from '../slices/updateRootEventsSlice';
 import { syncAspThunk, SyncAspThunkParams } from './syncAspThunk';
 import { setLastSyncedBlock } from '../slices/syncSlice';
 import { syncEventsThunk, SyncEventsThunkParams } from './syncEventsThunk';
+import { poolInfoSelector } from '../selectors/slices.selectors';
 
 export interface SyncThunkParams extends
   SyncEventsThunkParams,
@@ -22,6 +23,7 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
   'sync/fetchEvents',
   async ({ dataService, ...params }, { getState, dispatch }) => {
     const state = getState();
+    const poolInfo = poolInfoSelector(state);
     const lastSyncedBlock = selectLastSyncedBlock(state);
     const fromBlock = lastSyncedBlock + 1n;
 
@@ -38,7 +40,7 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
         "PoolWindDown"
       ],
       fromBlock,
-      address: state.poolInfo.entrypointAddress,
+      address: poolInfo.entrypointAddress,
     });
 
     await dispatch(syncPoolsThunk({
