@@ -21,7 +21,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
   beforeAll(async () => {
     anvil = defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: 8545,
+      port: 8546,
       chainId: 1,
     });
 
