@@ -68,7 +68,7 @@ export const withdrawThunk = createAsyncThunk<
     const scope = params.getScope(params.asset);
     const withdrawal = {
       processooor: addressToHex(entrypointAddress) as `0x${string}`,
-      data: params.withdrawalData as `0x${string}`,
+      data: params.withdrawalData as `0x${string}`,  // hacer abiencode de RelayDataObject
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contextHex = calculateContext(withdrawal, scope as any);

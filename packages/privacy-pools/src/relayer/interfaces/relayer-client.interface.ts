@@ -1,7 +1,10 @@
-import { WithdrawPublicSignals, WithdrawPublicSignalsStringArray } from "@fatsolutions/privacy-pools-core-circuits";
 import { Address } from "../../interfaces/types.interface";
 
-export interface IRelayFeesRequest {
+export interface IBaseRelayerRequest {
+  relayerUrl: string;
+}
+
+export interface IRelayFeesRequest extends IBaseRelayerRequest {
   chainId: bigint;
   assetAddress: Address;
 }
@@ -55,7 +58,7 @@ export interface IQuoteResponse {
   detail: IQuoteDetailBreakdown;
 }
 
-export interface IQuoteRequest {
+export interface IQuoteRequest extends IBaseRelayerRequest {
   /** The chain ID for the withdrawal. */
   chainId: bigint;
   /** The withdrawal amount as a string representation of a BigInt (in wei or base units). */
@@ -96,7 +99,7 @@ export interface IEthRelayRequest {
   feeCommitment: IQuoteResponse['feeCommitment'];
 }
 
-export interface IRelayRequest {
+export interface IRelayRequest extends IBaseRelayerRequest {
   /** Withdrawal details */
   withdrawal: WithdrawalPayload;
   /** Public signals as string array */
@@ -135,7 +138,6 @@ interface IFailedRelayResponse extends IBaseRelayResponse {
 }
 
 export type IRelayResponse = ISuccessfullRelayResponse | IFailedRelayResponse;
-
 
 export interface IRelayerClient {
   getQuote(
