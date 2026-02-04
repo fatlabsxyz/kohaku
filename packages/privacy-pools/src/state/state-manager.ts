@@ -2,6 +2,7 @@ import { Eip155ChainId } from "@kohaku-eth/plugins";
 
 import { Address } from "../interfaces/types.interface";
 import { IDepositOperationParams, IRagequitOperationParams, IStateManager, IWithdrawapOperationParams } from "../plugin/interfaces/protocol-params.interface";
+import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import { createMyApprovedAssetBalanceSelector, createMyAssetsBalanceSelector, createMyDepositsBalanceSelector } from "./selectors/balance.selector";
@@ -16,7 +17,9 @@ import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
 
-export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams { }
+export interface StoreFactoryParams extends BaseSelectorParams, SyncAspThunkParams {
+  relayerClient: IRelayerClient
+}
 
 const storeByChainAndEntrypoint = (params: Omit<StoreFactoryParams, 'dataService'>) => {
   const chainStoreMap = new Map<string, ReturnType<typeof storeFactory>>();
@@ -143,6 +146,10 @@ export const storeStateManager = ({
     },
     getWithdrawalPayloads: async ({ chainId, entrypoint, asset, amount, recipient, relayerConfig }: IWithdrawapOperationParams) => {
       const store = getChainStore({ chainId, entrypoint });
+
+      //const quoteResult = store.dispatch(quoteThunk(...));
+      // const quote = unwrap(quoteResult);
+      // const { context, relayDataObject, quoteData: IQuoteResponse, } = quote;
 
       // Dispatch the withdraw thunk which handles note selection and proof generation
       const result = await store.dispatch(withdrawThunk({
