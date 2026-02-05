@@ -6,7 +6,7 @@ import { storeStateManager } from '../state/state-manager';
 import { IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 import { AspService } from "../data/asp.service";
 import { RelayerClient } from "../relayer/relayer-client";
-import { IQuoteResponse } from "../relayer/interfaces/relayer-client.interface";
+import { IQuoteResponse, IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {};
 
@@ -15,13 +15,18 @@ const chainIsEvmChain = (chainId: ChainId): chainId is Eip155ChainId =>
 
 const getAssetAddress = (assetId: AssetId) => BigInt((assetId as Erc20Id).reference || 0n);
 
-export class PrivacyPoolsV1Protocol extends Plugin {
+export class PrivacyPoolsV1Protocol extends Plugin<
+  AssetAmount,
+  ShieldPreparation,
+  PPv1PrivateOperation
+> {
   private accountIndex: number;
   private secretManager: ISecretManager;
   private stateManager: IStateManager;
   private context: PrivacyPoolsV1ProtocolContext;
   private chainsEntrypoints: Map<string, Address>;
   private relayersList: Map<string, string>;
+  private relayerClient: IRelayerClient;
 
   constructor(readonly host: Host,
     {
@@ -37,6 +42,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
     this.accountIndex = 0;
     this.chainsEntrypoints = new Map<string, bigint>(Object.entries(chainsEntrypoints));
     this.relayersList = new Map<string, string>(Object.entries(relayersList));
+    this.relayerClient = relayerClientFactory();
     this.secretManager = secretManager({
       host,
       accountIndex: this.accountIndex
@@ -45,7 +51,7 @@ export class PrivacyPoolsV1Protocol extends Plugin {
       secretManager: this.secretManager,
       aspService: new AspService(host.network),
       dataService: new DataService({ provider: host.ethProvider }),
-      relayerClient: relayerClientFactory(),
+      relayerClient: this.relayerClient,
       relayersList: this.relayersList,
     });
   }
@@ -106,8 +112,39 @@ export class PrivacyPoolsV1Protocol extends Plugin {
     });
   }
 
-  override broadcastPrivateOperation(operation: PrivateOperation): Promise<void> {
-    throw new Error("Method not implemented.");
+  override async broadcastPrivateOperation({
+    rawData: {
+      chainId,
+      scope,
+      proof: {
+        proof,
+        publicSignals
+      },
+      withdrawalPayload
+    },
+    relayData: {
+      relayerId,
+      quote: {
+        feeCommitment,
+      }
+    }
+  }: PPv1PrivateOperation): Promise<void> {
+    const relayerUrl = this.relayersList.get(relayerId);
+    if (!relayerUrl) {
+      throw new Error('Specified relayer not found.');
+    }
+
+    await this.relayerClient.relay({
+      chainId,
+      scope,
+      feeCommitment,
+      relayerUrl,
+      withdrawal: withdrawalPayload,
+      publicSignals,
+      proof
+    });
+
+    return void 0;
   }
 
   async prepareShield(assets: { asset: AssetId, amount: bigint; }, from?: AccountId): Promise<ShieldPreparation> {
