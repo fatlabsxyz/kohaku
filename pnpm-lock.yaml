@@ -205,10 +205,16 @@ importers:
       ox:
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
+      redux-logger:
+        specifier: ^3.0.6
+        version: 3.0.6
     devDependencies:
       '@types/node':
         specifier: ^24.1.0
         version: 24.5.0
+      '@types/redux-logger':
+        specifier: ^3.0.13
+        version: 3.0.13
       dotenv:
         specifier: ^17.2.1
         version: 17.2.2
@@ -2878,6 +2884,9 @@ packages:
   '@types/react@19.2.13':
     resolution: {integrity: sha512-KkiJeU6VbYbUOp5ITMIc7kBfqlYkKA5KhEHVrGMmUUMt7NeaZg65ojdPk+FtNrBAOXNVM5QM72jnADjM+XVRAQ==}
 
+  '@types/redux-logger@3.0.13':
+    resolution: {integrity: sha512-jylqZXQfMxahkuPcO8J12AKSSCQngdEWQrw7UiLUJzMBcv1r4Qg77P6mjGLjM27e5gFQDPD8vwUMJ9AyVxFSsg==}
+
   '@types/responselike@1.0.3':
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
 
@@ -4076,6 +4085,10 @@ packages:
     peerDependenciesMeta:
       babel-plugin-macros:
         optional: true
+
+  deep-diff@0.3.8:
+    resolution: {integrity: sha512-yVn6RZmHiGnxRKR9sJb3iVV2XTF1Ghh2DiWRZ3dMnGc43yUdWWF/kX6lQyk3+P84iprfWKU/8zFTrlkvtFm1ug==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   deep-eql@4.1.4:
     resolution: {integrity: sha512-SUwdGfqdKOwxCPeVYjwSyRpJ7Z+fhpwIAtmCUdZIWZ/YP5R9WAsyuSgpLVDi9bjWoN2LXHNss/dk3urXtdQxGg==}
@@ -6559,6 +6572,9 @@ packages:
 
   recma-stringify@1.0.0:
     resolution: {integrity: sha512-cjwII1MdIIVloKvC9ErQ+OgAtwHBmcZ0Bg4ciz78FtbT8In39aAYbaA7zvxQ61xVMSPE8WxhLwLbhif4Js2C+g==}
+
+  redux-logger@3.0.6:
+    resolution: {integrity: sha512-JoCIok7bg/XpqA1JqCqXFypuqBbQzGQySrhFzewB7ThcnysTO30l4VCst86AuB9T9tuT03MAA56Jw2PNhRSNCg==}
 
   redux-thunk@3.1.0:
     resolution: {integrity: sha512-NW2r5T6ksUKXCabzhL9z+h206HQw/NJkcLm1GPImRQ8IzfXwRGqjVhKJGauHirT0DAuyy6hjdnMZaRoAcy0Klw==}
@@ -10766,6 +10782,10 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
+  '@types/redux-logger@3.0.13':
+    dependencies:
+      redux: 5.0.1
+
   '@types/responselike@1.0.3':
     dependencies:
       '@types/node': 24.5.0
@@ -12143,6 +12163,8 @@ snapshots:
       mimic-response: 3.1.0
 
   dedent@1.7.0: {}
+
+  deep-diff@0.3.8: {}
 
   deep-eql@4.1.4:
     dependencies:
@@ -15432,6 +15454,10 @@ snapshots:
       estree-util-to-js: 2.0.0
       unified: 11.0.5
       vfile: 6.0.3
+
+  redux-logger@3.0.6:
+    dependencies:
+      deep-diff: 0.3.8
 
   redux-thunk@3.1.0(redux@5.0.1):
     dependencies:
