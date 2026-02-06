@@ -18,5 +18,5 @@ export const isAspRootUpToDateSelector = createSelector(
 
 export const aspLeavesSelector = createSelector(
   [aspSelector],
-  ({ leaves }) => new Set(leaves)
+  ({leaves}) => new Set(leaves)
 );
