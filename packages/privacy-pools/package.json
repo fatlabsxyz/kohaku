@@ -52,10 +52,12 @@
     "@kohaku-eth/plugins": "workspace:*",
     "@kohaku-eth/provider": "workspace:*",
     "@reduxjs/toolkit": "^2.11.2",
-    "maci-crypto": "2.5.0"
+    "maci-crypto": "2.5.0",
+    "redux-logger": "^3.0.6"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
+    "@types/redux-logger": "^3.0.13",
     "dotenv": "^17.2.1",
     "prool": "^0.0.24",
     "ts-node": "^10.9.2",
