@@ -128,6 +128,7 @@ export async function assetVettingFee(provider: any, entrypointAddress: bigint, 
   const eadd = toBeHex(entrypointAddress);
   const ep = new Contract(eadd, epAbi, provider);
   const [pool, minimumDepositAmount, vettingFeeBPS, maxRelayFeeBPS] = await ep.assetConfig(asset.reference);
+
   return vettingFeeBPS as bigint;
 }
 
