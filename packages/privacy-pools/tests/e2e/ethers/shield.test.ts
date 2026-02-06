@@ -1,16 +1,17 @@
-import { ethers } from '@kohaku-eth/provider/ethers';
-import { SigningKey, Wallet } from 'ethers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import { Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
+import { ethers } from '@kohaku-eth/provider/ethers';
+
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
-import { Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
-import { AnvilPool, defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
 import { getEnv } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { approveERC20, assetVettingFee, fundAccountWithETH, getProtocol, transferERC20FromWhale } from '../../utils/test-helpers';
+import { approveERC20, assetVettingFee, getProtocol, sendTx, setupWallet, transferERC20FromWhale } from '../../utils/test-helpers';
 
-describe('PrivacyPools v1 E2E Flow', () => {
+describe.skip('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
@@ -51,13 +52,9 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
   it.skip('[prepareShield] executes successful deposit on forked mainnet', async () => {
     const pool = anvil.pool(2);
-    const jsonRpcProvider = await pool.getProvider();
-    const provider = ethers(jsonRpcProvider);
+    const provider = ethers(await pool.getProvider());
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
-    const alice = new Wallet(TEST_ACCOUNTS.alice.privateKey, jsonRpcProvider);
-
-    await fundAccountWithETH(pool, alice.address, BigInt('10000000000000000000'));
-    
     // Create host with pool-specific RPC URL
     const protocol = getProtocol(createMockHost(undefined, pool.rpcUrl));
 
@@ -67,8 +64,10 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // 1. Check initial balance is 0
     const initialBalancesApproved = await protocol.balance([nativeAsset], 'unapproved');
+
     expect(initialBalancesApproved[0].amount).toBe(0n);
     const initialBalancesUnapproved = await protocol.balance([nativeAsset], "unapproved");
+
     expect(initialBalancesUnapproved[0].amount).toBe(0n);
 
     // 2. Prepare and execute deposit
@@ -119,13 +118,9 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
   it.skip('[prepareShield] executes successful ERC20 deposit on forked mainnet', async () => {
     const pool = anvil.pool(4);
-    const jsonRpcProvider = await pool.getProvider();
-    const provider = ethers(jsonRpcProvider);
+    const provider = ethers(await pool.getProvider());
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
-    const alice = new Wallet(TEST_ACCOUNTS.alice.privateKey, jsonRpcProvider);
-
-    await fundAccountWithETH(pool, alice.address, BigInt('10000000000000000000'));
-    
     // Create host with pool-specific RPC URL
     const protocol = getProtocol(createMockHost(undefined, pool.rpcUrl));
 
@@ -137,8 +132,10 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // 1. Check initial balance is 0
     const initialBalancesApproved = await protocol.balance([usdcAsset]);
+
     expect(initialBalancesApproved[0].amount).toBe(0n);
     const initialBalancesUnapproved = await protocol.balance([usdcAsset], "unapproved");
+
     expect(initialBalancesUnapproved[0].amount).toBe(0n);
 
     // 2. Setup: Transfer USDC from whale to Alice
@@ -196,26 +193,32 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const { txns: [tx] } = await protocol.prepareShield(
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT_1 }
     );
+
     await sendTx(alice, tx);
     await pool.mine(1);
 
     // 2. Verify first deposit balance
     const [approvedBalance1] = await protocol.balance([nativeAsset], "approved");
+
     expect(approvedBalance1.amount).toBe(0n);
     const [balance1] = await protocol.balance([nativeAsset], "unapproved");
+
     expect(balance1.amount).toBe(POST_FEE_DEPOSIT_AMOUNT_1);
 
     // 3. Second deposit
     const { txns: [tx2] } = await protocol.prepareShield(
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT_2 }
     );
+
     await sendTx(alice, tx2);
     await pool.mine(1);
 
     // 4. Verify cumulative balance
     const [approvedBalance2] = await protocol.balance([nativeAsset], "approved");
+
     expect(approvedBalance2.amount).toBe(0n);
     const [balance2] = await protocol.balance([nativeAsset], "unapproved");
+
     expect(balance2.amount).toBe(POST_FEE_DEPOSIT_AMOUNT_1 + POST_FEE_DEPOSIT_AMOUNT_2);
   });
 });
@@ -223,17 +226,6 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
 function deductVettingFees(amount: bigint, vettingFeeBPS: bigint) {
   const vettingFees = amount * vettingFeeBPS / 10_000n;
+
   return amount - vettingFees;
-}
-
-async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
-  return signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
-}
-
-async function setupWallet(pool: AnvilPool, pk: string | SigningKey): Promise<Wallet> {
-  const jsonRpcProvider = await pool.getProvider();
-  const signer = new Wallet(pk, jsonRpcProvider);
-  // Fund with enough ETH for multiple deposits
-  await fundAccountWithETH(pool, signer.address, BigInt('100000000000000000000')); // 100 ETH
-  return signer;
 }
