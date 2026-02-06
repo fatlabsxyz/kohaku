@@ -131,6 +131,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
     }
   }: PPv1PrivateOperation): Promise<void> {
     const relayerUrl = this.relayersList.get(relayerId);
+
     if (!relayerUrl) {
       throw new Error('Specified relayer not found.');
     }

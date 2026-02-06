@@ -45,11 +45,13 @@ export const deserialize = <
       if (data instanceof Array) {
         if (data.length === 2) {
           const stringsData = (strings as [any, any]) || [];
+
           return [
             deserialize(data[0], stringsData[0]),
             deserialize(data[1], stringsData[1]),
           ] as DeserializeWithDictionary<Data, Dictionary>;
         }
+
         return data.map((d) =>
           deserialize(d, strings),
         ) as DeserializeWithDictionary<Data, Dictionary>;
