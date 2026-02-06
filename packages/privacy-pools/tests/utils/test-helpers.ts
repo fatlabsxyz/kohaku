@@ -1,10 +1,11 @@
+import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
+
 import { Erc20Id } from '@kohaku-eth/plugins';
 
-import { JsonRpcProvider, Contract, keccak256, AbiCoder, toBeHex, getAddress } from 'ethers';
-import { type AnvilPool } from './anvil';
 import { PrivacyPoolsV1Protocol } from '../../src';
-import { createMockHost } from './mock-host';
+import { type AnvilPool } from './anvil';
 import { MAINNET_ENTRYPOINT } from './common';
+import { createMockHost } from './mock-host';
 
 /**
  * Fund an account with ETH using anvil pool's setBalance
@@ -115,7 +116,9 @@ export async function assetVettingFee(provider: any, entrypointAddress: bigint, 
     "type": "function",
     "name": "assetConfig",
     "inputs":
-      [{ "name": "_asset", "type": "address", "internalType": "contract IERC20" }],
+      [
+        { "name": "_asset", "type": "address", "internalType": "contract IERC20" }
+      ],
     "outputs":
       [
         { "name": "pool", "type": "address", "internalType": "contract IPrivacyPool" },
@@ -127,7 +130,12 @@ export async function assetVettingFee(provider: any, entrypointAddress: bigint, 
   }] as const;
   const eadd = toBeHex(entrypointAddress);
   const ep = new Contract(eadd, epAbi, provider);
-  const [pool, minimumDepositAmount, vettingFeeBPS, maxRelayFeeBPS] = await ep.assetConfig(asset.reference);
+  const [
+    _pool,
+    _minimumDepositAmount,
+    vettingFeeBPS,
+    _maxRelayFeeBPS
+  ] = await ep.assetConfig(asset.reference);
 
   return vettingFeeBPS as bigint;
 }
@@ -137,3 +145,18 @@ export const getProtocol = (host = createMockHost()) => new PrivacyPoolsV1Protoc
     [MAINNET_ENTRYPOINT.chainId.toString()]: MAINNET_ENTRYPOINT
   }
 });
+
+export async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
+  return signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
+}
+
+
+export async function setupWallet(pool: AnvilPool, pk: string | SigningKey): Promise<Wallet> {
+  const jsonRpcProvider = await pool.getProvider();
+  const signer = new Wallet(pk, jsonRpcProvider);
+
+  // Fund with enough ETH for multiple deposits
+  await fundAccountWithETH(pool, signer.address, BigInt('100000000000000000000')); // 100 ETH
+
+  return signer;
+}

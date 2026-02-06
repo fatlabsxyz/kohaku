@@ -1,16 +1,16 @@
-import { ethers } from '@kohaku-eth/provider/ethers';
-import { Wallet } from 'ethers';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
+
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
-import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
 import { getEnv } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { fundAccountWithETH } from '../../utils/test-helpers';
+import { setupWallet } from '../../utils/test-helpers';
 
 describe('PrivacyPools v1 Unshield E2E', () => {
   let anvil: AnvilInstance;
@@ -35,12 +35,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
   it('[prepareUnshield] prepares withdrawal after deposit', async () => {
     const pool = anvil.pool(10);
-    const jsonRpcProvider = await pool.getProvider();
-    const provider = ethers(jsonRpcProvider);
-
-    const alice = new Wallet(TEST_ACCOUNTS.alice.privateKey, jsonRpcProvider);
-
-    await fundAccountWithETH(pool, alice.address, BigInt('10000000000000000000'));
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
@@ -95,11 +90,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
   it('[prepareUnshield] selects lowest fee relayer', async () => {
     const pool = anvil.pool(11);
-    const jsonRpcProvider = await pool.getProvider();
-
-    const alice = new Wallet(TEST_ACCOUNTS.alice.privateKey, jsonRpcProvider);
-
-    await fundAccountWithETH(pool, alice.address, BigInt('10000000000000000000'));
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
     // Create two mock relayers with different fees
     const expensiveRelayer = createMockRelayerClient({ feeBPS: '500' });
@@ -161,11 +152,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
   it('[prepareUnshield] throws when no sufficient balance', async () => {
     const pool = anvil.pool(12);
-    const jsonRpcProvider = await pool.getProvider();
-
-    const alice = new Wallet(TEST_ACCOUNTS.alice.privateKey, jsonRpcProvider);
-
-    await fundAccountWithETH(pool, alice.address, BigInt('1000000000000000000'));
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
     const mockRelayerClient = createMockRelayerClient();
 
@@ -194,11 +181,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
   it('[prepareUnshield] throws when all relayers fail', async () => {
     const pool = anvil.pool(13);
-    const jsonRpcProvider = await pool.getProvider();
-
-    const alice = new Wallet(TEST_ACCOUNTS.alice.privateKey, jsonRpcProvider);
-
-    await fundAccountWithETH(pool, alice.address, BigInt('10000000000000000000'));
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
     // Create a failing relayer
     const failingRelayer = createMockRelayerClient({ shouldFail: true });
