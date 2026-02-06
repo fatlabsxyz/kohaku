@@ -20,11 +20,19 @@ const logger = createLogger({
     withdrawals: { withdrawalsTuples },
     ragequits: { ragequitsTuples },
     entrypointDeposits: { entrypointDepositsTuples },
+    pools: { poolsTuples },
+    asp: { leaves, aspTreeRoot },
+    updateRootEvents: { lastUpdateRootEvent },
   }: RootState) => `
   Deposits: ${depositsTuples.length}
   Withdrawals: ${withdrawalsTuples.length}
   Ragequits: ${ragequitsTuples.length}
   EntrypointDeposits: ${entrypointDepositsTuples.length}
+  Pools: ${poolsTuples.length}
+  Synced ASP root: ${aspTreeRoot}
+  Synced ASP leaves count: ${leaves.length}
+  Latest known ASP root: ${lastUpdateRootEvent?.root}
+  Latest known ASP root ipfs: ${lastUpdateRootEvent?.ipfsCID},
   `,
   actionTransformer: (action: PayloadAction<unknown>) => ({
     action: action.type,
