@@ -1,3 +1,5 @@
+import { Erc20Id } from '@kohaku-eth/plugins';
+
 import { JsonRpcProvider, Contract, keccak256, AbiCoder, toBeHex, getAddress } from 'ethers';
 import { type AnvilPool } from './anvil';
 
@@ -105,3 +107,23 @@ export async function transferERC20FromWhale(
   await provider.send('anvil_stopImpersonatingAccount', [normalizedWhale]);
 }
 
+export async function assetVettingFee(provider: any, entrypointAddress: bigint, asset: Erc20Id) {
+  const epAbi = [{
+    "type": "function",
+    "name": "assetConfig",
+    "inputs":
+      [{ "name": "_asset", "type": "address", "internalType": "contract IERC20" }],
+    "outputs":
+      [
+        { "name": "pool", "type": "address", "internalType": "contract IPrivacyPool" },
+        { "name": "minimumDepositAmount", "type": "uint256", "internalType": "uint256" },
+        { "name": "vettingFeeBPS", "type": "uint256", "internalType": "uint256" },
+        { "name": "maxRelayFeeBPS", "type": "uint256", "internalType": "uint256" }
+      ],
+    "stateMutability": "view"
+  }] as const;
+  const eadd = toBeHex(entrypointAddress);
+  const ep = new Contract(eadd, epAbi, provider);
+  const [pool, minimumDepositAmount, vettingFeeBPS, maxRelayFeeBPS] = await ep.assetConfig(asset.reference);
+  return vettingFeeBPS as bigint;
+}
