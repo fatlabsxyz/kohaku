@@ -14,7 +14,11 @@ export const EVENTS_PARSERS: {
 } = {
     PoolDeposited: (log) => {
         const {
-            _depositor: depositor, _commitment: commitment, _label: label, _value: value, _merkleRoot: precommitment,
+            _depositor: depositor,
+            _commitment: commitment,
+            _label: label,
+            _value: value,
+            _precommitment: precommitment,
         } = log.args;
 
         return {
