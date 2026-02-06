@@ -6,6 +6,7 @@ import { EVENTS_PARSERS } from "./utils/events-parsers.util";
 import { EthClient } from "./eth-client";
 import type { IAsset } from "./interfaces/events.interface";
 import { Address } from "../interfaces/types.interface";
+import { E_ADDRESS } from "../config";
 
 export interface DataServiceParams {
     provider: EthProvider
@@ -53,6 +54,14 @@ export class DataService implements IDataService {
     getEntrypointEvents: GetEventsFn<typeof ENTRYPOINT_EVENTS_SIGNATURES, IEntrypointEvents> = this.getEvents;
 
     async getAsset(address: Address): Promise<IAsset> {
+        if (address === BigInt(E_ADDRESS)) {
+            return {
+                name: 'ETH',
+                address,
+                decimals: 18,
+                symbol: 'ETH',
+            };
+        }
         const [name, decimals, symbol] = await Promise.all([
             this.ethClient.makeContractRequest(address, 'erc20', 'name'),
             this.ethClient.makeContractRequest(address, 'erc20', 'decimals'),

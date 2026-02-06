@@ -25,7 +25,7 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
     const state = getState();
     const poolInfo = poolInfoSelector(state);
     const lastSyncedBlock = selectLastSyncedBlock(state);
-    const fromBlock = lastSyncedBlock + 1n;
+    const fromBlock = lastSyncedBlock;
 
     const {
       EntrypointDeposited,

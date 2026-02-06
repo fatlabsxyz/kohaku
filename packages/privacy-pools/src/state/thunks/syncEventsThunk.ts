@@ -32,7 +32,7 @@ export const syncEventsThunk = createAsyncThunk<
       const events = await dataService.getPoolEvents({
         events: ["PoolDeposited", "Withdrawn", "Ragequit"],
         fromBlock:
-          lastSyncedBlock === 0n ? pool.registeredBlock : lastSyncedBlock + 1n,
+          lastSyncedBlock === 0n ? pool.registeredBlock : lastSyncedBlock,
         address: pool.address,
       });
 
