@@ -1,14 +1,39 @@
-import { configureStore } from '@reduxjs/toolkit';
-import depositsReducer from './slices/depositsSlice';
-import entrypointDepositsReducer from './slices/entrypointDepositsSlice';
-import withdrawalsReducer from './slices/withdrawalsSlice';
-import ragequitsReducer from './slices/ragequitsSlice';
-import assetsReducer from './slices/assetsSlice';
-import poolsReducer from './slices/poolsSlice';
-import poolInfoReducer, { PoolInfoState, setPoolInfo } from './slices/poolInfoSlice';
-import aspReducer from './slices/aspSlice';
-import updateRootEventsReducer from './slices/updateRootEventsSlice';
-import syncReducer from './slices/syncSlice';
+import { Action, configureStore, PayloadAction } from "@reduxjs/toolkit";
+import depositsReducer from "./slices/depositsSlice";
+import entrypointDepositsReducer from "./slices/entrypointDepositsSlice";
+import withdrawalsReducer from "./slices/withdrawalsSlice";
+import ragequitsReducer from "./slices/ragequitsSlice";
+import assetsReducer from "./slices/assetsSlice";
+import poolsReducer from "./slices/poolsSlice";
+import poolInfoReducer, {
+  PoolInfoState,
+  setPoolInfo,
+} from "./slices/poolInfoSlice";
+import aspReducer from "./slices/aspSlice";
+import updateRootEventsReducer from "./slices/updateRootEventsSlice";
+import syncReducer from "./slices/syncSlice";
+import { createLogger } from "redux-logger";
+
+const logger = createLogger({
+  stateTransformer: ({
+    deposits: { depositsTuples },
+    withdrawals: { withdrawalsTuples },
+    ragequits: { ragequitsTuples },
+    entrypointDeposits: { entrypointDepositsTuples },
+  }: RootState) => `
+  Deposits: ${depositsTuples.length}
+  Withdrawals: ${withdrawalsTuples.length}
+  Ragequits: ${ragequitsTuples.length}
+  EntrypointDeposits: ${entrypointDepositsTuples.length}
+  `,
+  actionTransformer: (action: PayloadAction<unknown>) => ({
+    action: action.type,
+    payload:
+      action.payload instanceof Array
+        ? { count: action.payload.length }
+        : action.payload,
+  }),
+});
 
 export const storeFactory = (poolInfo: PoolInfoState) => {
   const store = configureStore({
@@ -22,21 +47,22 @@ export const storeFactory = (poolInfo: PoolInfoState) => {
       poolInfo: poolInfoReducer,
       asp: aspReducer,
       updateRootEvents: updateRootEventsReducer,
-      sync: syncReducer
+      sync: syncReducer,
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware({
-      serializableCheck: {
-        ignoreActions: true
-      }
-    }),
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        serializableCheck: {
+          ignoreActions: true,
+        },
+      }).concat(logger),
   });
 
   store.dispatch(setPoolInfo(poolInfo));
 
   return store;
-}
+};
 
 type StoreType = ReturnType<typeof storeFactory>;
 
-export type RootState = ReturnType<StoreType['getState']>;
-export type AppDispatch = StoreType['dispatch'];
+export type RootState = ReturnType<StoreType["getState"]>;
+export type AppDispatch = StoreType["dispatch"];
