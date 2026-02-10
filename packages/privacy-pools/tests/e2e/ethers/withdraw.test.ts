@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
 
@@ -7,10 +7,14 @@ import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
 import { getEnv } from '../../utils/common';
+import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
+import { mockProverFactory } from '../../utils/mock-prover';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { setupWallet } from '../../utils/test-helpers';
+import { assetVettingFee, deductVettingFees, pushNewAspRoot, sendTx, setupWallet } from '../../utils/test-helpers';
+
+const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 
 describe('PrivacyPools v1 Unshield E2E', () => {
   let anvil: AnvilInstance;
@@ -18,6 +22,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
   const MAINNET_CHAIN_ID = new Eip155ChainId(1);
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
+  const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
+
+  const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+  let vettingFees = 0n;
 
   beforeAll(async () => {
     anvil = defineAnvil({
@@ -33,9 +41,18 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     await anvil.stop();
   });
 
+  beforeEach(async () => {
+    const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
+    vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
+  });
+
   it('[prepareUnshield] prepares withdrawal after deposit', async () => {
     const pool = anvil.pool(10);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
+
+    // Create mock asp
+    const mockAspService = createMockAspService();
+    mockAspService.addLabels([0n, 1n, 2n]);
 
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
@@ -45,8 +62,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
       },
+      proverFactory: mockProverFactory,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
+      aspServiceFactory: () => mockAspService,
     });
 
     const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
@@ -54,22 +73,29 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
 
     // 1. Deposit first
-    const { txns } = await protocol.prepareShield(
+    const { txns: [shieldTx] } = await protocol.prepareShield(
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    await alice.sendTransaction({
-      to: txns[0].to,
-      data: txns[0].data,
-      value: txns[0].value,
-      gasLimit: 6000000n,
-    });
+    await sendTx(alice, shieldTx);
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const balanceAfterDeposit = await protocol.balance([nativeAsset]);
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
+    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
-    expect(balanceAfterDeposit[0].amount).toBe(DEPOSIT_AMOUNT);
+    // 2.b Approve deposits
+    const [note, ..._] = await protocol.notes([nativeAsset]);
+    mockAspService.addLabel(note.label);
+    console.log("label", note.label);
+    await pushNewAspRoot(pool.rpcUrl,
+      "0x" + ENTRYPOINT_ADDRESS.toString(16),
+      "0x" + POSTMAN_ADDRESS.toString(16),
+      { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
+    );
+
+    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset], "approved");
+    expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal
     const recipientAccount = { address: alice.address } as unknown as AccountId;
@@ -92,6 +118,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const pool = anvil.pool(11);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
+    // Create mock asp
+    const mockAspService = createMockAspService();
+    mockAspService.addLabels([0n, 1n, 2n]);
+
     // Create two mock relayers with different fees
     const expensiveRelayer = createMockRelayerClient({ feeBPS: '500' });
     const cheapRelayer = createMockRelayerClient({ feeBPS: '50' });
@@ -102,7 +132,6 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         if (body.relayerUrl.includes('expensive')) {
           return expensiveRelayer.getQuote(body);
         }
-
         return cheapRelayer.getQuote(body);
       },
       relay: cheapRelayer.relay,
@@ -118,6 +147,8 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         'expensive-relayer': 'http://expensive.relayer',
         'cheap-relayer': 'http://cheap.relayer',
       },
+      proverFactory: mockProverFactory,
+      aspServiceFactory: () => mockAspService,
       relayerClientFactory: () => multiRelayerClient,
     });
 
@@ -126,26 +157,34 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const WITHDRAW_AMOUNT = 500000000000000000n;
 
     // 1. Deposit
-    const { txns } = await protocol.prepareShield(
+    const { txns: [shieldTx] } = await protocol.prepareShield(
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    await alice.sendTransaction({
-      to: txns[0].to,
-      data: txns[0].data,
-      value: txns[0].value,
-      gasLimit: 6000000n,
-    });
+    await sendTx(alice, shieldTx);
     await pool.mine(1);
 
-    // 2. Prepare withdrawal - should select cheap relayer
+    // 2. Approve deposits
+    const [note, ..._] = await protocol.notes([nativeAsset]);
+    mockAspService.addLabel(note.label);
+    console.log("label", note.label);
+    await pushNewAspRoot(pool.rpcUrl,
+      "0x" + ENTRYPOINT_ADDRESS.toString(16),
+      "0x" + POSTMAN_ADDRESS.toString(16),
+      { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
+    );
+
+    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset], "approved");
+    expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+
+    // 3. Prepare withdrawal - should select cheap relayer
     const recipientAccount = { address: alice.address } as unknown as AccountId;
     const withdrawOp = await protocol.prepareUnshield(
       { asset: nativeAsset, amount: WITHDRAW_AMOUNT },
       recipientAccount
     );
 
-    // 3. Verify cheapest relayer was selected
+    // 4. Verify cheapest relayer was selected
     expect(withdrawOp.relayData.quote.feeBPS).toBe('50');
     expect(withdrawOp.relayData.relayerId).toBe('cheap-relayer');
   }, 120000);
@@ -153,6 +192,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   it('[prepareUnshield] throws when no sufficient balance', async () => {
     const pool = anvil.pool(12);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
+
+    // Create mock asp
+    const mockAspService = createMockAspService();
+    mockAspService.addLabels([0n, 1n, 2n]);
 
     const mockRelayerClient = createMockRelayerClient();
 
@@ -163,6 +206,8 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       },
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
+      proverFactory: mockProverFactory,
+      aspServiceFactory: () => mockAspService,
     });
 
     const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
@@ -220,6 +265,6 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         { asset: nativeAsset, amount: WITHDRAW_AMOUNT },
         recipientAccount
       )
-    ).rejects.toThrow('All relayers failed');
+    ).rejects.toThrow('Failed to get quote from relayers');
   }, 120000);
 });
