@@ -160,3 +160,11 @@ export async function setupWallet(pool: AnvilPool, pk: string | SigningKey): Pro
 
   return signer;
 }
+
+
+export function deductVettingFees(amount: bigint, vettingFeeBPS: bigint) {
+  const vettingFees = amount * vettingFeeBPS / 10000n;
+
+  return amount - vettingFees;
+}
+
