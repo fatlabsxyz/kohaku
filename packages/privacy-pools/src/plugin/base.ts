@@ -3,7 +3,7 @@ import { ISecretManager, SecretManager } from '../account/keys';
 import { DataService } from '../data/data.service';
 import { Address } from "../interfaces/types.interface";
 import { storeStateManager } from '../state/state-manager';
-import { IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
+import { IEntrypoint, IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 import { AspService } from "../data/asp.service";
 import { RelayerClient } from "../relayer/relayer-client";
 import { IQuoteResponse, IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
@@ -24,7 +24,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
   private secretManager: ISecretManager;
   private stateManager: IStateManager;
   private context: PrivacyPoolsV1ProtocolContext;
-  private chainsEntrypoints: Map<string, Address>;
+  private chainsEntrypoints: Map<string, IEntrypoint>;
   private relayersList: Map<string, string>;
   private relayerClient: IRelayerClient;
 
@@ -40,8 +40,8 @@ export class PrivacyPoolsV1Protocol extends Plugin<
     super();
     this.context = context;
     this.accountIndex = 0;
-    this.chainsEntrypoints = new Map<string, bigint>(Object.entries(chainsEntrypoints));
-    this.relayersList = new Map<string, string>(Object.entries(relayersList));
+    this.chainsEntrypoints = new Map(Object.entries(chainsEntrypoints));
+    this.relayersList = new Map(Object.entries(relayersList));
     this.relayerClient = relayerClientFactory();
     this.secretManager = secretManager({
       host,
@@ -53,6 +53,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       dataService: new DataService({ provider: host.ethProvider }),
       relayerClient: this.relayerClient,
       relayersList: this.relayersList,
+      storageToSyncTo: host.storage,
     });
   }
 
@@ -216,14 +217,14 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       rawData: {
         proof: payload,
         withdrawalPayload: {
-          processooor: `0x${entrypoint.toString(16).padStart(40, '0')}`,
+          processooor: `0x${entrypoint.address.toString(16).padStart(40, '0')}`,
           data: relayData.quote.feeCommitment.withdrawalData,
         },
         chainId: BigInt(chainId.reference),
-        scope: entrypoint,
+        scope: entrypoint.address,
       },
       txData: {
-        to: `0x${entrypoint.toString(16).padStart(40, '0')}`,
+        to: `0x${entrypoint.address.toString(16).padStart(40, '0')}`,
         data: '0x', // TODO: encode actual withdrawal call
         value: 0n,
       },

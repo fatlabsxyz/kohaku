@@ -7,7 +7,7 @@ import { Address } from '../../interfaces/types.interface';
 import { addressToHex } from '../../utils';
 import { RootState } from '../store';
 import { MerkleProof } from '../selectors/merkle.selector';
-import { poolInfoSelector } from '../selectors/slices.selectors';
+import { entrypointInfoSelector } from '../selectors/slices.selectors';
 
 // Use unknown for now as the prover result type - actual type comes from circuits package
 export type WithdrawProofResult = unknown;
@@ -36,7 +36,7 @@ export const withdrawThunk = createAsyncThunk<
   async (params, { getState }) => {
     const state = getState();
     
-    const { chainId, entrypointAddress } = poolInfoSelector(state);
+    const { chainId, entrypointAddress } = entrypointInfoSelector(state);
 
     // 1. Get existing note (smallest sufficient)
     const existingNote = params.getNote(params.asset, params.amount);

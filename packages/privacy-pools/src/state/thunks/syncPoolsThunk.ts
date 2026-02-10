@@ -9,7 +9,7 @@ export interface SyncPoolsThunkParams {
 }
 
 export const syncPoolsThunk = createAsyncThunk<void, SyncPoolsThunkParams, { state: RootState }>(
-  'pools/sync',
+  'sync/pools',
   async ({
     poolsRegistered,
     poolsWoundDown

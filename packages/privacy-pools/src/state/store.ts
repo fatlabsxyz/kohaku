@@ -1,4 +1,11 @@
-import { Action, configureStore, PayloadAction } from "@reduxjs/toolkit";
+import {
+  configureStore,
+  ConfigureStoreOptions,
+  EnhancedStore,
+  PayloadAction,
+  ReducersMapObject,
+  Store,
+} from "@reduxjs/toolkit";
 import depositsReducer from "./slices/depositsSlice";
 import entrypointDepositsReducer from "./slices/entrypointDepositsSlice";
 import withdrawalsReducer from "./slices/withdrawalsSlice";
@@ -6,9 +13,9 @@ import ragequitsReducer from "./slices/ragequitsSlice";
 import assetsReducer from "./slices/assetsSlice";
 import poolsReducer from "./slices/poolsSlice";
 import poolInfoReducer, {
-  PoolInfoState,
-  setPoolInfo,
-} from "./slices/poolInfoSlice";
+  EntrypointInfoState,
+  setEntrypointInfo,
+} from "./slices/entrypointInfoSlice";
 import aspReducer from "./slices/aspSlice";
 import updateRootEventsReducer from "./slices/updateRootEventsSlice";
 import syncReducer from "./slices/syncSlice";
@@ -43,20 +50,33 @@ const logger = createLogger({
   }),
 });
 
-export const storeFactory = (poolInfo: PoolInfoState) => {
+const reducers = {
+  deposits: depositsReducer,
+  entrypointDeposits: entrypointDepositsReducer,
+  withdrawals: withdrawalsReducer,
+  ragequits: ragequitsReducer,
+  assets: assetsReducer,
+  pools: poolsReducer,
+  entrypointInfo: poolInfoReducer,
+  asp: aspReducer,
+  updateRootEvents: updateRootEventsReducer,
+  sync: syncReducer,
+} as const;
+
+type StoreShape = typeof reducers extends ReducersMapObject<infer StateType> ? StateType : never;
+
+interface StoreFactoryParams {
+  entrypointInfo: EntrypointInfoState;
+  initialState?: StoreShape;
+}
+
+export const storeFactory = ({
+  entrypointInfo,
+  initialState,
+}: StoreFactoryParams) => {
   const store = configureStore({
-    reducer: {
-      deposits: depositsReducer,
-      entrypointDeposits: entrypointDepositsReducer,
-      withdrawals: withdrawalsReducer,
-      ragequits: ragequitsReducer,
-      assets: assetsReducer,
-      pools: poolsReducer,
-      poolInfo: poolInfoReducer,
-      asp: aspReducer,
-      updateRootEvents: updateRootEventsReducer,
-      sync: syncReducer,
-    },
+    preloadedState: initialState,
+    reducer: reducers,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: {
@@ -65,7 +85,7 @@ export const storeFactory = (poolInfo: PoolInfoState) => {
       }).concat(logger),
   });
 
-  store.dispatch(setPoolInfo(poolInfo));
+  store.dispatch(setEntrypointInfo(entrypointInfo));
 
   return store;
 };

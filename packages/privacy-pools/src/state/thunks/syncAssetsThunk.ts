@@ -10,7 +10,7 @@ export interface SyncAssetsThunkParams {
 }
 
 export const syncAssetsThunk = createAsyncThunk<void, SyncAssetsThunkParams, { state: RootState }>(
-  'assets/sync',
+  'sync/assets',
   async ({ dataService, myUnsyncedAssetsSelector }, { dispatch }) => {
     const myUnsyncedAssets = myUnsyncedAssetsSelector();
 
