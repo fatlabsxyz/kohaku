@@ -10,7 +10,7 @@ export interface SyncAspThunkParams {
 }
 
 export const syncAspThunk = createAsyncThunk<void, SyncAspThunkParams, { state: RootState }>(
-  'asp/sync',
+  'sync/asp',
   async ({ aspService }, { getState, dispatch }) => {
     const state = getState();
     const isAspRootUpToDate = isAspRootUpToDateSelector(state);

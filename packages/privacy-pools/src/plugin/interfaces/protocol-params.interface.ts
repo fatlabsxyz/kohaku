@@ -5,6 +5,7 @@ import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { Address } from "../../interfaces/types.interface";
 import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
 import { StoreFactoryParams } from "../../state/state-manager";
+import { RootState } from "../../state";
 
 type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
 
@@ -24,18 +25,23 @@ export interface PPv1PrivateOperation {
 
 export interface PrivacyPoolsV1ProtocolContext { }
 
+export interface IEntrypoint {
+  address: Address;
+  deploymentBlock: bigint;
+}
+
 export interface PrivacyPoolsV1ProtocolParams {
   context: PrivacyPoolsV1ProtocolContext;
   secretManager: (params: SecretManagerParams) => ISecretManager;
   stateManager: (params: StoreFactoryParams) => IStateManager;
   relayerClientFactory: () => IRelayerClient;
-  chainsEntrypoints: Record<string, bigint>;
+  chainsEntrypoints: Record<string, IEntrypoint>;
   relayersList: Record<string, string>;
 }
 
 interface IBaseOperationParams {
   chainId: Eip155ChainId<number>;
-  entrypoint: Address;
+  entrypoint: IEntrypoint;
 }
 
 export type ISyncOperationParams = IBaseOperationParams;

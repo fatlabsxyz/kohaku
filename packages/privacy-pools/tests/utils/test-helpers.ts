@@ -2,6 +2,9 @@ import { Erc20Id } from '@kohaku-eth/plugins';
 
 import { JsonRpcProvider, Contract, keccak256, AbiCoder, toBeHex, getAddress } from 'ethers';
 import { type AnvilPool } from './anvil';
+import { PrivacyPoolsV1Protocol } from '../../src';
+import { createMockHost } from './mock-host';
+import { MAINNET_ENTRYPOINT } from './common';
 
 /**
  * Fund an account with ETH using anvil pool's setBalance
@@ -127,3 +130,9 @@ export async function assetVettingFee(provider: any, entrypointAddress: bigint, 
   const [pool, minimumDepositAmount, vettingFeeBPS, maxRelayFeeBPS] = await ep.assetConfig(asset.reference);
   return vettingFeeBPS as bigint;
 }
+
+export const getProtocol = (host = createMockHost()) => new PrivacyPoolsV1Protocol(host, {
+  chainsEntrypoints: {
+    [MAINNET_ENTRYPOINT.chainId.toString()]: MAINNET_ENTRYPOINT
+  }
+});

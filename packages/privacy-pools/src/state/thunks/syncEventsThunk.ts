@@ -21,7 +21,7 @@ export const syncEventsThunk = createAsyncThunk<
   bigint,
   SyncEventsThunkParams,
   { state: RootState; }
->("sync/syncEvents", async ({ dataService }, { getState, dispatch }) => {
+>("sync/events", async ({ dataService }, { getState, dispatch }) => {
   const state = getState();
   const myPools = poolsSelector(state);
   const lastSyncedBlock = selectLastSyncedBlock(state);
