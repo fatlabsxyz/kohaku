@@ -87,6 +87,7 @@ export interface IStateManager {
    * All assets if not specified.
    */
   getBalances: (params: IGetBalancesOperationParams) => Map<Address, bigint>;
+  dumpState: () => Record<string, RootState>;
 }
 
 export type Note = {

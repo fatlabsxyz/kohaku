@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { IQuoteResponse, IRelayerClient } from '../../relayer/interfaces/relayer-client.interface';
 import { Address } from '../../interfaces/types.interface';
 import { RootState } from '../store';
+import { entrypointInfoSelector } from '../selectors/slices.selectors';
 
 export interface QuoteResult {
   quote: IQuoteResponse;
@@ -53,7 +54,7 @@ export const quoteThunk = createAsyncThunk<
 >(
   'quote/getBestQuote',
   async (params, { getState }) => {
-    const { chainId } = getState().poolInfo;
+    const { chainId } = entrypointInfoSelector(getState());
     const { relayerClient, relayers, asset, amount, recipient, extraGas } = params;
 
     if (relayers.size === 0) {
