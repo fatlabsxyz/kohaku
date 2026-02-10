@@ -7,7 +7,7 @@ import { TxData } from '@kohaku-eth/provider';
 import { prepareErc20Shield, prepareNativeShield } from '../../account/tx/shield';
 import { E_ADDRESS } from '../../config';
 import { addressToHex } from '../../utils';
-import { depositsSelector, entrypointDepositSelector, poolInfoSelector } from './slices.selectors';
+import { depositsSelector, entrypointDepositSelector, entrypointInfoSelector } from './slices.selectors';
 import { aspLeavesSelector } from './asp.selector';
 
 export const createMyDepositsSelector = ({
@@ -17,7 +17,7 @@ export const createMyDepositsSelector = ({
     [
       depositsSelector,
       aspLeavesSelector,
-      poolInfoSelector,
+      entrypointInfoSelector,
     ],
     (depositsMap, approvedLabels, { chainId, entrypointAddress }): Map<Precommitment, IIndexedDepositEvent> => {
       const myDeposits: IIndexedDepositEvent[] = [];
@@ -86,7 +86,7 @@ export const createGetNextDepositSecretsSelector = ({
   return createSelector(
     [
       depositsCountSelector,
-      poolInfoSelector,
+      entrypointInfoSelector,
     ],
     (depositCount, { chainId, entrypointAddress }) => {
       return secretManager.getDepositSecrets({
@@ -108,7 +108,7 @@ export const createGetNextDepositPayloadSelector = ({
       getNextDepositSecretsSelector,
       (_state: RootState, asset: Address, _amount: bigint) => asset,
       (_state: RootState, _asset: Address, amount: bigint) => amount,
-      poolInfoSelector,
+      entrypointInfoSelector,
     ],
     ({ precommitment }, asset, amount, { entrypointAddress }): TxData => {
       const assetHex = addressToHex(asset);

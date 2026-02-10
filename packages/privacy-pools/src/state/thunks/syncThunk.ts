@@ -9,7 +9,7 @@ import { registerLastUpdateRootEvent } from '../slices/updateRootEventsSlice';
 import { syncAspThunk, SyncAspThunkParams } from './syncAspThunk';
 import { setLastSyncedBlock } from '../slices/syncSlice';
 import { syncEventsThunk, SyncEventsThunkParams } from './syncEventsThunk';
-import { poolInfoSelector } from '../selectors/slices.selectors';
+import { entrypointInfoSelector } from '../selectors/slices.selectors';
 
 export interface SyncThunkParams extends
   SyncEventsThunkParams,
@@ -20,12 +20,11 @@ export interface SyncThunkParams extends
 }
 
 export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootState; }>(
-  'sync/fetchEvents',
+  'sync/syncEverything',
   async ({ dataService, ...params }, { getState, dispatch }) => {
     const state = getState();
-    const poolInfo = poolInfoSelector(state);
-    const lastSyncedBlock = selectLastSyncedBlock(state);
-    const fromBlock = lastSyncedBlock;
+    const poolInfo = entrypointInfoSelector(state);
+    const fromBlock = selectLastSyncedBlock(state);
 
     const {
       EntrypointDeposited,

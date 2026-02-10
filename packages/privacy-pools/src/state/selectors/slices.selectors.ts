@@ -3,7 +3,7 @@ import { deserialize } from "../utils/serialize.utils";
 import { RootState } from "../store";
 import { AspState } from "../slices/aspSlice";
 import { UpdateRootEventsState } from "../slices/updateRootEventsSlice";
-import { PoolInfoState } from "../slices/poolInfoSlice";
+import { EntrypointInfoState } from "../slices/entrypointInfoSlice";
 
 import {
   Address,
@@ -50,9 +50,9 @@ export const lastUpdateRootEventSelector = createSelector(
   },
 );
 
-export const poolInfoSelector = createSelector(
-  [(state: RootState) => state.poolInfo],
-  (poolInfo) => deserialize(poolInfo) as PoolInfoState,
+export const entrypointInfoSelector = createSelector(
+  [(state: RootState) => state.entrypointInfo],
+  (poolInfo) => deserialize(poolInfo) as EntrypointInfoState,
 );
 
 export const poolsSelector = selectEntityMap(
