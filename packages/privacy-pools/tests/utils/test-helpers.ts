@@ -1,4 +1,4 @@
-import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
+import { AbiCoder, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
 
 import { Erc20Id } from '@kohaku-eth/plugins';
 
@@ -109,6 +109,49 @@ export async function transferERC20FromWhale(
 
   // Stop impersonating
   await provider.send('anvil_stopImpersonatingAccount', [normalizedWhale]);
+}
+
+interface Callback<T> {
+  (): Promise<T>;
+}
+async function impersonate<T>(provider: JsonRpcProvider, address: string, f: Callback<T>): Promise<T> {
+  await provider.send('anvil_impersonateAccount', [address]);
+  const r = await f();
+  await provider.send('anvil_stopImpersonatingAccount', [address]);
+  return r;
+}
+
+export async function pushNewAspRoot(
+  rpcUrl: string,
+  entrypointAddress: string,
+  postmanAddress: string,
+  { _root, _ipfsCID }: { _root: bigint, _ipfsCID: string; }
+) {
+  const provider = new JsonRpcProvider(rpcUrl, undefined, { staticNetwork: true });
+  // Normalize addresses
+  const normalizedPostman = getAddress(postmanAddress.toLowerCase());
+
+  // const postmanAbi = ['function updateRoot(_root uint256, _ipfsCID string) returns (_index uint256)'];
+  const postmanAbi = [{
+    "type": "function",
+    "name": "updateRoot",
+    "inputs": [
+      { "name": "_root", "type": "uint256", "internalType": "uint256" },
+      { "name": "_ipfsCID", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [
+      { "name": "_index", "type": "uint256", "internalType": "uint256" }
+    ],
+    "stateMutability": "nonpayable"
+  }] as const;
+
+  // Impersonate the postman
+  const { hash } = await impersonate(provider, normalizedPostman, async () => {
+    const impersonatedSigner = await provider.getSigner(normalizedPostman);
+    const entrypoint = new Contract(getAddress(entrypointAddress), postmanAbi, impersonatedSigner);
+    return (await entrypoint.updateRoot(_root, _ipfsCID)) as ContractTransactionResponse;
+  });
+  return { hash };
 }
 
 export async function assetVettingFee(provider: any, entrypointAddress: bigint, asset: Erc20Id) {
