@@ -45,12 +45,17 @@ import { syncThunk } from "./thunks/syncThunk";
 import { quoteThunk, QuoteResult } from "./thunks/quoteThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
 import { Store } from "@reduxjs/toolkit";
+import { deserialize } from "./utils/serialize.utils";
 
 export interface StoreFactoryParams
   extends BaseSelectorParams, SyncAspThunkParams {
   relayerClient: IRelayerClient;
   relayersList: Map<string, string>;
   storageToSyncTo?: Storage;
+  initialState?: Record<
+    string,
+    Parameters<typeof storeFactory>[0]["initialState"]
+  >;
 }
 
 const initializeSelectors = <const T extends Store>({
@@ -166,12 +171,27 @@ const getStoreStorageKey = (
 
 const storeByChainAndEntrypoint = ({
   storageToSyncTo,
+  initialState,
   ...params
 }: Omit<StoreFactoryParams, "dataService">) => {
+  const initialMapState = Object.entries(initialState || {}).map(
+    ([key, state]) =>
+      [
+        key,
+        initializeSelectors({
+          ...params,
+          store: storeFactory({
+            entrypointInfo: deserialize(state!.entrypointInfo),
+            initialState: state,
+          }),
+        }),
+      ] as const,
+  );
+
   const chainStoreMap = new Map<
     string,
     ReturnType<typeof initializeSelectors<ReturnType<typeof storeFactory>>>
-  >();
+  >(initialMapState);
 
   return {
     getChainStore: (getChainStoreParams: GetChainStoreParams) => {
@@ -205,8 +225,14 @@ const storeByChainAndEntrypoint = ({
 
       return storeWithSelectors;
     },
-    getAllStores: () => {
-      return Array.from(chainStoreMap);
+    getAllStores: (): ReturnType<IStateManager['dumpState']> => {
+      return Array.from(chainStoreMap).reduce(
+        (completeState, [chainKey, state]) => ({
+          ...completeState,
+          [chainKey]: state.getState(),
+        }),
+        {} as ReturnType<IStateManager['dumpState']>,
+      );
     },
   };
 };
@@ -214,7 +240,7 @@ const storeByChainAndEntrypoint = ({
 export const storeStateManager = (
   params: StoreFactoryParams,
 ): IStateManager => {
-  const { getChainStore } = storeByChainAndEntrypoint(params);
+  const { getChainStore, getAllStores } = storeByChainAndEntrypoint(params);
   const { storageToSyncTo } = params;
 
   const _mgr = {
@@ -329,5 +355,6 @@ export const storeStateManager = (
     ): Promise<unknown[]> {
       throw new Error("Function not implemented.");
     },
+    dumpState: () => getAllStores(),
   };
 };
