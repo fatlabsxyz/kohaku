@@ -58,6 +58,7 @@
   "devDependencies": {
     "@types/node": "^24.1.0",
     "@types/redux-logger": "^3.0.13",
+    "@zk-kit/lean-imt": "^2.2.4",
     "dotenv": "^17.2.1",
     "prool": "^0.0.24",
     "ts-node": "^10.9.2",

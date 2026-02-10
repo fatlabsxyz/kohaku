@@ -1,12 +1,12 @@
-import { AccountId, AssetAmount, AssetId, ChainId, Eip155ChainId, Erc20Id, Host, Plugin, PrivateOperation, ShieldPreparation } from "@kohaku-eth/plugins";
+import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
+import { AccountId, AssetAmount, AssetId, ChainId, Eip155ChainId, Erc20Id, Host, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
 import { ISecretManager, SecretManager } from '../account/keys';
-import { DataService } from '../data/data.service';
-import { Address } from "../interfaces/types.interface";
-import { storeStateManager } from '../state/state-manager';
-import { IEntrypoint, IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 import { AspService } from "../data/asp.service";
-import { RelayerClient } from "../relayer/relayer-client";
+import { DataService } from '../data/data.service';
 import { IQuoteResponse, IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
+import { RelayerClient } from "../relayer/relayer-client";
+import { storeStateManager } from '../state/state-manager';
+import { IEntrypoint, INote, IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {};
 
@@ -32,10 +32,12 @@ export class PrivacyPoolsV1Protocol extends Plugin<
     {
       context = DefaultContext,
       secretManager = SecretManager,
-      stateManager = storeStateManager,
+      stateManager: stateManagerFactory = storeStateManager,
       chainsEntrypoints = {},
       relayersList = {},
       relayerClientFactory = () => new RelayerClient({ network: host.network }),
+      aspServiceFactory = () => new AspService(host.network),
+      proverFactory = Prover,
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     super();
     this.context = context;
@@ -47,12 +49,13 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       host,
       accountIndex: this.accountIndex
     });
-    this.stateManager = stateManager({
+    this.stateManager = stateManagerFactory({
       secretManager: this.secretManager,
-      aspService: new AspService(host.network),
+      aspService: aspServiceFactory(),
       dataService: new DataService({ provider: host.ethProvider }),
       relayerClient: this.relayerClient,
       relayersList: this.relayersList,
+      proverFactory,
       storageToSyncTo: host.storage,
     });
   }
