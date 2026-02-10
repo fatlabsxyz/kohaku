@@ -176,6 +176,52 @@ export class PrivacyPoolsV1Protocol extends Plugin<
     return { txns: [tx] };
   }
 
+  /**
+   * Returns all notes for the account.
+   * @param assets - Filter by specific assets (optional, if empty returns all chains)
+   * @param includeSpent - Include notes with zero balance (default: false)
+   */
+  async notes(
+    assets: AssetId[] = [],
+    includeSpent = false
+  ): Promise<INote[]> {
+    const evmAssets = assets.filter(({ chainId }) => chainIsEvmChain(chainId)) as (AssetId & { chainId: Eip155ChainId<number>; })[];
+
+    // If assets specified, get unique chains from them
+    // Otherwise, iterate all configured chains
+    const chainsToQuery = evmAssets.length > 0
+      ? [...new Set(evmAssets.map(a => a.chainId.toString()))]
+      : [...this.chainsEntrypoints.keys()];
+
+    const allNotes: INote[] = [];
+
+    for (const chainIdStr of chainsToQuery) {
+      const entrypoint = this.chainsEntrypoints.get(chainIdStr);
+
+      if (!entrypoint) continue;
+
+      // Parse chain ID (format: "eip155:1")
+      const chainId = new Eip155ChainId(parseInt(chainIdStr.split(':')[1] ?? '1'));
+
+      await this.stateManager.sync({ chainId, entrypoint });
+
+      const chainAssets = evmAssets
+        .filter(a => a.chainId.toString() === chainIdStr)
+        .map(getAssetAddress);
+
+      const notes = this.stateManager.getNotes({
+        chainId,
+        entrypoint,
+        includeSpent,
+        assets: chainAssets.length > 0 ? chainAssets : undefined,
+      });
+
+      allNotes.push(...notes);
+    }
+
+    return allNotes;
+  }
+
   async prepareUnshield(assets: AssetAmount, to: AccountId): Promise<PPv1PrivateOperation> {
     const { asset, amount } = assets;
     const { chainId: _chainId } = asset;
