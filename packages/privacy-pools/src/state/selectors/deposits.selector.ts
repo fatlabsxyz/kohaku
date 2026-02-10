@@ -9,7 +9,11 @@ import { E_ADDRESS } from '../../config';
 import { addressToHex } from '../../utils';
 import { depositsSelector, entrypointDepositSelector, entrypointInfoSelector } from './slices.selectors';
 import { aspLeavesSelector } from './asp.selector';
+import { Secret } from '../../account/keys';
 
+/**
+ * Returns a Map with every deposit we own. We also check approved status.
+ */
 export const createMyDepositsSelector = ({
   secretManager,
 }: Pick<BaseSelectorParams, 'secretManager'>) => {
@@ -76,6 +80,11 @@ export const createMyEntrypointDepositsSelector = (
   );
 };
 
+/**
+ * 
+ * Given our state, computes the next secret in the sequence for a new deposit
+ *
+ */
 export const createGetNextDepositSecretsSelector = ({
   depositsCountSelector,
   secretManager,
@@ -88,7 +97,7 @@ export const createGetNextDepositSecretsSelector = ({
       depositsCountSelector,
       entrypointInfoSelector,
     ],
-    (depositCount, { chainId, entrypointAddress }) => {
+    (depositCount, { chainId, entrypointAddress }): Secret => {
       return secretManager.getDepositSecrets({
         entrypointAddress,
         chainId,

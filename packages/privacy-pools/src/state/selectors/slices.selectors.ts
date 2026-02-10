@@ -55,6 +55,10 @@ export const entrypointInfoSelector = createSelector(
   (poolInfo) => deserialize(poolInfo) as EntrypointInfoState,
 );
 
+/**
+ * Maps asset address to IPoolInfo
+ *
+ */
 export const poolsSelector = selectEntityMap(
   (s) => s.pools.poolsTuples,
   deserialize as () => [Address, IPool],
