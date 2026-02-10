@@ -1,4 +1,5 @@
 import { Eip155ChainId, Storage } from "@kohaku-eth/plugins";
+import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
 
 import { Address } from "../interfaces/types.interface";
 import {
@@ -52,6 +53,7 @@ export interface StoreFactoryParams
   relayerClient: IRelayerClient;
   relayersList: Map<string, string>;
   storageToSyncTo?: Storage;
+  proverFactory: () => ReturnType<typeof Prover>;
   initialState?: Record<
     string,
     Parameters<typeof storeFactory>[0]["initialState"]
@@ -61,7 +63,7 @@ export interface StoreFactoryParams
 const initializeSelectors = <const T extends Store>({
   store,
   ...params
-}: Omit<StoreFactoryParams, "dataService"> & { store: T }) => {
+}: Omit<StoreFactoryParams, "dataService"> & { store: T; }) => {
   // We need to tie the selectors instances to a specific store
   // so they can memoize correctly
   const myDepositsSelector = createMyDepositsSelector(params);
@@ -333,9 +335,7 @@ export const storeStateManager = (
           getNote: store.selectors.getNote,
           getNextNote: store.selectors.getNextNote,
           getExistingNoteSecrets: store.selectors.getExistingNoteSecrets,
-          getStateMerkleProof: store.selectors.getStateMerkleProof,
-          getAspMerkleProof: store.selectors.getAspMerkleProof,
-          getScope: () => entrypoint.address, // TODO: Add proper scope selector
+        proverFactory: params.proverFactory,
           asset,
           amount: amount ?? 0n,
           recipient,
