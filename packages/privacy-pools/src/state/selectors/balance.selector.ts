@@ -1,15 +1,15 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { IDepositWithAsset } from '../../data/interfaces/events.interface';
+import { IDepositWithAsset, IDepositWithBalance } from '../../data/interfaces/events.interface';
 import { createMyWithdrawalsSelector } from './withdrawals.selector';
 import { createMyRagequitsSelector } from './ragequits.selector';
 import { Address, Precommitment } from '../../interfaces/types.interface';
 import { createMyDepositsSelector } from './deposits.selector';
 import { entrypointDepositSelector, poolsSelector } from './slices.selectors';
 
-export interface IDepositWithBalance extends IDepositWithAsset {
-  balance: bigint;
-}
-
+/**
+ * Provides a map of every precommitment mapped to a deposit+assetAddress
+ *
+ */
 export const createMyDepositsWithAssetSelector = (
   myDepositsSelector: ReturnType<typeof createMyDepositsSelector>,
 ) => {
@@ -42,6 +42,11 @@ export const createMyDepositsWithAssetSelector = (
   );
 };
 
+/**
+ * Provides a map of every precommitment mapped to a deposit+assetAddress+balance.
+ * It takes deposits+asset, withdraws and ragequits and aggregates balance over a 
+ * deposit lineage returning lefover balance.
+ */
 export const createMyDepositsBalanceSelector = ({
   myWithdrawalsSelector,
   myRagequitsSelector,
@@ -97,6 +102,16 @@ export const createMyDepositsBalanceSelector = ({
 
 export class NotEnoughCommitsToSpendError extends Error {}
 
+/**
+ * Creates a selector that returns the deposits with non-zero balance
+ * balance := deposit.value - sum( all withdraw(deposit).value )
+ *
+ * Deposits could still be unapproved
+ *
+ * @param assetAddress bigint
+ * @param amount bigint
+ * @returns IDepositWithBalance[]
+ */
 export const createDepositsToSpendSelector = ({
   myDepositsBalanceSelector,
 }: {myDepositsBalanceSelector: ReturnType<typeof createMyDepositsBalanceSelector>}) => {
