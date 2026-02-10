@@ -9,7 +9,7 @@ import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
 import { getEnv } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { approveERC20, assetVettingFee, getProtocol, sendTx, setupWallet, transferERC20FromWhale } from '../../utils/test-helpers';
+import { approveERC20, assetVettingFee, deductVettingFees, getProtocol, sendTx, setupWallet, transferERC20FromWhale } from '../../utils/test-helpers';
 
 describe.skip('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
@@ -222,10 +222,3 @@ describe.skip('PrivacyPools v1 E2E Flow', () => {
     expect(balance2.amount).toBe(POST_FEE_DEPOSIT_AMOUNT_1 + POST_FEE_DEPOSIT_AMOUNT_2);
   });
 });
-
-
-function deductVettingFees(amount: bigint, vettingFeeBPS: bigint) {
-  const vettingFees = amount * vettingFeeBPS / 10_000n;
-
-  return amount - vettingFees;
-}
