@@ -1,25 +1,27 @@
+import { calculateContext, Hash } from "@0xbow/privacy-pools-core-sdk";
+import { Prover, WithdrawPublicSignals } from "@fatsolutions/privacy-pools-core-circuits";
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { calculateContext } from "@0xbow/privacy-pools-core-sdk";
-import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
-import { Note } from '../../plugin/interfaces/protocol-params.interface';
 import { Secret } from '../../account/keys';
 import { Address } from '../../interfaces/types.interface';
+import { INote } from '../../plugin/interfaces/protocol-params.interface';
 import { addressToHex } from '../../utils';
+import { aspMerkleProofSelector, stateMerkleProofSelector } from '../selectors/merkle.selector';
+import { entrypointInfoSelector, poolsSelector } from '../selectors/slices.selectors';
 import { RootState } from '../store';
-import { MerkleProof } from '../selectors/merkle.selector';
-import { entrypointInfoSelector } from '../selectors/slices.selectors';
 
-// Use unknown for now as the prover result type - actual type comes from circuits package
-export type WithdrawProofResult = unknown;
+export type ProverInstance = Awaited<ReturnType<typeof Prover>>;
+export type ProveResult = Awaited<ReturnType<ProverInstance['prove']>>;
+export type WithdrawProofResult = Omit<ProveResult, 'mappedSignals'> & {
+  mappedSignals: WithdrawPublicSignals;
+};
 
 export interface WithdrawThunkParams {
   // Selector functions
-  getNote: (assetAddress: Address, minAmount: bigint) => Note | undefined;
-  getNextNote: (note: Note, withdrawAmount: bigint, chainId: bigint, entrypoint: Address) => { note: Note; secrets: Secret; };
-  getExistingNoteSecrets: (note: Note, chainId: bigint, entrypoint: Address) => Secret;
-  getStateMerkleProof: (note: Note & Secret) => MerkleProof;
-  getAspMerkleProof: (label: bigint) => MerkleProof;
-  getScope: (assetAddress: Address) => bigint;
+  getNote: (assetAddress: Address, minAmount: bigint) => INote | undefined;
+  getNextNote: (note: INote, withdrawAmount: bigint, chainId: bigint, entrypoint: Address) => { note: INote; secrets: Secret; };
+  getExistingNoteSecrets: (note: INote, chainId: bigint, entrypoint: Address) => Secret;
+  // Prover factory
+  proverFactory: () => ReturnType<typeof Prover>;
   // Withdrawal params
   asset: Address;
   amount: bigint;
@@ -60,25 +62,31 @@ export const withdrawThunk = createAsyncThunk<
       entrypointAddress
     );
 
+    const addressPoolTuple = Array.from(poolsSelector(state)).find(([_, p]) => p.asset === params.asset);
+
+    if (!addressPoolTuple) {
+      throw new Error(`No pool found for asset ${params.asset}`);
+    }
+
+    const [_, poolInfo] = addressPoolTuple;
+
     // 4. Get Merkle proofs (selectors parameterized by note/label)
     const existingNoteFull = { ...existingNote, ...existingSecrets };
-    const stateMerkleProof = params.getStateMerkleProof(existingNoteFull);
-    const aspMerkleProof = params.getAspMerkleProof(existingNote.label);
+
+    const stateMerkleProof = stateMerkleProofSelector(state, poolInfo.address, existingNoteFull);
+    const aspMerkleProof = aspMerkleProofSelector(state, existingNote.label);
 
     // 5. Calculate context
     // NOTE: The SDK uses branded Hash types, casting for compatibility
-    const scope = params.getScope(params.asset);
     const withdrawal = {
       processooor: addressToHex(entrypointAddress) as `0x${string}`,
       data: params.relayDataObject.withdrawalData as `0x${string}`,
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const contextHex = calculateContext(withdrawal, scope as any);
+    const contextHex = calculateContext(withdrawal, poolInfo.scope as Hash);
     const context = BigInt(contextHex);
 
     // 6. Generate ZK proof
-    const prover = await Prover();
-
+    const prover = await params.proverFactory();
     return prover.prove("withdraw", {
       context,
       label: existingNote.label,

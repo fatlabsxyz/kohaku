@@ -2,10 +2,12 @@ import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
 import { Eip155ChainId } from '@kohaku-eth/plugins';
 import { TxData } from '@kohaku-eth/provider';
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
+import { IAspService } from "../../data/asp.service";
+import { IDepositWithBalance } from "../../data/interfaces/events.interface";
 import { Address } from "../../interfaces/types.interface";
 import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
-import { StoreFactoryParams } from "../../state/state-manager";
 import { RootState } from "../../state";
+import { StoreFactoryParams } from "../../state/state-manager";
 
 type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
 
@@ -36,6 +38,8 @@ export interface PrivacyPoolsV1ProtocolParams {
   stateManager: (params: StoreFactoryParams) => IStateManager;
   relayerClientFactory: () => IRelayerClient;
   chainsEntrypoints: Record<string, IEntrypoint>;
+  aspServiceFactory: () => IAspService;
+  proverFactory: () => ReturnType<typeof Prover>;
   relayersList: Record<string, string>;
 }
 
@@ -64,6 +68,20 @@ export interface IRagequitOperationParams extends IBaseOperationParams {
   assets?: Address[];
 }
 
+export interface IGetNotesParams extends IBaseOperationParams {
+  includeSpent?: boolean;
+  assets?: Address[];
+}
+
+export type INote = Pick<IDepositWithBalance,
+  "label" | "precommitment" | "commitment" | "value" | "balance" | "assetAddress" | "approved"
+> & {
+  // deposit index
+  deposit: number;
+  // withdraw index
+  withdraw: number;
+};
+
 export interface IStateManager {
   /**
    * Queries the chain and updates its state
@@ -88,12 +106,10 @@ export interface IStateManager {
    */
   getBalances: (params: IGetBalancesOperationParams) => Map<Address, bigint>;
   dumpState: () => Record<string, RootState>;
+  /**
+   * Gets all notes for the account.
+   * @param includeSpent - If true, include notes with zero balance
+   * @param assets - Optional filter by specific assets
+   */
+  getNotes: (params: IGetNotesParams) => INote[];
 }
-
-export type Note = {
-  precommitment: bigint;
-  label: bigint;
-  value: bigint;
-  deposit: number;
-  withdraw: number;
-};

@@ -1,12 +1,12 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { AspService } from '../../data/asp.service';
+import { IAspService } from '../../data/asp.service';
 import { isAspRootUpToDateSelector } from '../selectors/asp.selector';
 import { registerAspTree } from '../slices/aspSlice';
 import { RootState } from '../store';
 import { lastUpdateRootEventSelector } from '../selectors/slices.selectors';
 
 export interface SyncAspThunkParams {
-  aspService: AspService;
+  aspService: IAspService;
 }
 
 export const syncAspThunk = createAsyncThunk<void, SyncAspThunkParams, { state: RootState }>(
