@@ -6,7 +6,7 @@ import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv } from '../../utils/common';
+import { getEnv, MAINNET_ENTRYPOINT } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { mockProverFactory } from '../../utils/mock-prover';
@@ -58,9 +58,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
     const host = createMockHost(undefined, pool.rpcUrl);
+
     const protocol = new PrivacyPoolsV1Protocol(host, {
       chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
       proverFactory: mockProverFactory,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -141,7 +142,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
     const protocol = new PrivacyPoolsV1Protocol(host, {
       chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
       relayersList: {
         'expensive-relayer': 'http://expensive.relayer',
@@ -202,7 +203,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
     const protocol = new PrivacyPoolsV1Protocol(host, {
       chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
@@ -234,7 +235,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
     const protocol = new PrivacyPoolsV1Protocol(host, {
       chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: ENTRYPOINT_ADDRESS
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
       relayersList: { 'failing-relayer': 'http://failing.relayer' },
       relayerClientFactory: () => failingRelayer,

@@ -5,6 +5,8 @@ import { Address } from "../interfaces/types.interface";
 import {
   IDepositOperationParams,
   IEntrypoint,
+  IGetNotesParams,
+  INote,
   IRagequitOperationParams,
   IStateManager,
   IWithdrawapOperationParams,
@@ -27,12 +29,7 @@ import {
   createMyEntrypointDepositsSelector,
 } from "./selectors/deposits.selector";
 import {
-  createAspLeavesSelector,
-  createAspMerkleProofSelector,
-  createStateLeavesSelector,
-  createStateMerkleProofSelector,
-} from "./selectors/merkle.selector";
-import {
+createAllNotesSelector,
   createExistingNoteSecretsDeriver,
   createGetNoteSelector,
   createNextNoteDeriver,
@@ -101,20 +98,16 @@ const initializeSelectors = <const T extends Store>({
     myDepositsBalanceSelector,
     myWithdrawalsSelector,
   });
+  const allNotesSelector = createAllNotesSelector({
+    myDepositsBalanceSelector,
+    myWithdrawalsSelector,
+  });
   const getNextNote = createNextNoteDeriver({
     secretManager: params.secretManager,
   });
   const getExistingNoteSecrets = createExistingNoteSecretsDeriver({
     secretManager: params.secretManager,
   });
-
-  // Merkle proof selectors (mocked for now)
-  const stateLeavesSelector = createStateLeavesSelector();
-  const aspLeavesSelector = createAspLeavesSelector();
-  const stateMerkleProofSelector =
-    createStateMerkleProofSelector(stateLeavesSelector);
-  const aspMerkleProofSelector =
-    createAspMerkleProofSelector(aspLeavesSelector);
 
   // Deposit payload selectors
   const getNextDepositSecretsSelector = createGetNextDepositSecretsSelector({
@@ -140,18 +133,12 @@ const initializeSelectors = <const T extends Store>({
       getNextDepositPayload: (asset: Address, amount: bigint) =>
         getNextDepositPayloadSelector(store.getState(), asset, amount),
       getNextNote,
-      getNote: (assetAddress: Address, minAmount: bigint) =>
-        getNoteSelector(store.getState(), assetAddress, minAmount),
+      getNote: (assetAddress: Address, minAmount: bigint) => getNoteSelector(store.getState(), assetAddress, minAmount),
+      getAllNotes: () => allNotesSelector(store.getState()),
 
       myPoolsSelector: () => myPoolsSelector(store.getState()),
       myUnsyncedAssetsSelector: () =>
         myUnsyncedAssetsSelector(store.getState()),
-
-      getAspMerkleProof: (label: bigint) =>
-        aspMerkleProofSelector(store.getState(), label),
-      getStateMerkleProof: (
-        note: Parameters<typeof stateMerkleProofSelector>[1],
-      ) => stateMerkleProofSelector(store.getState(), note),
     },
   };
 };
@@ -245,12 +232,7 @@ export const storeStateManager = (
   const { getChainStore, getAllStores } = storeByChainAndEntrypoint(params);
   const { storageToSyncTo } = params;
 
-  const _mgr = {
-    _getChainStore: getChainStore,
-  };
-
   return {
-    ..._mgr,
     sync: async (chainInfo): Promise<void> => {
       const store = getChainStore(chainInfo);
 
@@ -335,7 +317,7 @@ export const storeStateManager = (
           getNote: store.selectors.getNote,
           getNextNote: store.selectors.getNextNote,
           getExistingNoteSecrets: store.selectors.getExistingNoteSecrets,
-        proverFactory: params.proverFactory,
+          proverFactory: params.proverFactory,
           asset,
           amount: amount ?? 0n,
           recipient,
@@ -354,6 +336,29 @@ export const storeStateManager = (
       params: IRagequitOperationParams,
     ): Promise<unknown[]> {
       throw new Error("Function not implemented.");
+    },
+    getNotes: ({
+      chainId,
+      entrypoint,
+      includeSpent = false,
+      assets = [],
+    }: IGetNotesParams): INote[] => {
+      const store = getChainStore({ chainId, entrypoint });
+      let notes = store.selectors.getAllNotes();
+
+      // Filter out spent notes unless includeSpent
+      if (!includeSpent) {
+        notes = notes.filter(note => note.balance > 0n);
+      }
+
+      // Filter by assets if specified
+      if (assets.length > 0) {
+        const assetSet = new Set(assets.map(a => a.toString()));
+
+        notes = notes.filter(note => assetSet.has(note.assetAddress.toString()));
+      }
+
+      return notes;
     },
     dumpState: () => getAllStores(),
   };
