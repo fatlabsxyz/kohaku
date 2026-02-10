@@ -1,12 +1,12 @@
 import { poseidon } from "maci-crypto/build/ts/hashing";
-import { Note } from "./plugin/interfaces/protocol-params.interface";
+import { INote } from "./plugin/interfaces/protocol-params.interface";
 import { Address } from "./interfaces/types.interface";
 
 /**
  * Given a note, computes it commitment
  *
  */
-export function commitment({ value, label, precommitment }: Note): bigint {
+export function commitment({ balance: value, label, precommitment }: INote): bigint {
   return poseidon([value, label, precommitment]);
 }
 
