@@ -8,6 +8,7 @@ export interface GetLogsParams {
     address: string;
     fromBlock: number;
     toBlock?: number;
+    maxQuerySize?: number;
 }
 
 const abis = {
@@ -27,20 +28,44 @@ export class EthClient {
         return this.provider.request(...params);
     }
 
-    async getLogs(params: GetLogsParams): Promise<RpcLog[]> {
-        const filter: Record<string, string> = {
-            address: params.address,
-            fromBlock: toHex(params.fromBlock),
-        };
+    async getLogs({
+        maxQuerySize = 5000,
+        ...params
+    }: GetLogsParams): Promise<RpcLog[]> {
+        const fromBlock = params.fromBlock;
+        const toBlock = params.toBlock ?? await this.getBlockNumber();
 
-        if (params.toBlock !== undefined) {
-            filter['toBlock'] = toHex(params.toBlock);
+        const logs: RpcLog[] = [];
+        for (let start = fromBlock; start <= toBlock; start += maxQuerySize + 1) {
+            const end = Math.min(start + maxQuerySize, toBlock);
+            const result = await this.provider.request({
+                method: "eth_getLogs",
+                params: [{
+                    address: params.address,
+                    fromBlock: toHex(start),
+                    toBlock: toHex(end),
+                }],
+            }) as RpcLog[];
+            logs.push(...result);
         }
 
+        return logs;
+    }
+
+    async getCode(address: string, blockNumber?: number): Promise<string> {
+        const block = blockNumber !== undefined ? toHex(blockNumber) : 'latest';
         return this.provider.request({
-            method: "eth_getLogs",
-            params: [filter],
-        }) as Promise<RpcLog[]>;
+            method: 'eth_getCode',
+            params: [address, block],
+        }) as Promise<string>;
+    }
+
+    async getBlockNumber(): Promise<number> {
+        const hex = await this.provider.request({
+            method: "eth_blockNumber",
+            params: [],
+        }) as string;
+        return parseInt(hex, 16);
     }
 
     async makeContractRequest<
