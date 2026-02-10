@@ -26,6 +26,10 @@ export interface IDepositWithAsset extends IIndexedDepositEvent {
   assetAddress: Address;
 }
 
+export interface IDepositWithBalance extends IDepositWithAsset {
+  balance: bigint;
+}
+
 export interface IWithdrawalEvent extends IPoolEvent {
   spentNullifier: Nullifier;
   commitment: Commitment;

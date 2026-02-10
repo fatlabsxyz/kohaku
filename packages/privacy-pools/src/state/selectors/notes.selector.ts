@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { ISecretManager, Secret } from '../../account/keys';
 import { Address } from '../../interfaces/types.interface';
-import { Note } from '../../plugin/interfaces/protocol-params.interface';
+import { INote } from '../../plugin/interfaces/protocol-params.interface';
 import { createMyDepositsBalanceSelector } from './balance.selector';
 import { createMyWithdrawalsSelector } from './withdrawals.selector';
 
@@ -23,7 +23,7 @@ export const createGetNoteSelector = ({
       (_state: unknown, assetAddress: Address, _minAmount: bigint) => assetAddress,
       (_state: unknown, _assetAddress: Address, minAmount: bigint) => minAmount,
     ],
-    (depositsMap, withdrawalsMap, assetAddress, minAmount): Note | undefined => {
+    (depositsMap, withdrawalsMap, assetAddress, minAmount): INote | undefined => {
       // Filter deposits by asset and sufficient balance
       const eligibleDeposits = Array.from(depositsMap.values())
         .filter(deposit => deposit.assetAddress === assetAddress && deposit.balance >= minAmount);
@@ -43,14 +43,12 @@ export const createGetNoteSelector = ({
 
       const bestDeposit = eligibleDeposits[0]!;
 
-      // Get withdrawal count for this deposit (next withdrawal index)
+      // Get withdrawal count for this deposit
       const withdrawals = withdrawalsMap.get(bestDeposit.precommitment) || [];
       const withdrawIndex = withdrawals.length;
 
       return {
-        precommitment: bestDeposit.precommitment,
-        label: bestDeposit.label,
-        value: bestDeposit.balance, // Current spendable balance
+        ...bestDeposit,
         deposit: bestDeposit.index,
         withdraw: withdrawIndex,
       };
@@ -58,8 +56,36 @@ export const createGetNoteSelector = ({
   );
 };
 
+/**
+ * Creates a selector that returns all notes for the account.
+ */
+export const createAllNotesSelector = ({
+  myDepositsBalanceSelector,
+  myWithdrawalsSelector,
+}: {
+  myDepositsBalanceSelector: ReturnType<typeof createMyDepositsBalanceSelector>;
+  myWithdrawalsSelector: ReturnType<typeof createMyWithdrawalsSelector>;
+}) => {
+  return createSelector(
+    [myDepositsBalanceSelector, myWithdrawalsSelector],
+    (depositsMap, withdrawalsMap): INote[] => {
+      return Array.from(depositsMap.values()).map(deposit => ({
+        label: deposit.label,
+        precommitment: deposit.precommitment,
+        commitment: deposit.commitment,
+        value: deposit.value,
+        balance: deposit.balance,
+        assetAddress: deposit.assetAddress,
+        approved: deposit.approved,
+        deposit: deposit.index,
+        withdraw: (withdrawalsMap.get(deposit.precommitment) || []).length,
+      }));
+    }
+  );
+};
+
 type NextNoteResult = {
-  note: Note;
+  note: INote;
   secrets: Secret;
 };
 
@@ -73,14 +99,14 @@ export const createNextNoteDeriver = ({
   secretManager: ISecretManager;
 }) => {
   return (
-    note: Note,
+    note: INote,
     withdrawAmount: bigint,
     chainId: bigint,
     entrypointAddress: Address
   ): NextNoteResult => {
-    const newValue = note.value - withdrawAmount;
+    const newBalance = note.balance - withdrawAmount;
 
-    if (newValue < 0n) {
+    if (newBalance < 0n) {
       throw new Error("Withdrawal amount exceeds note balance");
     }
 
@@ -94,10 +120,8 @@ export const createNextNoteDeriver = ({
 
     return {
       note: {
-        precommitment: secrets.precommitment,
-        label: note.label,
-        value: newValue,
-        deposit: note.deposit,
+        ...note,
+        balance: newBalance,
         withdraw: note.withdraw + 1,
       },
       secrets,
@@ -115,7 +139,7 @@ export const createExistingNoteSecretsDeriver = ({
   secretManager: ISecretManager;
 }) => {
   return (
-    note: Note,
+    note: INote,
     chainId: bigint,
     entrypointAddress: Address
   ): Secret => {
