@@ -90,7 +90,6 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
     mockAspService.addLabel(note.label);
-    console.log("label", note.label);
     await pushNewAspRoot(pool.rpcUrl,
       "0x" + ENTRYPOINT_ADDRESS.toString(16),
       "0x" + POSTMAN_ADDRESS.toString(16),
@@ -171,7 +170,6 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     // 2. Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
     mockAspService.addLabel(note.label);
-    console.log("label", note.label);
     await pushNewAspRoot(pool.rpcUrl,
       "0x" + ENTRYPOINT_ADDRESS.toString(16),
       "0x" + POSTMAN_ADDRESS.toString(16),
@@ -222,7 +220,6 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const recipientAccount = { address: alice.address } as unknown as AccountId;
 
     const [approvedBalance] = await protocol.balance([nativeAsset], "approved");
-    console.log("approvedBalance", approvedBalance);
     expect(approvedBalance.amount < WITHDRAW_AMOUNT).toBeTruthy();
 
     await expect(

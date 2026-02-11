@@ -8,18 +8,19 @@ import { Address } from "../../interfaces/types.interface";
 import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
 import { RootState } from "../../state";
 import { StoreFactoryParams } from "../../state/state-manager";
-
-type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
+import { WithdrawProveOutput } from "../../state/thunks/withdrawThunk";
 
 export interface PPv1PrivateOperation {
   rawData: {
-    proof: ProveOutput;
+    context: bigint,
+    relayData: {},
+    proof: WithdrawProveOutput;
     withdrawalPayload: WithdrawalPayload;
     chainId: bigint;
     scope: bigint;
   };
   txData: TxData;
-  relayData: {
+  quoteData: {
     quote: IQuoteResponse;
     relayerId: string;
   };
@@ -41,6 +42,7 @@ export interface PrivacyPoolsV1ProtocolParams {
   aspServiceFactory: () => IAspService;
   proverFactory: () => ReturnType<typeof Prover>;
   relayersList: Record<string, string>;
+  initialState?: Record<string, RootState>;
 }
 
 interface IBaseOperationParams {
@@ -82,6 +84,19 @@ export type INote = Pick<IDepositWithBalance,
   withdraw: number;
 };
 
+export type StateWithdrawalPayload = {
+  withdrawalInfo: {
+    context: bigint;
+    scope: bigint;
+    relayDataAbi: {};
+    relayDataObject: {};
+    withdrawalObject: WithdrawalPayload;
+  };
+  proofResult: WithdrawProveOutput,
+  quoteData: { quote: IQuoteResponse, relayerId: string; };
+};
+
+
 export interface IStateManager {
   /**
    * Queries the chain and updates its state
@@ -94,7 +109,7 @@ export interface IStateManager {
   /**
    * Generates the relayer quotes and withdrawals payloads for the specified amount
    */
-  getWithdrawalPayloads: (params: IWithdrawapOperationParams) => Promise<unknown[]>;
+  getWithdrawalPayloads: (params: IWithdrawapOperationParams) => Promise<StateWithdrawalPayload[]>;
   /**
    * Generates the ragequit payloads for the specified assets. Only unapproved
    * amount will be ragequitted.

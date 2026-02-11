@@ -73,9 +73,9 @@ export interface IQuoteRequest extends IBaseRelayerRequest {
 
 export interface WithdrawalPayload {
   /** Relayer address (0xAdDrEsS) */
-  processooor: string;
+  processooor: `0x${string}`;
   /** Transaction data (hex encoded) */
-  data: string;
+  data: `0x${string}`;
 }
 
 interface ProofRelayerPayload {
