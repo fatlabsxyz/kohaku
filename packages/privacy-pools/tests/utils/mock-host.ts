@@ -25,7 +25,7 @@ const createMockStorage = (): PluginStorage => {
 
   return {
     _brand: "Storage",
-    set: storageMap.set,
+    set: storageMap.set.bind(storageMap),
     get: (key) => storageMap.get(key) || null,
   };
 };
