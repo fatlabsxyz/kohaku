@@ -6,7 +6,7 @@ import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, MAINNET_ENTRYPOINT } from '../../utils/common';
+import { getEnv, MAINNET_ENTRYPOINT, loadInitialState } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { mockProverFactory } from '../../utils/mock-prover';
@@ -15,6 +15,7 @@ import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { assetVettingFee, deductVettingFees, pushNewAspRoot, sendTx, setupWallet } from '../../utils/test-helpers';
 
 const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
+
 
 describe('PrivacyPools v1 Unshield E2E', () => {
   let anvil: AnvilInstance;
@@ -63,6 +64,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
+      initialState: loadInitialState(),
       proverFactory: mockProverFactory,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
@@ -148,6 +150,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         'expensive-relayer': 'http://expensive.relayer',
         'cheap-relayer': 'http://cheap.relayer',
       },
+      initialState: loadInitialState(),
       proverFactory: mockProverFactory,
       aspServiceFactory: () => mockAspService,
       relayerClientFactory: () => multiRelayerClient,
@@ -205,6 +208,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
+      initialState: loadInitialState(),
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
       proverFactory: mockProverFactory,
@@ -216,6 +220,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
     // Try to withdraw without depositing first
     const recipientAccount = { address: alice.address } as unknown as AccountId;
+
+    const [approvedBalance] = await protocol.balance([nativeAsset], "approved");
+    console.log("approvedBalance", approvedBalance);
+    expect(approvedBalance.amount < WITHDRAW_AMOUNT).toBeTruthy();
 
     await expect(
       protocol.prepareUnshield(
@@ -237,6 +245,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
+      initialState: loadInitialState(),
       relayersList: { 'failing-relayer': 'http://failing.relayer' },
       relayerClientFactory: () => failingRelayer,
     });
