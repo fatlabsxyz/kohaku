@@ -1,0 +1,130 @@
+import { Prover } from '@fatsolutions/privacy-pools-core-circuits';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+
+import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
+
+import { E_ADDRESS } from '../../../src/config/constants';
+import { MAINNET_CONFIG } from '../../../src/config/index';
+import { PrivacyPoolsV1Protocol } from '../../../src/index';
+import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { getEnv, loadInitialState, MAINNET_ENTRYPOINT } from '../../utils/common';
+import { createMockAspService } from '../../utils/mock-asp-service';
+import { createMockHost } from '../../utils/mock-host';
+import { createMockRelayerClient } from '../../utils/mock-relayer';
+import { TEST_ACCOUNTS } from '../../utils/test-accounts';
+import { assetVettingFee, deductVettingFees, pushNewAspRoot, sendTx, setupWallet } from '../../utils/test-helpers';
+
+const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
+
+describe.only('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
+  let anvil: AnvilInstance;
+
+  const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
+  const MAINNET_CHAIN_ID = new Eip155ChainId(1);
+  const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
+  const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
+
+  const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+  let vettingFees = 0n;
+
+  beforeAll(async () => {
+    anvil = defineAnvil({
+      forkUrl: MAINNET_FORK_URL,
+      port: 8547,
+      chainId: 1,
+    });
+
+    await anvil.start();
+  }, 300000);
+
+  afterAll(async () => {
+    await anvil.stop();
+  });
+
+  beforeEach(async () => {
+    const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
+    vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
+  });
+
+  it('[prepareUnshield] prepares withdrawal with real prover after deposit', async () => {
+    const pool = anvil.pool(20);
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
+
+    // Load initial state from env var if available
+    const initialState = loadInitialState();
+
+    // Create mock asp
+    const mockAspService = createMockAspService();
+    mockAspService.addLabels([0n, 1n, 2n]);
+
+    // Create mock relayer
+    const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
+
+    const host = createMockHost(undefined, pool.rpcUrl);
+
+    const protocol = new PrivacyPoolsV1Protocol(host, {
+      chainsEntrypoints: {
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
+      },
+      initialState,
+      proverFactory: () => Prover({ browser: false }), // Use real prover
+      relayersList: { 'mock-relayer': 'http://mock.relayer' },
+      relayerClientFactory: () => mockRelayerClient,
+      aspServiceFactory: () => mockAspService,
+    });
+
+    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
+    const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
+
+    // 1. Deposit first
+    const { txns: [shieldTx] } = await protocol.prepareShield(
+      { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
+    );
+
+    await sendTx(alice, shieldTx);
+    await pool.mine(1);
+
+    // 2. Verify deposit balance
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
+    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+
+    // 2.b Approve deposits
+    const [note, ..._] = await protocol.notes([nativeAsset]);
+    mockAspService.addLabel(note.label);
+    await pushNewAspRoot(pool.rpcUrl,
+      "0x" + ENTRYPOINT_ADDRESS.toString(16),
+      "0x" + POSTMAN_ADDRESS.toString(16),
+      { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
+    );
+
+    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset], "approved");
+    expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+
+    // 3. Prepare withdrawal with real prover
+    const recipientAccount = { address: alice.address } as unknown as AccountId;
+    const withdrawOp = await protocol.prepareUnshield(
+      { asset: nativeAsset, amount: WITHDRAW_AMOUNT },
+      recipientAccount
+    );
+
+    // 4. Verify withdrawal operation structure
+    expect(withdrawOp.quoteData).toBeDefined();
+    expect(withdrawOp.quoteData.quote).toBeDefined();
+    expect(withdrawOp.quoteData.quote.feeBPS).toBe('100');
+    expect(withdrawOp.quoteData.relayerId).toBe('mock-relayer');
+    expect(withdrawOp.rawData).toBeDefined();
+    expect(withdrawOp.rawData.proof).toBeDefined();
+
+    // Verify real proof structure (not mocked zeros)
+    const { proof, context } = withdrawOp.rawData;
+    expect(proof.proof).toBeDefined();
+    expect(proof.publicSignals).toBeDefined();
+    expect(proof.publicSignals.length).toBeGreaterThan(0);
+
+    expect(proof.mappedSignals.withdrawnValue).toEqual(WITHDRAW_AMOUNT);
+    expect(proof.mappedSignals.context).toEqual(context);
+
+    expect(withdrawOp.txData).toBeDefined();
+  }, 300000); // Extended timeout for real proof generation
+});
