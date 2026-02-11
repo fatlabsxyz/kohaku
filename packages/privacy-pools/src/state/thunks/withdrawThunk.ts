@@ -8,10 +8,10 @@ import { addressToHex } from '../../utils';
 import { aspMerkleProofSelector, stateMerkleProofSelector } from '../selectors/merkle.selector';
 import { entrypointInfoSelector, poolsSelector } from '../selectors/slices.selectors';
 import { RootState } from '../store';
+import { poolFromAssetSelector } from "../selectors/pools.selector";
 
-export type ProverInstance = Awaited<ReturnType<typeof Prover>>;
-export type ProveResult = Awaited<ReturnType<ProverInstance['prove']>>;
-export type WithdrawProofResult = Omit<ProveResult, 'mappedSignals'> & {
+export type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
+export type WithdrawProveOutput = Omit<ProveOutput, 'mappedSignals'> & {
   mappedSignals: WithdrawPublicSignals;
 };
 
@@ -26,11 +26,11 @@ export interface WithdrawThunkParams {
   asset: Address;
   amount: bigint;
   recipient: Address;
-  relayDataObject: any;
+  context: bigint;
 }
 
 export const withdrawThunk = createAsyncThunk<
-  WithdrawProofResult,
+  WithdrawProveOutput,
   WithdrawThunkParams,
   { state: RootState; }
 >(
@@ -62,13 +62,10 @@ export const withdrawThunk = createAsyncThunk<
       entrypointAddress
     );
 
-    const addressPoolTuple = Array.from(poolsSelector(state)).find(([_, p]) => p.asset === params.asset);
-
-    if (!addressPoolTuple) {
+    const poolInfo = poolFromAssetSelector(state, params.asset)
+    if (!poolInfo) {
       throw new Error(`No pool found for asset ${params.asset}`);
     }
-
-    const [_, poolInfo] = addressPoolTuple;
 
     // 4. Get Merkle proofs (selectors parameterized by note/label)
     const existingNoteFull = { ...existingNote, ...existingSecrets };
@@ -76,19 +73,10 @@ export const withdrawThunk = createAsyncThunk<
     const stateMerkleProof = stateMerkleProofSelector(state, poolInfo.address, existingNoteFull);
     const aspMerkleProof = aspMerkleProofSelector(state, existingNote.label);
 
-    // 5. Calculate context
-    // NOTE: The SDK uses branded Hash types, casting for compatibility
-    const withdrawal = {
-      processooor: addressToHex(entrypointAddress) as `0x${string}`,
-      data: params.relayDataObject.withdrawalData as `0x${string}`,
-    };
-    const contextHex = calculateContext(withdrawal, poolInfo.scope as Hash);
-    const context = BigInt(contextHex);
-
     // 6. Generate ZK proof
     const prover = await params.proverFactory();
     return prover.prove("withdraw", {
-      context,
+      context: params.context,
       label: existingNote.label,
       existingNullifier: existingSecrets.nullifier,
       existingSecret: existingSecrets.salt,

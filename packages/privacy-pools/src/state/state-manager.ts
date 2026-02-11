@@ -10,8 +10,9 @@ import {
   IRagequitOperationParams,
   IStateManager,
   IWithdrawapOperationParams,
+  StateWithdrawalPayload,
 } from "../plugin/interfaces/protocol-params.interface";
-import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
+import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from "../relayer/interfaces/relayer-client.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import {
@@ -34,16 +35,18 @@ import {
   createGetNoteSelector,
   createNextNoteDeriver,
 } from "./selectors/notes.selector";
-import { createMyPoolsSelector } from "./selectors/pools.selector";
+import { createMyPoolsSelector, poolFromAssetSelector } from "./selectors/pools.selector";
 import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
 import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { RootState, storeFactory } from "./store";
 import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
 import { quoteThunk, QuoteResult } from "./thunks/quoteThunk";
-import { withdrawThunk } from "./thunks/withdrawThunk";
+import { WithdrawProveOutput, withdrawThunk } from "./thunks/withdrawThunk";
 import { Store, unwrapResult } from "@reduxjs/toolkit";
 import { deserialize } from "./utils/serialize.utils";
+import { addressToHex } from "../utils";
+import { calculateContext, Hash } from "@0xbow/privacy-pools-core-sdk";
 
 export interface StoreFactoryParams
   extends BaseSelectorParams, SyncAspThunkParams {
@@ -77,6 +80,7 @@ const initializeSelectors = <const T extends Store>({
   });
 
   const myPoolsSelector = createMyPoolsSelector(myEntrypointDepositsSelector);
+
   const myUnsyncedAssetsSelector =
     createMyUnsyncedAssetsSelector(myPoolsSelector);
   const myDepositsBalanceSelector = createMyDepositsBalanceSelector({
@@ -137,6 +141,8 @@ const initializeSelectors = <const T extends Store>({
       getAllNotes: () => allNotesSelector(store.getState()),
 
       myPoolsSelector: () => myPoolsSelector(store.getState()),
+      poolFromAssetSelector: (assetAddress: Address) => poolFromAssetSelector(store.getState(), assetAddress),
+
       myUnsyncedAssetsSelector: () =>
         myUnsyncedAssetsSelector(store.getState()),
     },
@@ -291,7 +297,7 @@ export const storeStateManager = (
       asset,
       amount,
       recipient,
-    }: IWithdrawapOperationParams) => {
+    }: IWithdrawapOperationParams): Promise<Array<StateWithdrawalPayload>> => {
       const store = getChainStore({ chainId, entrypoint });
 
       // Get best quote from relayers
@@ -311,6 +317,16 @@ export const storeStateManager = (
 
       const { quote, relayerId } = unwrapResult(quoteResultAction);
 
+      const poolInfo = store.selectors.poolFromAssetSelector(asset);
+      if (!poolInfo)
+        throw new Error(`No pool found for asset ${asset}`);
+
+      const withdrawal = {
+        processooor: addressToHex(entrypoint.address) as `0x${string}`,
+        data: quote.feeCommitment.withdrawalData as `0x${string}`,
+      };
+      const context = BigInt(calculateContext(withdrawal, poolInfo.scope as Hash));
+
       // Dispatch the withdraw thunk which handles note selection and proof generation
       const withdrawResultAction = await store.dispatch(
         withdrawThunk({
@@ -321,15 +337,23 @@ export const storeStateManager = (
           asset,
           amount: amount ?? 0n,
           recipient,
-          relayDataObject: quote.feeCommitment,
+          context,
         })
       );
 
       const withdrawProofResult = unwrapResult(withdrawResultAction);
 
       return [{
-        payload: withdrawProofResult,
-        relayData: { quote, relayerId },
+        withdrawalInfo: {
+          context,
+          scope: poolInfo.scope,
+          // raw RelayData:= { address recipient; address feeRecipient; uint256 relayFeeBPS;  }
+          relayDataAbi: {},
+          relayDataObject: {}, // TODO: decode(relayDataAbi, withdrawal.data)
+          withdrawalObject: withdrawal,
+        },
+        proofResult: withdrawProofResult,
+        quoteData: { quote, relayerId },
       }];
     },
     getRagequitPayloads: function (
