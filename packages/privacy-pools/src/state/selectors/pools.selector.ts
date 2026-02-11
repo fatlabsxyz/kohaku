@@ -72,7 +72,22 @@ export const poolCommitmentsSelector = createSelector(
     });
 
     return new Set(
-      eventsSorterByBlockNumber.map(({commitment}) => commitment)
+      eventsSorterByBlockNumber.map(({ commitment }) => commitment)
     );
+  }
+);
+
+export const poolFromAssetSelector = createSelector(
+  [
+    poolsSelector,
+    (state: RootState, assetAddress: Address) => assetAddress,
+  ],
+  (pools, assetAddress: Address): IPool | undefined => {
+    const addressPoolTuple = Array.from(pools).find(([_, p]) => p.asset === assetAddress);
+    if (!addressPoolTuple) {
+      return undefined;
+    }
+    const [_, poolInfo] = addressPoolTuple;
+    return poolInfo;
   }
 );
