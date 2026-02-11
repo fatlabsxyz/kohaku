@@ -29,7 +29,7 @@ import {
   createMyEntrypointDepositsSelector,
 } from "./selectors/deposits.selector";
 import {
-createAllNotesSelector,
+  createAllNotesSelector,
   createExistingNoteSecretsDeriver,
   createGetNoteSelector,
   createNextNoteDeriver,
@@ -42,7 +42,7 @@ import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
 import { quoteThunk, QuoteResult } from "./thunks/quoteThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
-import { Store } from "@reduxjs/toolkit";
+import { Store, unwrapResult } from "@reduxjs/toolkit";
 import { deserialize } from "./utils/serialize.utils";
 
 export interface StoreFactoryParams
@@ -309,10 +309,10 @@ export const storeStateManager = (
         throw new Error("Failed to get quote from relayers");
       }
 
-      const { quote, relayerId } = quoteResultAction.payload as QuoteResult;
+      const { quote, relayerId } = unwrapResult(quoteResultAction);
 
       // Dispatch the withdraw thunk which handles note selection and proof generation
-      const result = await store.dispatch(
+      const withdrawResultAction = await store.dispatch(
         withdrawThunk({
           getNote: store.selectors.getNote,
           getNextNote: store.selectors.getNextNote,
@@ -322,15 +322,15 @@ export const storeStateManager = (
           amount: amount ?? 0n,
           recipient,
           relayDataObject: quote.feeCommitment,
-        }),
+        })
       );
 
-      return [
-        {
-          payload: result.payload,
-          relayData: { quote, relayerId },
-        },
-      ];
+      const withdrawProofResult = unwrapResult(withdrawResultAction);
+
+      return [{
+        payload: withdrawProofResult,
+        relayData: { quote, relayerId },
+      }];
     },
     getRagequitPayloads: function (
       params: IRagequitOperationParams,
