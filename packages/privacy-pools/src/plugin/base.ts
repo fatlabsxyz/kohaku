@@ -1,4 +1,5 @@
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
+import { encodeWithdrawalPayload } from "../utils.js";
 import { AccountId, AssetAmount, AssetId, ChainId, Eip155ChainId, Erc20Id, Host, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
 import { ISecretManager, SecretManager } from '../account/keys';
 import { AspService } from "../data/asp.service";
@@ -128,7 +129,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       },
       withdrawalPayload
     },
-    relayData: {
+    quoteData: {
       relayerId,
       quote: {
         feeCommitment,
@@ -260,27 +261,40 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       recipient: recipientAddress,
     });
 
-    const { payload, relayData } = result as {
-      payload: PPv1PrivateOperation['rawData']['proof'];
-      relayData: { quote: IQuoteResponse; relayerId: string; };
+    if (!result)
+      throw new Error("We failed to create a withdrawalPayload");
+
+    const {
+      proofResult,
+      quoteData,
+      withdrawalInfo: {
+        scope,
+        relayDataObject,
+        context,
+        withdrawalObject
+      }
+    } = result;
+
+    const rawData = {
+      context,
+      relayData: relayDataObject,
+      proof: proofResult,
+      withdrawalPayload: withdrawalObject,
+      chainId: BigInt(chainId.reference),
+      scope: entrypoint.address,
     };
 
+
+    const encodedWithdrawalData = encodeWithdrawalPayload(withdrawalObject, proofResult, scope);
+
     return {
-      rawData: {
-        proof: payload,
-        withdrawalPayload: {
-          processooor: `0x${entrypoint.address.toString(16).padStart(40, '0')}`,
-          data: relayData.quote.feeCommitment.withdrawalData,
-        },
-        chainId: BigInt(chainId.reference),
-        scope: entrypoint.address,
-      },
+      rawData,
       txData: {
         to: `0x${entrypoint.address.toString(16).padStart(40, '0')}`,
-        data: '0x', // TODO: encode actual withdrawal call
+        data: encodedWithdrawalData, // TODO: encode actual withdrawal call
         value: 0n,
       },
-      relayData,
+      quoteData,
     };
   }
 
