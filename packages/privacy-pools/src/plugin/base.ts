@@ -31,6 +31,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
   constructor(readonly host: Host,
     {
       context = DefaultContext,
+      initialState = {},
       secretManager = SecretManager,
       stateManager: stateManagerFactory = storeStateManager,
       chainsEntrypoints = {},
@@ -50,6 +51,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       accountIndex: this.accountIndex
     });
     this.stateManager = stateManagerFactory({
+      initialState,
       secretManager: this.secretManager,
       aspService: aspServiceFactory(),
       dataService: new DataService({ provider: host.ethProvider }),
@@ -260,7 +262,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
 
     const { payload, relayData } = result as {
       payload: PPv1PrivateOperation['rawData']['proof'];
-      relayData: { quote: IQuoteResponse; relayerId: string };
+      relayData: { quote: IQuoteResponse; relayerId: string; };
     };
 
     return {
@@ -284,6 +286,10 @@ export class PrivacyPoolsV1Protocol extends Plugin<
 
   broadcast(operation: PPv1PrivateOperation): Promise<void> {
     throw new Error("Method not implemented.");
+  }
+
+  dumpState() {
+    return this.stateManager.dumpState();
   }
 
 }
