@@ -38,7 +38,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       chainsEntrypoints = {},
       relayersList = {},
       relayerClientFactory = () => new RelayerClient({ network: host.network }),
-      aspServiceFactory = () => new AspService(host.network),
+      aspServiceFactory = () => new AspService({ network: host.network}),
       proverFactory = Prover,
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     super();
@@ -281,7 +281,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       proof: proofResult,
       withdrawalPayload: withdrawalObject,
       chainId: BigInt(chainId.reference),
-      scope: entrypoint.address,
+      scope,
     };
 
 

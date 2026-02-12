@@ -74,6 +74,12 @@ export interface IPoolWindDownEvent extends IBaseEvent {
   pool: Address;
 }
 
+export interface ILeafInsertedEvent extends IBaseEvent {
+  index: bigint;
+  commitment: Commitment;
+  root: bigint;
+}
+
 export interface IPool {
   address: Address;
   asset: Address;

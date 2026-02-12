@@ -23,7 +23,7 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
   'sync/syncEverything',
   async ({ dataService, ...params }, { getState, dispatch }) => {
     const state = getState();
-    const poolInfo = entrypointInfoSelector(state);
+    const { entrypointAddress } = entrypointInfoSelector(state);
     const fromBlock = selectLastSyncedBlock(state);
 
     const {
@@ -39,7 +39,7 @@ export const syncThunk = createAsyncThunk<void, SyncThunkParams, { state: RootSt
         "PoolWindDown"
       ],
       fromBlock,
-      address: poolInfo.entrypointAddress,
+      address: entrypointAddress,
     });
 
     await dispatch(syncPoolsThunk({

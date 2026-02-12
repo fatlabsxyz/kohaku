@@ -4,7 +4,6 @@ import { RootState } from '../store';
 import { INote, } from '../../plugin/interfaces/protocol-params.interface';
 import { Secret } from '../../account/keys';
 import { commitment } from '../../utils';
-import { depositsSelector } from './slices.selectors';
 import { poolCommitmentsSelector } from './pools.selector';
 import { Commitment } from '../../interfaces/types.interface';
 
