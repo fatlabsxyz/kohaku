@@ -17,8 +17,8 @@ export function commitment({ balance: value, label, precommitment }: INote): big
 /**
  * Converts an Address type to a hex string
  */
-export function addressToHex(address: Address): `0x${string}` {
-  return `0x${address.toString(16).padStart(40, '0')}`;
+export function addressToHex(address: Address, padding = 40): `0x${string}` {
+  return `0x${address.toString(16).padStart(padding, '0')}`;
 }
 
 export function encodeWithdrawalPayload(

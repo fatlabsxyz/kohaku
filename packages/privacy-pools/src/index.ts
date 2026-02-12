@@ -2,6 +2,7 @@ export * from './v1';
 export * from './v2';
 // Main factory
 export { PrivacyPoolsV1Protocol } from './plugin/base';
+export { AspService } from './data/asp.service';
 
 // Types
 export type { SecretManager, SecretManagerParams, ISecretManager } from './account/keys';

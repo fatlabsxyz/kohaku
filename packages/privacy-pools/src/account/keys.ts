@@ -12,10 +12,11 @@ import { Host } from '@kohaku-eth/plugins';
 
 const PRIVACY_POOLS_PATH = "m/28784'/1'";
 
-export type Secret = {
+export interface Secret {
   nullifier: bigint;
   salt: bigint;
   precommitment: bigint;
+  nullifierHash: bigint;
 };
 
 type BaseDeriveSecretParams = {
@@ -58,8 +59,9 @@ export function SecretManager({
     const nullifier = hashToSnarkField([chainId.toString(), toBigInt(entrypointAddress), toBigInt(nullifierSecret)]);
     const salt = hashToSnarkField([chainId.toString(), toBigInt(entrypointAddress), toBigInt(saltSecret)]);
     const precommitment = hashToSnarkField([nullifier, salt]);
+    const nullifierHash = hashToSnarkField([nullifier]);
 
-    return { nullifier, salt, precommitment };
+    return { nullifier, salt, precommitment, nullifierHash };
   };
 
   const getDepositSecrets = ({ entrypointAddress, chainId, depositIndex }: DeriveDepositSecretParams) => {

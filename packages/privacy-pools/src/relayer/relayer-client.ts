@@ -64,6 +64,9 @@ export class RelayerClient implements IRelayerClient {
     }
     const relayRequest = await this.fetch(`${relayerUrl}/request`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(relayBody),
     });
 
