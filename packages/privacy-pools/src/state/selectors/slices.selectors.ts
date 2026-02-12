@@ -15,6 +15,7 @@ import {
 import {
   IAsset,
   IEntrypointDepositEvent,
+  ILeafInsertedEvent,
   IPool,
   IPoolDepositEvent,
   IRagequitEvent,
@@ -35,6 +36,19 @@ export const entrypointDepositSelector = selectEntityMap(
 export const aspSelector = createSelector(
   [(state: RootState) => state.asp],
   (asp) => deserialize(asp) as AspState,
+);
+
+export const poolsLeavesSelector = createSelector(
+  [(state: RootState) => state.poolsLeaves.poolLeavesTuples],
+  (poolsLeaves): Map<Address, Map<bigint, ILeafInsertedEvent>> => {
+    const deserializedPoolsLeaves = deserialize(poolsLeaves);
+    return new Map(
+      deserializedPoolsLeaves.map(
+        ([poolAddress, leavesMap]) =>
+          [poolAddress, new Map(leavesMap)] as const,
+      ),
+    );
+  },
 );
 
 export const lastUpdateRootEventSelector = createSelector(
