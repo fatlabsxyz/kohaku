@@ -4,7 +4,6 @@ import {
   IPoolDepositEvent,
   IWithdrawalEvent,
   IRagequitEvent,
-  IPool,
 } from "../../data/interfaces/events.interface";
 import { selectLastSyncedBlock } from "../selectors/last-synced-block.selector";
 import { registerDeposits } from "../slices/depositsSlice";
@@ -12,6 +11,7 @@ import { registerRagequits } from "../slices/ragequitsSlice";
 import { registerWithdrawals } from "../slices/withdrawalsSlice";
 import { RootState } from "../store";
 import { poolsSelector } from "../selectors/slices.selectors";
+import { registerPoolLeaves } from "../slices/poolLeavesSlice";
 
 export interface SyncEventsThunkParams {
   dataService: IDataService;
@@ -30,7 +30,7 @@ export const syncEventsThunk = createAsyncThunk<
   const results = await Promise.allSettled(
     Array.from(myPools.values()).map(async (pool) => {
       const events = await dataService.getPoolEvents({
-        events: ["PoolDeposited", "Withdrawn", "Ragequit"],
+        events: ["PoolDeposited", "Withdrawn", "Ragequit", "LeafInserted"],
         fromBlock:
           lastSyncedBlock === 0n ? pool.registeredBlock : lastSyncedBlock,
         address: pool.address,
@@ -51,12 +51,17 @@ export const syncEventsThunk = createAsyncThunk<
 
   results.forEach((result) => {
     if (result.status === "fulfilled") {
-      const { PoolDeposited, Withdrawn, Ragequit, toBlock, pool } =
+      const { PoolDeposited, Withdrawn, Ragequit, LeafInserted, toBlock, pool } =
         result.value;
 
       allDeposits.push(...PoolDeposited.map((e) => ({ ...e, pool })));
       allWithdrawals.push(...Withdrawn.map((e) => ({ ...e, pool })));
       allRagequits.push(...Ragequit.map((e) => ({ ...e, pool })));
+
+      dispatch(registerPoolLeaves({
+        poolAddress: pool,
+        leaves: LeafInserted,
+      }));
 
       if (toBlock > maxBlock) {
         maxBlock = toBlock;

@@ -18,6 +18,7 @@ import poolInfoReducer, {
 } from "./slices/entrypointInfoSlice";
 import aspReducer from "./slices/aspSlice";
 import updateRootEventsReducer from "./slices/updateRootEventsSlice";
+import poolsLeavesReducer from "./slices/poolLeavesSlice";
 import syncReducer from "./slices/syncSlice";
 import { createLogger } from "redux-logger";
 
@@ -57,6 +58,7 @@ const reducers = {
   ragequits: ragequitsReducer,
   assets: assetsReducer,
   pools: poolsReducer,
+  poolsLeaves: poolsLeavesReducer,
   entrypointInfo: poolInfoReducer,
   asp: aspReducer,
   updateRootEvents: updateRootEventsReducer,

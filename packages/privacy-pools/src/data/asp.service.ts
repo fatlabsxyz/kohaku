@@ -5,13 +5,20 @@ export interface IAspService {
   getAspTree(ipfsCID: string): Promise<bigint[][]>;
 }
 
+export interface IAspServiceParams {
+  network: Network;
+  aspUrl?: string;
+}
 
 export class AspService implements IAspService {
-  private providerUrl = 'https://ipfs.io/ipfs/';
-  private fetch: Network['fetch'];
+  private providerUrl = "https://ipfs.io/ipfs/";
+  private fetch: Network["fetch"];
 
-  constructor({ fetch }: Network) {
+  constructor({ network: { fetch }, aspUrl }: IAspServiceParams) {
     this.fetch = fetch;
+    if (aspUrl) {
+      this.providerUrl = aspUrl;
+    }
   }
 
   async getAspTree(ipfsCID: string): Promise<bigint[][]> {

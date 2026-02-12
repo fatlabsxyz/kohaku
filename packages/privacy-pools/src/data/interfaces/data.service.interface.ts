@@ -3,6 +3,7 @@ import { Address } from "../../interfaces/types.interface";
 import {
   IAsset,
   IEntrypointDepositEvent,
+  ILeafInsertedEvent,
   IPoolRegisteredEvent,
   IPoolWindDownEvent,
   IRawPoolDepositEvent,
@@ -35,6 +36,7 @@ export interface IPoolEvents {
   PoolDeposited: IRawPoolDepositEvent;
   Withdrawn: IRawWithdrawalEvent;
   Ragequit: IRawRagequitEvent;
+  LeafInserted: ILeafInsertedEvent;
 }
 
 type IGroupedEvents<NamesTable extends Record<string, any>> = {

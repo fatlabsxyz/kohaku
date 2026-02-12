@@ -3,67 +3,91 @@ import { IPool } from "../../data/interfaces/events.interface";
 import { RootState } from "../store";
 import { createMyEntrypointDepositsSelector } from "./deposits.selector";
 import { Address, Commitment } from "../../interfaces/types.interface";
-import { depositsSelector, poolsSelector, ragequitsSelector, withdrawalsSelector } from "./slices.selectors";
+import {
+  depositsSelector,
+  poolsLeavesSelector,
+  poolsSelector,
+  ragequitsSelector,
+  withdrawalsSelector,
+} from "./slices.selectors";
 
 export const createMyPoolsSelector = (
-  myEntrypointDepositsSelector: ReturnType<typeof createMyEntrypointDepositsSelector>
+  myEntrypointDepositsSelector: ReturnType<
+    typeof createMyEntrypointDepositsSelector
+  >,
 ) => {
   return createSelector(
-    [
-      myEntrypointDepositsSelector,
-      poolsSelector,
-    ],
+    [myEntrypointDepositsSelector, poolsSelector],
     (myEntrypointDeposits, pools): IPool[] => {
-      return Array.from(new Set(
-        Array.from(myEntrypointDeposits.values())
-          .map(({ poolAddress }) => poolAddress)
-      ))
+      return Array.from(
+        new Set(
+          Array.from(myEntrypointDeposits.values()).map(
+            ({ poolAddress }) => poolAddress,
+          ),
+        ),
+      )
         .map((poolAddress) => pools.get(poolAddress))
         .filter((pool) => !!pool);
-    }
+    },
   );
 };
+
+export const selectPoolLeaves = createSelector(
+  [poolsLeavesSelector, (_, poolAddress: Address) => poolAddress],
+  (poolsLeaves, poolAddress) => {
+    const poolLeaves = poolsLeaves.get(poolAddress);
+    if (!poolLeaves) {
+      throw new Error('Pool to get leaves for not found.')
+    }
+    return poolLeaves;
+  },
+);
 
 export const poolEventsSelector = createSelector(
   [
     depositsSelector,
     withdrawalsSelector,
     ragequitsSelector,
+    selectPoolLeaves,
     (state: RootState, poolAddress: Address) => poolAddress,
   ],
-  (deposits, withdrawals, ragequits, poolAddress) => {
+  (deposits, withdrawals, ragequits, poolLeaves, poolAddress) => {
     // Filter deposits by pool address
     const filteredDeposits = new Map(
-      Array.from(deposits)
-        .filter(([_, deposit]) => deposit.pool === poolAddress)
+      Array.from(deposits).filter(
+        ([_, deposit]) => deposit.pool === poolAddress,
+      ),
     );
 
     // Filter withdrawals by pool address
     const filteredWithdrawals = new Map(
-      Array.from(withdrawals)
-        .filter(([_, withdrawal]) => withdrawal.pool === poolAddress)
+      Array.from(withdrawals).filter(
+        ([_, withdrawal]) => withdrawal.pool === poolAddress,
+      ),
     );
 
     // Filter ragequits by pool address
     const filteredRagequits = new Map(
-      Array.from(ragequits)
-        .filter(([_, ragequit]) => ragequit.pool === poolAddress)
+      Array.from(ragequits).filter(
+        ([_, ragequit]) => ragequit.pool === poolAddress,
+      ),
     );
 
     return {
       deposits: filteredDeposits,
       withdrawals: filteredWithdrawals,
       ragequits: filteredRagequits,
+      leavesInserted: poolLeaves,
     };
-  }
+  },
 );
 
 export const poolCommitmentsSelector = createSelector(
   [poolEventsSelector],
   (poolEvents): Set<Commitment> => {
-    const { deposits, withdrawals } = poolEvents;
+    const { withdrawals, leavesInserted } = poolEvents;
 
-    const depositsArray = Array.from(deposits.values());
+    const depositsArray = Array.from(leavesInserted.values());
     const withdrawalsArray = Array.from(withdrawals.values());
     const combined = [...depositsArray, ...withdrawalsArray];
 
@@ -72,22 +96,21 @@ export const poolCommitmentsSelector = createSelector(
     });
 
     return new Set(
-      eventsSorterByBlockNumber.map(({ commitment }) => commitment)
+      eventsSorterByBlockNumber.map(({ commitment }) => commitment),
     );
-  }
+  },
 );
 
 export const poolFromAssetSelector = createSelector(
-  [
-    poolsSelector,
-    (state: RootState, assetAddress: Address) => assetAddress,
-  ],
+  [poolsSelector, (state: RootState, assetAddress: Address) => assetAddress],
   (pools, assetAddress: Address): IPool | undefined => {
-    const addressPoolTuple = Array.from(pools).find(([_, p]) => p.asset === assetAddress);
+    const addressPoolTuple = Array.from(pools).find(
+      ([_, p]) => p.asset === assetAddress,
+    );
     if (!addressPoolTuple) {
       return undefined;
     }
     const [_, poolInfo] = addressPoolTuple;
     return poolInfo;
-  }
+  },
 );
