@@ -284,7 +284,6 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       scope,
     };
 
-
     const encodedWithdrawalData = encodeWithdrawalPayload(withdrawalObject, proofResult, scope);
 
     return {
