@@ -127,4 +127,72 @@ describe.only('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     expect(withdrawOp.txData).toBeDefined();
   }, 300000); // Extended timeout for real proof generation
+
+  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws', async () => {
+    const pool = anvil.pool(21);
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
+
+    // Load initial state from env var if available
+    const initialState = loadInitialState();
+
+    // Create mock asp
+    const mockAspService = createMockAspService();
+    mockAspService.addLabels([0n, 1n, 2n]);
+
+    // Create mock relayer
+    const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
+
+    const host = createMockHost(undefined, pool.rpcUrl);
+
+    const protocol = new PrivacyPoolsV1Protocol(host, {
+      chainsEntrypoints: {
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
+      },
+      initialState,
+      proverFactory: () => Prover({ browser: false }), // Use real prover
+      relayersList: { 'mock-relayer': 'http://mock.relayer' },
+      relayerClientFactory: () => mockRelayerClient,
+      aspServiceFactory: () => mockAspService,
+    });
+
+    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
+    const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
+
+    // 1. Deposit first
+    const { txns: [shieldTx] } = await protocol.prepareShield(
+      { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
+    );
+
+    await sendTx(alice, shieldTx);
+    await pool.mine(1);
+
+    // 2. Verify deposit balance
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
+    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+
+    // 2.b Approve deposits
+    const [note, ..._] = await protocol.notes([nativeAsset]);
+    mockAspService.addLabel(note.label);
+    await pushNewAspRoot(pool.rpcUrl,
+      "0x" + ENTRYPOINT_ADDRESS.toString(16),
+      "0x" + POSTMAN_ADDRESS.toString(16),
+      { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
+    );
+
+    // 3. Prepare withdrawal with real prover
+    const recipientAccount = { address: alice.address } as unknown as AccountId;
+    const withdrawOp = await protocol.prepareUnshield(
+      { asset: nativeAsset, amount: WITHDRAW_AMOUNT },
+      recipientAccount
+    );
+
+    // 4. 
+    const r = await sendTx(alice, withdrawOp.txData)
+    await pool.mine(1);
+    const receipt = await (await pool.getProvider()).getTransactionReceipt(r.hash)
+    expect(receipt).toBeTruthy();
+    expect(receipt!.status).toEqual(1);
+
+  }, 300000); // Extended timeout for real proof generation
 });

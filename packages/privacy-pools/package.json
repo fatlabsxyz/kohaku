@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@0xbow/privacy-pools-core-sdk": "^1.0.2",
-    "@fatsolutions/privacy-pools-core-circuits": "1.0.3",
+    "@fatsolutions/privacy-pools-core-circuits": "1.0.4",
     "@kohaku-eth/plugins": "workspace:*",
     "@kohaku-eth/provider": "workspace:*",
     "ox": "^0.12.0",
