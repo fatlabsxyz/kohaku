@@ -1,9 +1,10 @@
 // Main factory
 export { PrivacyPoolsV1Protocol } from './plugin/base';
 export { AspService } from './data/asp.service';
+export { SecretManager } from './account/keys';
 
 // Types
-export type { SecretManager, SecretManagerParams, ISecretManager } from './account/keys';
+export type { SecretManagerParams, ISecretManager } from './account/keys';
 export type { Commitment, Nullifier } from './account/types';
 export type { PPv1NetworkConfig as NetworkConfig } from './config';
 

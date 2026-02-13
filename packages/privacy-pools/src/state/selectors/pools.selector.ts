@@ -85,14 +85,12 @@ export const poolEventsSelector = createSelector(
 export const poolCommitmentsSelector = createSelector(
   [poolEventsSelector],
   (poolEvents): Set<Commitment> => {
-    const { withdrawals, leavesInserted } = poolEvents;
+    const { leavesInserted } = poolEvents;
 
-    const depositsArray = Array.from(leavesInserted.values());
-    const withdrawalsArray = Array.from(withdrawals.values());
-    const combined = [...depositsArray, ...withdrawalsArray];
+    const leavesInsertedArray = Array.from(leavesInserted.values());
 
-    const eventsSorterByBlockNumber = combined.sort((a, b) => {
-      return Number(a.blockNumber - b.blockNumber);
+    const eventsSorterByBlockNumber = leavesInsertedArray.sort((a, b) => {
+      return Number(a.index - b.index);
     });
 
     return new Set(

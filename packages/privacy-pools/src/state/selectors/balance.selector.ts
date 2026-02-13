@@ -167,7 +167,7 @@ export const createMyAssetsBalanceSelector = ({
 
         assetsBalanceMap.set(deposit.assetAddress, {
           ...currentBalance,
-          [balanceKey]: currentBalance[balanceKey] + deposit.value,
+          [balanceKey]: currentBalance[balanceKey] + deposit.balance,
         });
       }
 
