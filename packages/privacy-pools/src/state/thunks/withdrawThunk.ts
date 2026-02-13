@@ -80,7 +80,7 @@ export const withdrawThunk = createAsyncThunk<
       label: existingNote.label,
       existingNullifier: existingSecrets.nullifier,
       existingSecret: existingSecrets.salt,
-      existingValue: existingNote.value,
+      existingValue: existingNote.balance,
       newNullifier: changeSecrets.nullifier,
       newSecret: changeSecrets.salt,
       withdrawnValue: params.amount,

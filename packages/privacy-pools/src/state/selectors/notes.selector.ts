@@ -33,15 +33,9 @@ export const createGetNoteSelector = ({
       }
 
       // Sort by balance ascending to get smallest sufficient
-      eligibleDeposits.sort((a, b) => {
-        if (a.balance < b.balance) return -1;
+      eligibleDeposits.sort((a, b) => Number(a.balance - b.balance));
 
-        if (a.balance > b.balance) return 1;
-
-        return 0;
-      });
-
-      const bestDeposit = eligibleDeposits[0]!;
+      const { commitment, ...bestDeposit } = eligibleDeposits[0]!;
 
       // Get withdrawal count for this deposit
       const withdrawals = withdrawalsMap.get(bestDeposit.precommitment) || [];
