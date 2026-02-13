@@ -3,6 +3,7 @@
   "compilerOptions": {
     "verbatimModuleSyntax": false,
     "baseUrl": ".",
+    "outDir": "./dist",
     "paths": {
       "~/*": [
         "./src/*"
@@ -11,6 +12,5 @@
   },
   "include": [
     "src",
-    "examples"
   ],
 }
