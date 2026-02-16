@@ -5,6 +5,7 @@ packages:
   - packages/plugins
   - packages/railgun-plugin
   - packages/tc-plugin
+  - packages/tongo
   - docs
 
 onlyBuiltDependencies:

@@ -76,8 +76,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@fatsolutions/privacy-pools-core-circuits':
-        specifier: 1.0.3
-        version: 1.0.3
+        specifier: 1.0.4
+        version: 1.0.4
       '@kohaku-eth/plugins':
         specifier: workspace:*
         version: link:../plugins
@@ -288,9 +288,6 @@ importers:
         specifier: ^5.4.0
         version: 5.9.0
     devDependencies:
-      '@railgun-community/circuit-artifacts':
-        specifier: https://npm.railgun.org/railgun-community-circuit-artifacts-0.0.1.tgz
-        version: https://npm.railgun.org/railgun-community-circuit-artifacts-0.0.1.tgz
       '@typechain/ethers-v6':
         specifier: ^0.5.1
         version: 0.5.1(ethers@6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
@@ -357,6 +354,61 @@ importers:
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@24.5.0)(lightningcss@1.30.2)
+
+  packages/tongo:
+    dependencies:
+      '@kohaku-eth/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@kohaku-eth/provider':
+        specifier: workspace:*
+        version: link:../provider
+      '@reduxjs/toolkit':
+        specifier: ^2.11.2
+        version: 2.11.2(react@19.2.3)
+      ethers:
+        specifier: ^6.13.1
+        version: 6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      maci-crypto:
+        specifier: 2.5.0
+        version: 2.5.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      redux-logger:
+        specifier: ^3.0.6
+        version: 3.0.6
+      tongo-sdk:
+        specifier: ../../../tongo-evm/tongo-sdk
+        version: link:../../../tongo-evm/tongo-sdk
+    devDependencies:
+      '@types/node':
+        specifier: ^24.1.0
+        version: 24.5.0
+      '@types/redux-logger':
+        specifier: ^3.0.13
+        version: 3.0.13
+      dotenv:
+        specifier: ^17.2.1
+        version: 17.2.2
+      prool:
+        specifier: ^0.0.24
+        version: 0.0.24
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@24.5.0)(typescript@5.9.3)
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.6.0)(postcss@8.5.6)(tsx@4.20.5)(typescript@5.9.3)(yaml@2.8.1)
+      tsx:
+        specifier: ^4.17.0
+        version: 4.20.5
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      viem:
+        specifier: ^2.43.0
+        version: 2.45.0(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.5.0)(jiti@2.6.0)(lightningcss@1.30.2)(tsx@4.20.5)(yaml@2.8.1)
 
 packages:
 
@@ -996,8 +1048,8 @@ packages:
   '@ethersproject/wordlists@5.8.0':
     resolution: {integrity: sha512-2df9bbXicZws2Sb5S6ET493uJ0Z84Fjr3pC4tu/qlnZERibZCeUVuqdtt+7Tv9xxhUxHoIekIA7avrKUWHrezg==}
 
-  '@fatsolutions/privacy-pools-core-circuits@1.0.3':
-    resolution: {integrity: sha512-qeBMjszUDP+8l1TB//6PDa9E3zeABspbIpg9RtkpUChyWT8o3bUAIcGWG34/gfnWS4//KGh0pWX84eQYIAHw4A==}
+  '@fatsolutions/privacy-pools-core-circuits@1.0.4':
+    resolution: {integrity: sha512-hpymJBsw2ge5QhyXopTytihmyJnbYaBKJTuDaE81hrjVvRu8I+126DGwOyxUNyhWYQTVNMrcywHby1vkU1xNbg==}
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -1873,10 +1925,6 @@ packages:
 
   '@railgun-community/circomlibjs@0.0.8':
     resolution: {integrity: sha512-ZqDUxS1DkxoZ7Nz6n1awTBjFaunDR64WQSwj2XtGOjx3ZQVpaVoSaIxbp0egsZPzyr70uRm7PQ76ZDeUwLyNkg==}
-
-  '@railgun-community/circuit-artifacts@https://npm.railgun.org/railgun-community-circuit-artifacts-0.0.1.tgz':
-    resolution: {integrity: sha512-Dj9za3+mJP8FBWSwhTfOU4uM0gjnC+1+XnTkMz+xGogZU2NYcviC1Tr20d9g5Go17dPEt4F0q9CvGnefQF9rBA==, tarball: https://npm.railgun.org/railgun-community-circuit-artifacts-0.0.1.tgz}
-    version: 0.0.1
 
   '@railgun-community/curve25519-scalarmult-wasm@0.1.5':
     resolution: {integrity: sha512-Cur8uM/IdNW3WzUwdPloDG1CF0rpSBDWq2yGXJMZ7IMeBGdc4Jj0h9tnNMFRZ35ZuCVVbZ3yClmqSa4PsbpdGQ==}
@@ -2873,9 +2921,6 @@ packages:
 
   brorand@1.1.0:
     resolution: {integrity: sha512-cKV8tMCEpQs4hK/ik71d6LrPOnpkpGBR0wzxqr68g2m/LB2GxVYQroAjMJZRVM1Y4BCjCKc3vAamxSzOY2RP+w==}
-
-  brotli@1.3.3:
-    resolution: {integrity: sha512-oTKjJdShmDuGW94SyyaoQvAjf30dZaHnjJ8uAF+u2/vGJkJbJPJAT1gDiOJP5v1Zb6f9KEyW/1HpuaWIXtGHPg==}
 
   browser-stdout@1.3.1:
     resolution: {integrity: sha512-qhAVI1+Av2X7qelOfAIYwXONood6XlZE/fXaBSmW/T5SzLAmCgzi+eiWE7fUvbHaeNBQH13UftjpXxsfLkMpgw==}
@@ -8013,7 +8058,9 @@ snapshots:
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
 
-  '@fatsolutions/privacy-pools-core-circuits@1.0.3': {}
+  '@fatsolutions/privacy-pools-core-circuits@1.0.4':
+    dependencies:
+      snarkjs: 0.7.5
 
   '@floating-ui/core@1.7.3':
     dependencies:
@@ -8958,10 +9005,6 @@ snapshots:
       - encoding
       - supports-color
       - utf-8-validate
-
-  '@railgun-community/circuit-artifacts@https://npm.railgun.org/railgun-community-circuit-artifacts-0.0.1.tgz':
-    dependencies:
-      brotli: 1.3.3
 
   '@railgun-community/curve25519-scalarmult-wasm@0.1.5': {}
 
@@ -10105,10 +10148,6 @@ snapshots:
       fill-range: 7.1.1
 
   brorand@1.1.0: {}
-
-  brotli@1.3.3:
-    dependencies:
-      base64-js: 1.5.1
 
   browser-stdout@1.3.1: {}
 
@@ -12528,7 +12567,7 @@ snapshots:
       '@zk-kit/baby-jubjub': 1.0.3
       '@zk-kit/eddsa-poseidon': 1.1.0
       '@zk-kit/poseidon-cipher': 0.3.2
-      ethers: 6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ethers: 6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate

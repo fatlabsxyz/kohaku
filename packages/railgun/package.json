@@ -89,7 +89,6 @@
     "ts-pattern": "^5.4.0"
   },
   "devDependencies": {
-    "@railgun-community/circuit-artifacts": "https://npm.railgun.org/railgun-community-circuit-artifacts-0.0.1.tgz",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/buffer-xor": "^2.0.0",
     "@types/chai": "^4.3.20",
