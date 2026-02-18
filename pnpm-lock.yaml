@@ -76,8 +76,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@fatsolutions/privacy-pools-core-circuits':
-        specifier: 1.0.3
-        version: 1.0.3
+        specifier: 1.0.5
+        version: 1.0.5
       '@kohaku-eth/plugins':
         specifier: workspace:*
         version: link:../plugins
@@ -996,8 +996,8 @@ packages:
   '@ethersproject/wordlists@5.8.0':
     resolution: {integrity: sha512-2df9bbXicZws2Sb5S6ET493uJ0Z84Fjr3pC4tu/qlnZERibZCeUVuqdtt+7Tv9xxhUxHoIekIA7avrKUWHrezg==}
 
-  '@fatsolutions/privacy-pools-core-circuits@1.0.3':
-    resolution: {integrity: sha512-qeBMjszUDP+8l1TB//6PDa9E3zeABspbIpg9RtkpUChyWT8o3bUAIcGWG34/gfnWS4//KGh0pWX84eQYIAHw4A==}
+  '@fatsolutions/privacy-pools-core-circuits@1.0.5':
+    resolution: {integrity: sha512-0E15p9wmWkUXEpPLuw7crpp301xNhLzCnjrvIzqIy/xE85FIsdbTdgWGW0Y9TwwjpxGsLjaCimyTujYbtza4ZA==}
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -4172,7 +4172,7 @@ packages:
 
   glob@7.1.7:
     resolution: {integrity: sha512-OvD9ENzPLbegENnYP5UUfJIirTg4+XwMWGaQfQTY0JenxNvvIKP3U3/tAQSPIu/lHxXYSZmpXlUHeqAIdKzBLQ==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global@4.4.0:
     resolution: {integrity: sha512-wv/LAoHdRE3BeTGz53FAamhGlPLhlssK45usmGFThIi4XqnBmjKQ16u+RNbP7WvigRZDxUsM0J3gcQ5yicaL0w==}
@@ -8013,7 +8013,9 @@ snapshots:
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
 
-  '@fatsolutions/privacy-pools-core-circuits@1.0.3': {}
+  '@fatsolutions/privacy-pools-core-circuits@1.0.5':
+    dependencies:
+      snarkjs: 0.7.5
 
   '@floating-ui/core@1.7.3':
     dependencies:

@@ -1,11 +1,11 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { generateMerkleProof } from "@0xbow/privacy-pools-core-sdk";
 import { RootState } from '../store';
 import { INote, } from '../../plugin/interfaces/protocol-params.interface';
 import { Secret } from '../../account/keys';
 import { commitment } from '../../utils';
 import { poolCommitmentsSelector } from './pools.selector';
 import { Commitment } from '../../interfaces/types.interface';
+import { generateMerkleProof } from '../../utils/proof.util';
 
 export type MerkleProof = {
   index: number;
