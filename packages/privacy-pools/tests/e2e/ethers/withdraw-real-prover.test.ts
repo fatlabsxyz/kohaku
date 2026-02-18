@@ -58,9 +58,6 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const pool = anvil.pool(20);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
-    // Load initial state from env var if available
-    const initialState = loadInitialState();
-
     // Create mock asp
     const mockAspService = createMockAspService();
     mockAspService.addLabels([0n, 1n, 2n]);
@@ -74,7 +71,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
-      initialState,
+      initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
@@ -140,9 +137,6 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const pool = anvil.pool(21);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
-    // Load initial state from env var if available
-    const initialState = loadInitialState();
-
     // Create mock asp
     const mockAspService = createMockAspService();
     mockAspService.addLabels([0n, 1n, 2n]);
@@ -156,7 +150,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
-      initialState,
+      initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
@@ -202,4 +196,91 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     expect(receipt!.status).toEqual(1);
 
   }, 300000); // Extended timeout for real proof generation
+
+  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws multiple times', async () => {
+    const pool = anvil.pool(22);
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
+
+    // Create mock asp
+    const mockAspService = createMockAspService();
+    mockAspService.addLabels([0n, 1n, 2n]);
+
+    // Create mock relayer
+    const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
+
+    const host = createMockHost(undefined, pool.rpcUrl);
+
+    const protocol = new PrivacyPoolsV1Protocol(host, {
+      chainsEntrypoints: {
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
+      },
+      initialState: latestState,
+      proverFactory: () => Prover(), // Use real prover
+      relayersList: { 'mock-relayer': 'http://mock.relayer' },
+      relayerClientFactory: () => mockRelayerClient,
+      aspServiceFactory: () => mockAspService,
+    });
+
+    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
+    const WITHDRAW_AMOUNT = 100000000000000000n; // 0.1 ETH
+
+    // 1. Deposit first
+    const { txns: [shieldTx] } = await protocol.prepareShield(
+      { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
+    );
+
+    await sendTx(alice, shieldTx);
+    await pool.mine(1);
+
+    // 2. Verify deposit balance
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
+    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+
+    // 2.b Approve deposits
+    const [note, ..._] = await protocol.notes([nativeAsset]);
+    mockAspService.addLabel(note.label);
+    await pushNewAspRoot(pool.rpcUrl,
+      "0x" + ENTRYPOINT_ADDRESS.toString(16),
+      "0x" + POSTMAN_ADDRESS.toString(16),
+      { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
+    );
+
+
+    const provider = await pool.getProvider();
+    const withdrawNumber = 4;
+    const recipientAccount = { address: "0xfE0fe0Fe0fe0fe0fE0fe0fe0Fe0fE0Fe0fE0fe00" } as unknown as AccountId;
+    let receiverBalance = 0n;
+
+    // reciever starts with 0 ETH
+    expect(await provider.getBalance(recipientAccount.address)).toEqual(receiverBalance);
+
+    for (const i in Array(withdrawNumber).fill(null)) {
+
+      // We withdraw 0.1 at a time, until the last one in which we take out the rest.
+      const withdraw_amount = (Number(i) + 1) === withdrawNumber ? balanceAfterDeposit.amount - 3n * WITHDRAW_AMOUNT : WITHDRAW_AMOUNT;
+
+      // 3. Prepare withdrawal with real prover
+      const withdrawOp = await protocol.prepareUnshield(
+        { asset: nativeAsset, amount: withdraw_amount },
+        recipientAccount
+      );
+
+      receiverBalance += withdraw_amount - (withdraw_amount * BigInt(withdrawOp.quoteData.quote.feeBPS)) / 10_000n;
+
+      // 4. 
+      const receipt = await sendTxAndWait(alice, withdrawOp.txData);
+      await pool.mine(1);
+      expect(receipt).toBeTruthy();
+      expect(receipt!.status).toEqual(1);
+      expect(await provider.getBalance(recipientAccount.address)).toEqual(receiverBalance);
+
+    }
+
+    // shielded balance should be 0
+    const [balanceAfterWithdraws] = await protocol.balance([nativeAsset], "approved");
+    expect(balanceAfterWithdraws.amount).toBe(0n);
+
+  }, 90_000); // Extended timeout for real proof generation
+
 });

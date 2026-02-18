@@ -1,7 +1,7 @@
 import { poseidon } from "maci-crypto/build/ts/hashing";
 import { INote } from "./plugin/interfaces/protocol-params.interface";
 import { Address } from "./interfaces/types.interface";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, getAddress } from "viem";
 import { entrypointAbi } from "./data/abis/entrypoint.abi";
 import { WithdrawalPayload } from "./relayer/interfaces/relayer-client.interface";
 import { WithdrawProveOutput } from "./state/thunks/withdrawThunk";
@@ -19,6 +19,13 @@ export function commitment({ balance: value, label, precommitment }: INote): big
  */
 export function addressToHex(address: Address, padding = 40): `0x${string}` {
   return `0x${address.toString(16).padStart(padding, '0')}`;
+}
+
+/**
+ * Converts an string type to a Address
+ */
+export function stringToAddress(addressString: string): Address {
+  return BigInt(getAddress(addressString));
 }
 
 type WithdrawSignals = [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
