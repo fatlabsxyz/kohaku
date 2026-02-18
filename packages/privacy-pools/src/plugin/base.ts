@@ -1,5 +1,5 @@
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
-import { encodeWithdrawalPayload } from "../utils.js";
+import { encodeWithdrawalPayload, stringToAddress } from "../utils.js";
 import { AccountId, AssetAmount, AssetId, ChainId, Eip155ChainId, Erc20Id, Host, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
 import { ISecretManager, SecretManager } from '../account/keys';
 import { AspService } from "../data/asp.service";
@@ -38,7 +38,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       chainsEntrypoints = {},
       relayersList = {},
       relayerClientFactory = () => new RelayerClient({ network: host.network }),
-      aspServiceFactory = () => new AspService({ network: host.network}),
+      aspServiceFactory = () => new AspService({ network: host.network }),
       proverFactory = Prover,
     }: Partial<PrivacyPoolsV1ProtocolParams> = {}) {
     super();
@@ -52,7 +52,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       accountIndex: this.accountIndex
     });
     this.stateManager = stateManagerFactory({
-      initialState,
+      initialState: { ...initialState },
       secretManager: this.secretManager,
       aspService: aspServiceFactory(),
       dataService: new DataService({ provider: host.ethProvider }),
@@ -299,6 +299,19 @@ export class PrivacyPoolsV1Protocol extends Plugin<
 
   broadcast(operation: PPv1PrivateOperation): Promise<void> {
     throw new Error("Method not implemented.");
+  }
+
+  sync(params: ISyncOperationParams) {
+    return this.stateManager.sync(params);
+  }
+
+  syncAll() {
+    return Promise.all(Array.from(this.chainsEntrypoints.entries()).map(([chain, entrypoint]) => {
+      return this.stateManager.sync({
+        chainId: new Eip155ChainId(Number(chain.split(":")[1])),
+        entrypoint
+      });
+    }));
   }
 
   dumpState() {
