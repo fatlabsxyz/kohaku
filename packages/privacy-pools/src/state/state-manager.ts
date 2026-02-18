@@ -12,15 +12,19 @@ import {
   IWithdrawapOperationParams,
   StateWithdrawalPayload,
 } from "../plugin/interfaces/protocol-params.interface";
-import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from "../relayer/interfaces/relayer-client.interface";
+import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import {
+  createAllAssetsBalanceSelector,
   createMyApprovedAssetBalanceSelector,
   createMyAssetsBalanceSelector,
   createMyDepositsBalanceSelector,
   createMyDepositsWithAssetSelector,
   createMyUnapprovedAssetBalanceSelector,
+  createSpecificAssetBalanceSelector,
+  IBalanceType,
+  SpecificAssetBalanceFn,
 } from "./selectors/balance.selector";
 import {
   createGetNextDepositPayloadSelector,
@@ -122,17 +126,16 @@ const initializeSelectors = <const T extends Store>({
     getNextDepositSecretsSelector,
   });
 
+  const allAssetsBalanceSelector = createAllAssetsBalanceSelector(myAssetsBalanceSelector);
+  const specificAssetsBalanceSelector = createSpecificAssetBalanceSelector(allAssetsBalanceSelector);
+
   return {
     ...store,
     selectors: {
       depositsCount: () => depositsCountSelector(store.getState()),
 
-      myUnapprovedAssetBalanceSelector: () =>
-        myUnapprovedAssetBalanceSelector(store.getState()),
-      myApprovedAssetBalanceSelector: () =>
-        myApprovedAssetBalanceSelector(store.getState()),
       myAssetsBalanceSelector: () => myAssetsBalanceSelector(store.getState()),
-
+      specificAssetsBalanceSelector: ((addresses: Address[], balanceType: IBalanceType = 'approved') => specificAssetsBalanceSelector(store.getState(), addresses, balanceType)) as SpecificAssetBalanceFn,
       getExistingNoteSecrets,
       getNextDepositPayload: (asset: Address, amount: bigint) =>
         getNextDepositPayloadSelector(store.getState(), asset, amount),
@@ -260,26 +263,13 @@ export const storeStateManager = (
       assets = [],
       balanceType = "approved",
       ...params
-    }): Map<Address, bigint> => {
+    }) => {
       const {
         selectors: {
-          myApprovedAssetBalanceSelector,
-          myUnapprovedAssetBalanceSelector,
+          specificAssetsBalanceSelector,
         },
       } = getChainStore(params);
-      const balanceSelector =
-        balanceType === "approved"
-          ? myApprovedAssetBalanceSelector
-          : myUnapprovedAssetBalanceSelector;
-      const balances = balanceSelector();
-
-      if (assets.length === 0) {
-        return balances;
-      }
-
-      return new Map(
-        assets.map((address) => [address, balances.get(address) || 0n]),
-      );
+      return specificAssetsBalanceSelector(assets, balanceType);
     },
     getDepositPayload: async ({
       chainId,
