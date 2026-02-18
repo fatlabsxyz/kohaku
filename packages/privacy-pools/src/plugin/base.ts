@@ -119,7 +119,7 @@ export class PrivacyPoolsV1Protocol extends Plugin<
     });
   }
 
-  override async broadcastPrivateOperation({
+  async broadcastPrivateOperation({
     rawData: {
       chainId,
       scope,
