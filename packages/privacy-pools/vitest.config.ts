@@ -20,6 +20,13 @@ export default defineConfig({
           include: ['tests/unit/**/*.test.ts'],
           testTimeout: 5_000,
         }
+      },
+      {
+        extends: true,
+        test: {
+          name: 'sync',
+          include: ['tests/sync.test.ts'],
+        }
       }
     ]
   },

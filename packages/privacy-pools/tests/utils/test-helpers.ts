@@ -1,4 +1,5 @@
 import { AbiCoder, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
+import { getContract } from 'viem';
 
 import { Erc20Id } from '@kohaku-eth/plugins';
 
@@ -181,6 +182,21 @@ export async function assetVettingFee(provider: any, entrypointAddress: bigint, 
   ] = await ep.assetConfig(asset.reference);
 
   return vettingFeeBPS as bigint;
+}
+
+export async function getPoolStateRoot(pool: AnvilPool, poolAddress: bigint) {
+  const poolRootAbi = [{
+    "type": "function",
+    "name": "currentRoot",
+    "inputs": [],
+    "outputs": [{ "name": "root", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  }] as const;
+  const provider = await pool.getProvider();
+  const padd = toBeHex(poolAddress);
+  const poolSC = new Contract(padd, poolRootAbi, provider);
+  const root = await poolSC.currentRoot();
+  return root as bigint;
 }
 
 export const getProtocol = (host = createMockHost()) => new PrivacyPoolsV1Protocol(host, {
