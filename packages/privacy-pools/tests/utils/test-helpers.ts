@@ -1,11 +1,10 @@
 import { AbiCoder, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
-import { getContract } from 'viem';
 
-import { Erc20Id } from '@kohaku-eth/plugins';
+import { Erc20Id, Host } from '@kohaku-eth/plugins';
 
 import { PrivacyPoolsV1Protocol } from '../../src';
 import { type AnvilPool } from './anvil';
-import { MAINNET_ENTRYPOINT } from './common';
+import { InitialState, loadInitialState, MAINNET_ENTRYPOINT } from './common';
 import { createMockHost } from './mock-host';
 
 /**
@@ -199,9 +198,23 @@ export async function getPoolStateRoot(pool: AnvilPool, poolAddress: bigint) {
   return root as bigint;
 }
 
+interface SimplifiedProtocolParams {
+  host: Host,
+  initialState: InitialState;
+}
+export const getProtocolWithState = ({
+  host = createMockHost(),
+  initialState = loadInitialState()
+}: Partial<SimplifiedProtocolParams> = {}) => new PrivacyPoolsV1Protocol(host, {
+  initialState,
+  chainsEntrypoints: {
+    [MAINNET_ENTRYPOINT.chainId.toString()]: MAINNET_ENTRYPOINT,
+  }
+});
+
 export const getProtocol = (host = createMockHost()) => new PrivacyPoolsV1Protocol(host, {
   chainsEntrypoints: {
-    [MAINNET_ENTRYPOINT.chainId.toString()]: MAINNET_ENTRYPOINT
+    [MAINNET_ENTRYPOINT.chainId.toString()]: MAINNET_ENTRYPOINT,
   }
 });
 

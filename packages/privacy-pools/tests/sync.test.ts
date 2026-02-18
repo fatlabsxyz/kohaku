@@ -2,6 +2,7 @@ import * as fs from "fs";
 
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
+import { generateMerkleProof } from "@0xbow/privacy-pools-core-sdk";
 import { Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
 
 import { E_ADDRESS } from '../src/config/constants';
@@ -16,7 +17,7 @@ import { createMockRelayerClient } from './utils/mock-relayer';
 import { TEST_ACCOUNTS } from './utils/test-accounts';
 import { assetVettingFee, getPoolStateRoot, setupWallet } from './utils/test-helpers';
 
-import { generateMerkleProof } from "@0xbow/privacy-pools-core-sdk";
+
 describe("Creates the dump state payload", () => {
   let anvil: AnvilInstance;
 

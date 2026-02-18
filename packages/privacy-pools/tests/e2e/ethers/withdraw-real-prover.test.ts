@@ -6,18 +6,19 @@ import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
-import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, loadInitialState, MAINNET_ENTRYPOINT } from '../../utils/common';
+import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { getEnv, InitialState, loadInitialState, MAINNET_ENTRYPOINT } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { assetVettingFee, deductVettingFees, pushNewAspRoot, sendTx, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
+import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTx, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
 
 const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 
 describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let anvil: AnvilInstance;
+  let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
   const MAINNET_CHAIN_ID = new Eip155ChainId(1);
@@ -28,13 +29,22 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let vettingFees = 0n;
 
   beforeAll(async () => {
+
     anvil = defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: 8547,
+      port: ANVIL_PORT + 3,
       chainId: 1,
     });
 
+    const _protocol = getProtocolWithState();
+    await _protocol.syncAll();
+    latestState = _protocol.dumpState();
+
     await anvil.start();
+
+    const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
+    vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
+
   }, 300000);
 
   afterAll(async () => {
@@ -42,8 +52,6 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   });
 
   beforeEach(async () => {
-    const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
-    vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
   });
 
   it('[prepareUnshield] prepares withdrawal with real prover after deposit', async () => {
