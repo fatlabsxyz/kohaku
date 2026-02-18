@@ -1,3 +1,4 @@
+import { encodeAbiParameters, getAddress } from 'viem';
 import {
   IQuoteResponse,
   IRelayerClient,
@@ -8,6 +9,7 @@ import {
   ISuccessfullRelayResponse,
 } from '../../src/relayer/interfaces/relayer-client.interface';
 
+import { FeeData } from 'ethers';
 export interface MockRelayerOptions {
   feeBPS?: string;
   baseFeeBPS?: string;
@@ -23,11 +25,32 @@ export const createMockRelayerClient = (options: MockRelayerOptions = {}): IRela
     shouldFail = false,
   } = options;
 
+  const feeRecipient = getAddress("0x976EA74026E726554dB657fA54763abd0C3a0aa9"); // junk[6]
+  const RelayDataAbi = [
+    {
+      name: "RelayData",
+      type: "tuple",
+      components: [
+        { name: "recipient", type: "address" },
+        { name: "feeRecipient", type: "address" },
+        { name: "relayFeeBPS", type: "uint256" },
+      ],
+    },
+  ] as const;
+
   return {
+
     async getQuote(body: IQuoteRequest): Promise<IQuoteResponse> {
       if (shouldFail) {
         throw new Error('Mock relayer failed');
       }
+
+      const RelayData = {
+        recipient: getAddress("0x" + BigInt(body.recipient).toString(16)),
+        feeRecipient,
+        relayFeeBPS: BigInt(feeBPS)
+      };
+      const withdrawalData = encodeAbiParameters(RelayDataAbi, [RelayData]);
 
       return {
         baseFeeBPS,
@@ -35,7 +58,7 @@ export const createMockRelayerClient = (options: MockRelayerOptions = {}): IRela
         gasPrice,
         feeCommitment: {
           expiration: Date.now() + 3600000, // 1 hour from now
-          withdrawalData: '0x',
+          withdrawalData,
           signedRelayerCommitment: '0xmocksignature',
           extraGas: body.extraGas,
         },
