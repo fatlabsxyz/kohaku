@@ -47,8 +47,8 @@ export function encodeWithdrawalPayload(
 
   const pA = [pi_a[0], pi_a[1]].map(definedOrThrow).map(BigInt) as [bigint, bigint];
   const pB = [
-    [definedOrThrow(pi_b[0])[0], definedOrThrow(pi_b[0])[1]].map(definedOrThrow).map(BigInt),
-    [definedOrThrow(pi_b[1])[0], definedOrThrow(pi_b[1])[1]].map(definedOrThrow).map(BigInt),
+    [definedOrThrow(pi_b[0])[1], definedOrThrow(pi_b[0])[0]].map(definedOrThrow).map(BigInt),
+    [definedOrThrow(pi_b[1])[1], definedOrThrow(pi_b[1])[0]].map(definedOrThrow).map(BigInt),
   ] as [[bigint, bigint], [bigint, bigint]];
   const pC = [pi_c[0], pi_c[1]].map(definedOrThrow).map(BigInt) as [bigint, bigint];
 
