@@ -147,12 +147,12 @@ export async function pushNewAspRoot(
   }] as const;
 
   // Impersonate the postman
-  const { hash } = await impersonate(provider, normalizedPostman, async () => {
+  const { hash, data, to } = await impersonate(provider, normalizedPostman, async () => {
     const impersonatedSigner = await provider.getSigner(normalizedPostman);
     const entrypoint = new Contract(getAddress(entrypointAddress), postmanAbi, impersonatedSigner);
     return (await entrypoint.updateRoot(_root, _ipfsCID)) as ContractTransactionResponse;
   });
-  return { hash };
+  return { hash, txData: { data, to, from: normalizedPostman } };
 }
 
 export async function assetVettingFee(provider: any, entrypointAddress: bigint, asset: Erc20Id) {
@@ -209,6 +209,10 @@ export async function sendTx(signer: Wallet, { to, data, value }: { to: string; 
   return signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
 }
 
+export async function sendTxAndWait(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
+  const tx = await signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
+  return tx.wait();
+}
 
 export async function setupWallet(pool: AnvilPool, pk: string | SigningKey): Promise<Wallet> {
   const jsonRpcProvider = await pool.getProvider();

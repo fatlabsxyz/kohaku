@@ -12,11 +12,11 @@ import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { assetVettingFee, deductVettingFees, pushNewAspRoot, sendTx, setupWallet } from '../../utils/test-helpers';
+import { assetVettingFee, deductVettingFees, pushNewAspRoot, sendTx, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
 
 const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 
-describe.only('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
+describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let anvil: AnvilInstance;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
@@ -188,9 +188,8 @@ describe.only('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     );
 
     // 4. 
-    const r = await sendTx(alice, withdrawOp.txData)
+    const receipt = await sendTxAndWait(alice, withdrawOp.txData);
     await pool.mine(1);
-    const receipt = await (await pool.getProvider()).getTransactionReceipt(r.hash)
     expect(receipt).toBeTruthy();
     expect(receipt!.status).toEqual(1);
 
