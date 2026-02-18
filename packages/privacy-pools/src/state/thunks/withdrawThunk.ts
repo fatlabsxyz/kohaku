@@ -1,10 +1,8 @@
-import { calculateContext, Hash } from "@0xbow/privacy-pools-core-sdk";
 import { Prover, WithdrawPublicSignals } from "@fatsolutions/privacy-pools-core-circuits";
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { Secret } from '../../account/keys';
 import { Address } from '../../interfaces/types.interface';
 import { INote } from '../../plugin/interfaces/protocol-params.interface';
-import { addressToHex } from '../../utils';
 import { aspMerkleProofSelector, stateMerkleProofSelector } from '../selectors/merkle.selector';
 import { entrypointInfoSelector, poolsSelector } from '../selectors/slices.selectors';
 import { RootState } from '../store';

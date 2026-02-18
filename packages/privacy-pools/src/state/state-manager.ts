@@ -45,12 +45,12 @@ import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { RootState, storeFactory } from "./store";
 import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
-import { quoteThunk, QuoteResult } from "./thunks/quoteThunk";
-import { WithdrawProveOutput, withdrawThunk } from "./thunks/withdrawThunk";
+import { quoteThunk } from "./thunks/quoteThunk";
+import { withdrawThunk } from "./thunks/withdrawThunk";
 import { Store, unwrapResult } from "@reduxjs/toolkit";
 import { deserialize } from "./utils/serialize.utils";
 import { addressToHex } from "../utils";
-import { calculateContext, Hash } from "@0xbow/privacy-pools-core-sdk";
+import { calculateContext } from "../utils/proof.util";
 
 export interface StoreFactoryParams
   extends BaseSelectorParams, SyncAspThunkParams {
@@ -315,7 +315,7 @@ export const storeStateManager = (
         processooor: addressToHex(entrypoint.address) as `0x${string}`,
         data: quote.feeCommitment.withdrawalData as `0x${string}`,
       };
-      const context = BigInt(calculateContext(withdrawal, poolInfo.scope as Hash));
+      const context = BigInt(calculateContext(withdrawal, poolInfo.scope));
 
       // Dispatch the withdraw thunk which handles note selection and proof generation
       const withdrawResultAction = await store.dispatch(
