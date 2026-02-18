@@ -67,7 +67,7 @@ describe.only('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
       initialState,
-      proverFactory: () => Prover({ browser: false }), // Use real prover
+      proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
       aspServiceFactory: () => mockAspService,
@@ -149,7 +149,7 @@ describe.only('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
       initialState,
-      proverFactory: () => Prover({ browser: false }), // Use real prover
+      proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
       aspServiceFactory: () => mockAspService,
