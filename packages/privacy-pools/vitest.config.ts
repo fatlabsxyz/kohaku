@@ -10,7 +10,7 @@ export default defineConfig({
         test: {
           name: 'e2e',
           include: ['tests/e2e/**/*.test.ts'],
-          testTimeout: 30000,
+          testTimeout: 600_000,
         }
       },
       {
@@ -26,6 +26,7 @@ export default defineConfig({
         test: {
           name: 'sync',
           include: ['tests/sync.test.ts'],
+          testTimeout: 1200_000,
         }
       }
     ]

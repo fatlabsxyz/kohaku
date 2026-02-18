@@ -2,6 +2,8 @@ import { createServer } from 'prool';
 import { anvil, type AnvilParameters } from 'prool/instances';
 import { JsonRpcProvider } from 'ethers';
 
+export const ANVIL_PORT = 8545;
+
 type DefineAnvilParameters = {
   forkUrl: string;
   forkBlockNumber?: number;
@@ -64,7 +66,7 @@ export function defineAnvil(params: DefineAnvilParameters): AnvilInstance {
   const {
     forkUrl,
     forkBlockNumber,
-    port = 8545,
+    port = ANVIL_PORT,
     chainId = 11155111,
   } = params;
 
@@ -87,6 +89,7 @@ export function defineAnvil(params: DefineAnvilParameters): AnvilInstance {
       const instance = anvil(anvilOptions);
 
       stopFn = await createServer({
+        limit: 100,
         instance,
         port,
       }).start();
