@@ -5,20 +5,21 @@ import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
-import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, MAINNET_ENTRYPOINT, loadInitialState } from '../../utils/common';
+import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { getEnv, MAINNET_ENTRYPOINT, loadInitialState, InitialState } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { mockProverFactory } from '../../utils/mock-prover';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { assetVettingFee, deductVettingFees, pushNewAspRoot, sendTx, setupWallet } from '../../utils/test-helpers';
+import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTx, setupWallet } from '../../utils/test-helpers';
 
 const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 
 
 describe('PrivacyPools v1 Unshield E2E', () => {
   let anvil: AnvilInstance;
+  let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
   const MAINNET_CHAIN_ID = new Eip155ChainId(1);
@@ -29,13 +30,22 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   let vettingFees = 0n;
 
   beforeAll(async () => {
+
     anvil = defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: 8546,
+      port: ANVIL_PORT + 2,
       chainId: 1,
     });
 
+    const _protocol = getProtocolWithState();
+    await _protocol.syncAll();
+    latestState = _protocol.dumpState();
+
     await anvil.start();
+
+    const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
+    vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
+
   }, 300000);
 
   afterAll(async () => {
@@ -43,8 +53,6 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   });
 
   beforeEach(async () => {
-    const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
-    vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
   });
 
   it('[prepareUnshield] prepares withdrawal after deposit', async () => {
@@ -64,7 +72,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
-      initialState: loadInitialState(),
+      initialState: latestState,
       proverFactory: mockProverFactory,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
@@ -107,14 +115,14 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     );
 
     // 4. Verify withdrawal operation structure
-    expect(withdrawOp.relayData).toBeDefined();
-    expect(withdrawOp.relayData.quote).toBeDefined();
-    expect(withdrawOp.relayData.quote.feeBPS).toBe('100');
-    expect(withdrawOp.relayData.relayerId).toBe('mock-relayer');
+    expect(withdrawOp.quoteData).toBeDefined();
+    expect(withdrawOp.quoteData.quote).toBeDefined();
+    expect(withdrawOp.quoteData.quote.feeBPS).toBe('100');
+    expect(withdrawOp.quoteData.relayerId).toBe('mock-relayer');
     expect(withdrawOp.rawData).toBeDefined();
     expect(withdrawOp.rawData.proof).toBeDefined();
     expect(withdrawOp.txData).toBeDefined();
-  }, 120000);
+  }, { time: 60_000 });
 
   it('[prepareUnshield] selects lowest fee relayer', async () => {
     const pool = anvil.pool(11);
@@ -149,7 +157,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         'expensive-relayer': 'http://expensive.relayer',
         'cheap-relayer': 'http://cheap.relayer',
       },
-      initialState: loadInitialState(),
+      initialState: latestState,
       proverFactory: mockProverFactory,
       aspServiceFactory: () => mockAspService,
       relayerClientFactory: () => multiRelayerClient,
@@ -187,9 +195,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     );
 
     // 4. Verify cheapest relayer was selected
-    expect(withdrawOp.relayData.quote.feeBPS).toBe('50');
-    expect(withdrawOp.relayData.relayerId).toBe('cheap-relayer');
-  }, 120000);
+    expect(withdrawOp.quoteData.quote.feeBPS).toBe('50');
+    expect(withdrawOp.quoteData.relayerId).toBe('cheap-relayer');
+  }, { timeout: 60_000 });
 
   it('[prepareUnshield] throws when no sufficient balance', async () => {
     const pool = anvil.pool(12);
@@ -206,7 +214,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
-      initialState: loadInitialState(),
+      initialState: latestState,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
       proverFactory: mockProverFactory,
@@ -228,7 +236,8 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         recipientAccount
       )
     ).rejects.toThrow('No note with sufficient balance');
-  }, 60000);
+
+  }, { timeout: 60_000 });
 
   it('[prepareUnshield] throws when all relayers fail', async () => {
     const pool = anvil.pool(13);
@@ -242,7 +251,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       chainsEntrypoints: {
         [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
       },
-      initialState: loadInitialState(),
+      initialState: latestState,
       relayersList: { 'failing-relayer': 'http://failing.relayer' },
       relayerClientFactory: () => failingRelayer,
     });
@@ -273,5 +282,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         recipientAccount
       )
     ).rejects.toThrow('Failed to get quote from relayers');
-  }, 120000);
+
+  }, { timeout: 60_000 });
+
 });
