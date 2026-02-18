@@ -4,7 +4,8 @@ import { createMyWithdrawalsSelector } from './withdrawals.selector';
 import { createMyRagequitsSelector } from './ragequits.selector';
 import { Address, Precommitment } from '../../interfaces/types.interface';
 import { createMyDepositsSelector } from './deposits.selector';
-import { entrypointDepositSelector, poolsSelector } from './slices.selectors';
+import { assetSelector, entrypointDepositSelector, poolsSelector } from './slices.selectors';
+import { RootState } from '../store';
 
 /**
  * Provides a map of every precommitment mapped to a deposit+assetAddress
@@ -67,7 +68,7 @@ export const createMyDepositsBalanceSelector = ({
       const depositsByPrecommitment = Array.from(myDeposits.entries())
         .map(([precommitment, deposit]): [Precommitment, IDepositWithBalance] => {
           const depositData = myDeposits.get(deposit.precommitment);
-    
+
           if (!depositData) {
             return [precommitment, {
               ...deposit,
@@ -76,7 +77,7 @@ export const createMyDepositsBalanceSelector = ({
               balance: 0n,
             }] as const;
           }
-    
+
           const ragequit = ragequitsMap.get(depositData.precommitment);
 
           if (ragequit) {
@@ -85,10 +86,10 @@ export const createMyDepositsBalanceSelector = ({
               balance: 0n,
             }] as const;
           }
-    
+
           const withdrawals = withdrawalsMap.get(depositData.precommitment) || [];
           const totalWithdrawn = withdrawals.reduce((sum, withdrawal) => sum + withdrawal.value, 0n);
-    
+
           return [precommitment, {
             ...depositData,
             balance: depositData.value - totalWithdrawn,
@@ -100,7 +101,7 @@ export const createMyDepositsBalanceSelector = ({
   );
 };
 
-export class NotEnoughCommitsToSpendError extends Error {}
+export class NotEnoughCommitsToSpendError extends Error { }
 
 /**
  * Creates a selector that returns the deposits with non-zero balance
@@ -114,7 +115,7 @@ export class NotEnoughCommitsToSpendError extends Error {}
  */
 export const createDepositsToSpendSelector = ({
   myDepositsBalanceSelector,
-}: {myDepositsBalanceSelector: ReturnType<typeof createMyDepositsBalanceSelector>}) => {
+}: { myDepositsBalanceSelector: ReturnType<typeof createMyDepositsBalanceSelector> }) => {
 
   return createSelector(
     [
@@ -138,7 +139,7 @@ export const createDepositsToSpendSelector = ({
         remainingAmount -= deposit.balance;
       }
 
-      if ( remainingAmount > 0 ) {
+      if (remainingAmount > 0) {
         throw new NotEnoughCommitsToSpendError(`Remaining ${remainingAmount.toString(10)} to spend.`);
       }
 
@@ -154,7 +155,7 @@ interface IAssetBalance {
 
 export const createMyAssetsBalanceSelector = ({
   myDepositsBalanceSelector,
-}: {myDepositsBalanceSelector: ReturnType<typeof createMyDepositsBalanceSelector>}) => {
+}: { myDepositsBalanceSelector: ReturnType<typeof createMyDepositsBalanceSelector> }) => {
 
   return createSelector(
     [myDepositsBalanceSelector],
@@ -176,18 +177,53 @@ export const createMyAssetsBalanceSelector = ({
   );
 };
 
-export const createSpecificAssetBalanceSelector = (
+export const createAllAssetsBalanceSelector = (
   myAssetsBalanceSelector: ReturnType<typeof createMyAssetsBalanceSelector>
-) => {
+) => createSelector([
+  myAssetsBalanceSelector,
+  assetSelector
+], (myAssetsBalance, allAssets) => {
+  return new Map(
+    Array.from(allAssets)
+      .map(([assetAddress]) => [assetAddress, myAssetsBalance.get(assetAddress) || { approved: 0n, unapproved: 0n }] as const)
+  )
+})
+
+type BalanceOutput<T extends 'approved' | 'unapproved' | 'both'> = T extends 'both' ? IAssetBalance : IAssetBalance[keyof IAssetBalance];
+export type IBalanceType = 'approved' | 'unapproved' | 'both';
+
+export type SpecificAssetBalanceSelectorFn = <
+  const Adresses extends Address | Address[] = Address[],
+  const BalanceType extends IBalanceType = 'both'
+>(state: RootState, assetAddress?: Adresses, balanceType?: BalanceType) => Adresses extends any[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>;
+
+export type SpecificAssetBalanceFn = <
+  const Adresses extends Address | Address[] = Address[],
+  const BalanceType extends IBalanceType = 'both'
+>(assetAddress?: Adresses, balanceType?: BalanceType) => Adresses extends any[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>;
+
+export const createSpecificAssetBalanceSelector = (
+  allAssetsBalanceSelector: ReturnType<typeof createAllAssetsBalanceSelector>
+): SpecificAssetBalanceSelectorFn => {
   return createSelector(
     [
-      myAssetsBalanceSelector,
-      (_state: any, assetAddress: Address) => assetAddress,
+      allAssetsBalanceSelector,
+      (_state: RootState, assetAddresses: Address[] | Address = []) => assetAddresses,
+      (_: RootState, assetAddresses: Address[] | Address = [], balanceType: IBalanceType = 'both') => balanceType
     ],
-    (assetsBalanceMap, assetAddress): IAssetBalance => {
-      return assetsBalanceMap.get(assetAddress) || { approved: 0n, unapproved: 0n };
+    (assetsBalanceMap, assetAddress, balanceType) => {
+      if (assetAddress instanceof Array) {
+        const addresses = assetAddress.length === 0 ? [...assetsBalanceMap.keys()] : assetAddress;
+        return new Map(addresses.map((address) => {
+          const balance = assetsBalanceMap.get(address) || { approved: 0n, unapproved: 0n };
+          const returnBalance: BalanceOutput<typeof balanceType> = balanceType === 'both' ? balance : balance[balanceType];
+          return [address, returnBalance] as const
+        }));
+      }
+      const balance = assetsBalanceMap.get(assetAddress) || { approved: 0n, unapproved: 0n };
+      return balanceType === 'both' ? balance : balance[balanceType];
     }
-  );
+  ) as SpecificAssetBalanceSelectorFn;
 };
 
 export const createMyApprovedAssetBalanceSelector = (
@@ -200,7 +236,7 @@ export const createMyApprovedAssetBalanceSelector = (
     (assetsBalanceMap): Map<Address, bigint> => {
       return new Map(
         Array.from(assetsBalanceMap)
-        .map(([assetAddress, balance]) => [assetAddress, balance.approved] as const),
+          .map(([assetAddress, balance]) => [assetAddress, balance.approved] as const),
       )
     }
   );
@@ -216,7 +252,7 @@ export const createMyUnapprovedAssetBalanceSelector = (
     (assetsBalanceMap): Map<Address, bigint> => {
       return new Map(
         Array.from(assetsBalanceMap)
-        .map(([assetAddress, balance]) => [assetAddress, balance.unapproved] as const),
+          .map(([assetAddress, balance]) => [assetAddress, balance.unapproved] as const),
       )
     }
   );
