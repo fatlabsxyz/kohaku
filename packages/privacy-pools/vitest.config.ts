@@ -4,7 +4,32 @@ export default defineConfig({
   test: {
     globals: false,
     environment: 'node',
+    exclude: [ '*' ],
     projects: [
+      {
+        extends: true,
+        test: {
+          name: 'shield',
+          include: ['tests/e2e/**/shield.test.ts'],
+          testTimeout: 600_000,
+        }
+      },
+      {
+        extends: true,
+        test: {
+          name: 'withdraw-mocked',
+          include: ['tests/e2e/**/withdraw.test.ts'],
+          testTimeout: 600_000,
+        }
+      },
+      {
+        extends: true,
+        test: {
+          name: 'withdraw-live',
+          include: ['tests/e2e/**/withdraw-real-prover.test.ts'],
+          testTimeout: 600_000,
+        }
+      },
       {
         extends: true,
         test: {
