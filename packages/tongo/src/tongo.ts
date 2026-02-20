@@ -1,6 +1,7 @@
 import { Plugin, AssetAmount, ShieldPreparation, PrivateOperation, CustomAccountId, CustomChainId, UnsupportedAssetError, InsufficientBalanceError } from "@kohaku-eth/plugins";
 import { AccountId, AssetId, Host, MultiAssetsNotSupportedError } from "@kohaku-eth/plugins";
 import { createPublicClient, http, PublicClient } from "viem";
+import { sepolia } from "viem/chains";
 import { Address } from "@kohaku-eth/provider";
 import { pubKeyBase58ToAffine, Account as TongoAccount } from "tongo-sdk";
 
@@ -11,14 +12,12 @@ interface TongoPluginConfig {
 }
 
 export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateOperation> {
-    host: Host; 
     config: TongoPluginConfig;
 
     tempmocktongoaccount!: TongoAccount;
     
-    constructor(readonly _host: Host, config: TongoPluginConfig) {
+    constructor(readonly host: Host, config: TongoPluginConfig) {
         super();
-        this.host = _host;
         this.config = config;
     }
 
