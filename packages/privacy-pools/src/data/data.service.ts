@@ -127,4 +127,12 @@ export class DataService implements IDataService {
   async getPoolScope(poolAddress: Address) {
     return this.ethClient.makeContractRequest(poolAddress, "pool", "SCOPE");
   }
+
+  async getChainId() {
+    const chainIdHex = await this.ethClient.request({
+      method: "eth_chainId",
+      params: [],
+    }) as string;
+    return BigInt(chainIdHex);
+  }
 }

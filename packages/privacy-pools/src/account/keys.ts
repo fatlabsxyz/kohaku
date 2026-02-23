@@ -1,4 +1,3 @@
-import { toBigInt } from 'ethers';
 import { poseidon } from "maci-crypto/build/ts/hashing.js";
 import { Host } from '@kohaku-eth/plugins';
 
@@ -56,8 +55,8 @@ export function SecretManager({
   const deriveSecrets = ({ chainId, entrypointAddress, depositIndex, secretIndex }: DeriveSecretsParams) => {
     const saltSecret = keystore.deriveAt(ppPath({ secretType: "salt", accountIndex, depositIndex, secretIndex }));
     const nullifierSecret = keystore.deriveAt(ppPath({ accountIndex, secretType: "nullifier", depositIndex, secretIndex }));
-    const nullifier = hashToSnarkField([chainId.toString(), toBigInt(entrypointAddress), toBigInt(nullifierSecret)]);
-    const salt = hashToSnarkField([chainId.toString(), toBigInt(entrypointAddress), toBigInt(saltSecret)]);
+    const nullifier = hashToSnarkField([chainId.toString(), BigInt(entrypointAddress), BigInt(nullifierSecret)]);
+    const salt = hashToSnarkField([chainId.toString(), BigInt(entrypointAddress), BigInt(saltSecret)]);
     const precommitment = hashToSnarkField([nullifier, salt]);
     const nullifierHash = hashToSnarkField([nullifier]);
 

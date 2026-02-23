@@ -1,5 +1,5 @@
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
-import { Eip155ChainId } from '@kohaku-eth/plugins';
+import { ChainId, PrivateOperation } from '@kohaku-eth/plugins';
 import { TxData } from '@kohaku-eth/provider';
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { IAspService } from "../../data/asp.service";
@@ -10,7 +10,7 @@ import { RootState } from "../../state";
 import { StoreFactoryParams } from "../../state/state-manager";
 import { WithdrawProveOutput } from "../../state/thunks/withdrawThunk";
 
-export interface PPv1PrivateOperation {
+export interface PPv1PrivateOperation extends PrivateOperation {
   rawData: {
     context: bigint,
     relayData: {},
@@ -26,31 +26,24 @@ export interface PPv1PrivateOperation {
   };
 }
 
-export interface PrivacyPoolsV1ProtocolContext { }
-
 export interface IEntrypoint {
   address: Address;
   deploymentBlock: bigint;
 }
 
 export interface PrivacyPoolsV1ProtocolParams {
-  context: PrivacyPoolsV1ProtocolContext;
   secretManager: (params: SecretManagerParams) => ISecretManager;
   stateManager: (params: StoreFactoryParams) => IStateManager;
   relayerClientFactory: () => IRelayerClient;
-  chainsEntrypoints: Record<string, IEntrypoint>;
+  entrypoint: IEntrypoint;
   aspServiceFactory: () => IAspService;
   proverFactory: () => ReturnType<typeof Prover>;
   relayersList: Record<string, string>;
   initialState?: Record<string, RootState>;
 }
 
-interface IBaseOperationParams {
-  chainId: Eip155ChainId<number>;
-  entrypoint: IEntrypoint;
-}
+interface IBaseOperationParams {}
 
-export type ISyncOperationParams = IBaseOperationParams;
 export interface IDepositOperationParams extends IBaseOperationParams {
   asset: Address;
   amount: bigint;
@@ -94,6 +87,7 @@ export type StateWithdrawalPayload = {
   };
   proofResult: WithdrawProveOutput,
   quoteData: { quote: IQuoteResponse, relayerId: string; };
+  chainId: ChainId;
 };
 
 
@@ -101,7 +95,7 @@ export interface IStateManager {
   /**
    * Queries the chain and updates its state
    */
-  sync: (params: ISyncOperationParams) => Promise<void>;
+  sync: () => Promise<void>;
   /**
    * Generates a deposit payload for the signer
    */
@@ -119,12 +113,12 @@ export interface IStateManager {
    * Gets the balance of the specified assets.
    * All assets if not specified.
    */
-  getBalances: (params: IGetBalancesOperationParams) => Map<Address, bigint>;
+  getBalances: (params: IGetBalancesOperationParams) => Promise<Map<Address, bigint>>;
   dumpState: () => Record<string, RootState>;
   /**
    * Gets all notes for the account.
    * @param includeSpent - If true, include notes with zero balance
    * @param assets - Optional filter by specific assets
    */
-  getNotes: (params: IGetNotesParams) => INote[];
+  getNotes: (params: IGetNotesParams) => Promise<INote[]>;
 }

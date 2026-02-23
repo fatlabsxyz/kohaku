@@ -15,6 +15,7 @@ import {
   ENTRYPOINT_EVENTS_SIGNATURES,
   POOL_EVENTS_SIGNATURES,
 } from "../abis/events.abi";
+import { ChainId } from "@kohaku-eth/plugins";
 
 type IEventsMap = Record<string, ParseAbiItem<any>>;
 
@@ -75,4 +76,5 @@ export interface IDataService {
     assetAddress: Address,
   ): Promise<IPoolConfig>;
   getPoolScope(poolAddress: Address): Promise<bigint>;
+  getChainId(): Promise<ChainId>;
 }
