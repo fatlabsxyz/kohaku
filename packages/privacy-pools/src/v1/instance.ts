@@ -1,6 +1,6 @@
 import { Address } from 'ox/Address';
-import { PPv1PrivateOperation } from '.';
 import { AssetAmount, ERC20AssetId, PluginInstance, PublicOperation } from '@kohaku-eth/plugins';
+import { PPv1PrivateOperation } from '../plugin/interfaces/protocol-params.interface';
 
 /**
  * PPv1 uses Ethereum Addresses internally
