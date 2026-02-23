@@ -2,7 +2,7 @@ import { Plugin, AssetAmount, ShieldPreparation, PrivateOperation, CustomAccount
 import { AccountId, AssetId, Host, MultiAssetsNotSupportedError } from "@kohaku-eth/plugins";
 import { createPublicClient, http, PublicClient } from "viem";
 import { Address } from "@kohaku-eth/provider";
-import { pubKeyBase58ToAffine, Account as TongoAccount } from "tongo-sdk";
+import { pubKeyBase58ToAffine, Account as TongoAccount } from "@fatsolutions/tongo-evm";
 
 interface TongoPluginConfig {
     chain: number;
@@ -23,9 +23,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     }
 
     async account(): Promise<AccountId> {
-        const client = createPublicClient({ transport: http() })
-        //new TongoAccount(0n, "", client); // TODO: typing fails here, but why? viem version?
-        const tongoAccount = this.tempmocktongoaccount;//new TongoAccount(0n, "", this.config.client);
+        const tongoAccount = new TongoAccount(0n, "", this.host.ethProvider);
         return new CustomAccountId(tongoAccount.tongoAddress(), new CustomChainId("tongo-evm", this.config.chain));
     }
 
@@ -33,7 +31,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         let balances = [];
         this.config.deploys.forEach(async (tongoAddress, assetId) => {
             if (assets === undefined || assets.includes(assetId)) {
-                const tongoAccount = this.tempmocktongoaccount;//new TongoAccount(0n, tongoAddress, this.config.client);
+                const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
                 const state = await tongoAccount.state();
                 balances.push({ asset: assetId, amount: state.balance + state.pending })
             }
@@ -44,7 +42,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     async prepareShield(_asset: AssetAmount, from?: AccountId): Promise<ShieldPreparation> {
         const tongoAddress = this.config.deploys.get(_asset.asset);
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
-        const tongoAccount = this.tempmocktongoaccount;//new TongoAccount(0n, tongoAddress, this.config.client);
+        const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
         const fund = await tongoAccount.fund({ amount: _asset.amount, sender: "sender" });
         return { txns: [fund.approve, fund.toCalldata()] };
     }
@@ -53,7 +51,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         if (_asset.amount > (await this.balance([_asset.asset]))[0]!.amount) { throw InsufficientBalanceError; }
         const tongoAddress = this.config.deploys.get(_asset.asset);
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
-        const tongoAccount = this.tempmocktongoaccount;//new TongoAccount(0n, tongoAddress, this.config.client);
+        const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
         const rollover = await tongoAccount.rollover({ sender: "sender" });
         const withdraw = await tongoAccount.withdraw({ amount: _asset.amount, to: to.address, sender: "sender" });
         return { txns: [rollover.toCalldata(), withdraw.toCalldata()] };
@@ -63,7 +61,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         if (asset.amount > (await this.balance([asset.asset]))[0]!.amount) { throw InsufficientBalanceError; }
         const tongoAddress = this.config.deploys.get(asset.asset);
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
-        const tongoAccount = this.tempmocktongoaccount;//new TongoAccount(0n, tongoAddress, this.config.client);
+        const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
         const rollover = await tongoAccount.rollover({ sender: "sender" });
         const transfer = await tongoAccount.transfer({ amount: asset.amount, to: pubKeyBase58ToAffine(to.address), sender: "sender" });
         return { txns: [rollover.toCalldata(), transfer.toCalldata()] };
