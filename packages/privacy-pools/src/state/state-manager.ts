@@ -1,4 +1,4 @@
-import { Eip155ChainId, Storage } from "@kohaku-eth/plugins";
+import { ChainId, Storage } from "@kohaku-eth/plugins";
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
 
 import { Address } from "../interfaces/types.interface";
@@ -57,6 +57,7 @@ export interface StoreFactoryParams
   relayerClient: IRelayerClient;
   relayersList: Map<string, string>;
   storageToSyncTo?: Storage;
+  entrypoint: IEntrypoint;
   proverFactory: () => ReturnType<typeof Prover>;
   initialState?: Record<
     string,
@@ -153,7 +154,7 @@ const initializeSelectors = <const T extends Store>({
 };
 
 interface GetChainStoreParams {
-  chainId: Eip155ChainId<number>;
+  chainId: ChainId;
   entrypoint: IEntrypoint;
 }
 
@@ -210,7 +211,7 @@ const storeByChainAndEntrypoint = ({
           : undefined;
         const store = storeFactory({
           entrypointInfo: {
-            chainId: BigInt(chainId.reference),
+            chainId,
             entrypointAddress: address,
             deploymentBlock,
           },
@@ -241,8 +242,15 @@ export const storeStateManager = (
   const { getChainStore, getAllStores } = storeByChainAndEntrypoint(params);
   const { storageToSyncTo } = params;
 
+  const getChainInfo = async () => ({
+    chainId: await params.dataService.getChainId(),
+    entrypoint: params.entrypoint
+  });
+
   return {
-    sync: async (chainInfo): Promise<void> => {
+    sync: async (): Promise<void> => {
+      const chainInfo = await getChainInfo();
+
       const store = getChainStore(chainInfo);
 
       await store.dispatch(
@@ -259,7 +267,7 @@ export const storeStateManager = (
         );
       }
     },
-    getBalances: ({
+    getBalances: async ({
       assets = [],
       balanceType = "approved",
       ...params
@@ -268,27 +276,24 @@ export const storeStateManager = (
         selectors: {
           specificAssetsBalanceSelector,
         },
-      } = getChainStore(params);
+      } = getChainStore(await getChainInfo());
       return specificAssetsBalanceSelector(assets, balanceType);
     },
     getDepositPayload: async ({
-      chainId,
-      entrypoint,
       asset,
       amount,
     }: IDepositOperationParams) => {
-      const store = getChainStore({ chainId, entrypoint });
+      const store = getChainStore(await getChainInfo());
 
       return store.selectors.getNextDepositPayload(asset, amount);
     },
     getWithdrawalPayloads: async ({
-      chainId,
-      entrypoint,
       asset,
       amount,
       recipient,
     }: IWithdrawapOperationParams): Promise<Array<StateWithdrawalPayload>> => {
-      const store = getChainStore({ chainId, entrypoint });
+      const chainInfo = await getChainInfo();
+      const store = getChainStore(chainInfo);
 
       // Get best quote from relayers
       const quoteResultAction = await store.dispatch(
@@ -312,7 +317,7 @@ export const storeStateManager = (
         throw new Error(`No pool found for asset ${asset}`);
 
       const withdrawal = {
-        processooor: addressToHex(entrypoint.address) as `0x${string}`,
+        processooor: addressToHex(params.entrypoint.address) as `0x${string}`,
         data: quote.feeCommitment.withdrawalData as `0x${string}`,
       };
       const context = BigInt(calculateContext(withdrawal, poolInfo.scope));
@@ -344,6 +349,7 @@ export const storeStateManager = (
         },
         proofResult: withdrawProofResult,
         quoteData: { quote, relayerId },
+        chainId: chainInfo.chainId,
       }];
     },
     getRagequitPayloads: function (
@@ -351,13 +357,11 @@ export const storeStateManager = (
     ): Promise<unknown[]> {
       throw new Error("Function not implemented.");
     },
-    getNotes: ({
-      chainId,
-      entrypoint,
+    getNotes: async ({
       includeSpent = false,
       assets = [],
-    }: IGetNotesParams): INote[] => {
-      const store = getChainStore({ chainId, entrypoint });
+    }: IGetNotesParams): Promise<INote[]> => {
+      const store = getChainStore(await getChainInfo());
       let notes = store.selectors.getAllNotes();
 
       // Filter out spent notes unless includeSpent
