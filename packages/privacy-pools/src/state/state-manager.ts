@@ -267,11 +267,10 @@ export const storeStateManager = (
         );
       }
     },
-    getBalances: async ({
-      assets = [],
-      balanceType = "approved",
-      ...params
-    }) => {
+    getBalances: async (
+      assets,
+      balanceType,
+    ) => {
       const {
         selectors: {
           specificAssetsBalanceSelector,

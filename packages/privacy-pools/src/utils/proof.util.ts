@@ -30,7 +30,16 @@ export function generateMerkleProof(
         );
     }
 
-    return tree.generateProof(leafIndex);
+    const proof = tree.generateProof(leafIndex);
+
+    if (proof.siblings.length < 32) {
+        proof.siblings = [
+        ...proof.siblings,
+        ...Array(32 - proof.siblings.length).fill(BigInt(0)),
+        ];
+    }
+
+    return proof;
 }
 
 export function calculateContext(withdrawal: WithdrawalPayload, scope: bigint): string {
