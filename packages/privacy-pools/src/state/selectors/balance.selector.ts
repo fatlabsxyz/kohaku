@@ -197,10 +197,11 @@ export type SpecificAssetBalanceSelectorFn = <
   const BalanceType extends IBalanceType = 'both'
 >(state: RootState, assetAddress?: Adresses, balanceType?: BalanceType) => Adresses extends any[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>;
 
-export type SpecificAssetBalanceFn = <
+export type SpecificAssetBalanceFn<isAsync extends boolean = false> = <
   const Adresses extends Address | Address[] = Address[],
-  const BalanceType extends IBalanceType = 'both'
->(assetAddress?: Adresses, balanceType?: BalanceType) => Adresses extends any[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>;
+  const BalanceType extends IBalanceType = 'both',
+  ReturnType = Adresses extends any[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>,
+>(assetAddress?: Adresses, balanceType?: BalanceType) => isAsync extends true ? Promise<ReturnType> : ReturnType;
 
 export const createSpecificAssetBalanceSelector = (
   allAssetsBalanceSelector: ReturnType<typeof createAllAssetsBalanceSelector>

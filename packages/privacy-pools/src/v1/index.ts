@@ -1,11 +1,14 @@
-import { Broadcaster } from "@kohaku-eth/plugins/broadcaster";
-import { CreatePluginFn, PrivateOperation, PluginInstance, ERC20AssetId, AssetAmount, PublicOperation } from "@kohaku-eth/plugins";
-import { Address } from 'ox/Address';
+import { CreatePluginFn } from "@kohaku-eth/plugins";
+import { PrivacyPoolsBroadcaster, PrivacyPoolsV1Protocol } from "../plugin";
+import { PPv1Instance } from "./instance";
+import { PPv1Plugin } from "./interfaces";
 
-/**
- * PPv1 uses Ethereum Addresses internally
- */
-export type PPv1Address = Address;
+ 
+export const createPPv1Plugin: CreatePluginFn<PPv1Plugin> = (host, params) => {
+  let instance: PPv1Instance | null = null;
+  const broadcaster = new PrivacyPoolsBroadcaster({
+    host,
+  });
 
 export type PPv1AssetAmount = AssetAmount<ERC20AssetId, bigint, 'spendable' | 'unspendable'>;
 
@@ -37,7 +40,18 @@ export type PPv1Instance = PluginInstance<
             prepareUnshieldMulti: true,
         },
     }
->;
+    const broadcasterUrl = params.broadcasterUrl;
+    const relayersList =
+      typeof broadcasterUrl === "string"
+        ? { default: broadcasterUrl }
+        : broadcasterUrl;
+    instance = new PrivacyPoolsV1Protocol(host, {
+      ...params,
+      relayersList,
+    });
+    await broadcaster.config(params);
+    return instance;
+  };
 
 export type PPv1BroadcasterParameters = {
     broadcasterUrl: string;

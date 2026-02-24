@@ -7,17 +7,17 @@ export interface IAspService {
 
 export interface IAspServiceParams {
   network: Network;
-  aspUrl?: string;
+  ipfsUrl?: string;
 }
 
 export class AspService implements IAspService {
   private providerUrl = "https://ipfs.io/ipfs/";
   private fetch: Network["fetch"];
 
-  constructor({ network: { fetch }, aspUrl }: IAspServiceParams) {
+  constructor({ network: { fetch }, ipfsUrl }: IAspServiceParams) {
     this.fetch = fetch;
-    if (aspUrl) {
-      this.providerUrl = aspUrl;
+    if (ipfsUrl) {
+      this.providerUrl = ipfsUrl;
     }
   }
 

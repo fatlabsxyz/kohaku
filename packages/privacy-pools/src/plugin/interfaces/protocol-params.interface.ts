@@ -1,5 +1,5 @@
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
-import { ChainId, PrivateOperation } from '@kohaku-eth/plugins';
+import { ChainId, PrivateOperation, PublicOperation } from '@kohaku-eth/plugins';
 import { TxData } from '@kohaku-eth/provider';
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { IAspService } from "../../data/asp.service";
@@ -9,6 +9,7 @@ import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from '../../relayer
 import { RootState } from "../../state";
 import { StoreFactoryParams } from "../../state/state-manager";
 import { WithdrawProveOutput } from "../../state/thunks/withdrawThunk";
+import { SpecificAssetBalanceFn } from "../../state/selectors/balance.selector";
 
 export interface PPv1PrivateOperation extends PrivateOperation {
   rawData: {
@@ -26,6 +27,10 @@ export interface PPv1PrivateOperation extends PrivateOperation {
   };
 }
 
+export interface PPv1PublicOperation extends PublicOperation {
+  txns: TxData[];
+}
+
 export interface IEntrypoint {
   address: Address;
   deploymentBlock: bigint;
@@ -40,6 +45,7 @@ export interface PrivacyPoolsV1ProtocolParams {
   proverFactory: () => ReturnType<typeof Prover>;
   relayersList: Record<string, string>;
   initialState?: Record<string, RootState>;
+  ipfsUrl?: string;
 }
 
 interface IBaseOperationParams {}
@@ -113,7 +119,7 @@ export interface IStateManager {
    * Gets the balance of the specified assets.
    * All assets if not specified.
    */
-  getBalances: (params: IGetBalancesOperationParams) => Promise<Map<Address, bigint>>;
+  getBalances: SpecificAssetBalanceFn<true>;
   dumpState: () => Record<string, RootState>;
   /**
    * Gets all notes for the account.
