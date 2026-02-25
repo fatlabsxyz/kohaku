@@ -49,6 +49,7 @@ export async function mintERC20(
     AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [recipient, balanceSlot])
   );
   const value = zeroPadValue(toBeHex(amount), 32);
+  
   await provider.send('anvil_setStorageAt', [tokenAddress, slot, value]);
 }
 

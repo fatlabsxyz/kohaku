@@ -23,7 +23,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     }
 
     async account(): Promise<AccountId> {
-        const tongoAccount = new TongoAccount(0n, "", this.host.ethProvider);
+        const tongoAccount = new TongoAccount(1n, "", this.host.ethProvider);
 
         return new CustomAccountId(tongoAccount.tongoAddress(), new CustomChainId("tongo-evm", this.config.chain));
     }
@@ -33,7 +33,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         this.config.deploys.forEach(async (tongoAddress, assetId) => {
             if (assets === undefined || assets.includes(assetId)) {
-                const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
+                const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
                 const state = await tongoAccount.state();
 
                 balances.push({ asset: assetId, amount: state.balance + state.pending })
@@ -42,14 +42,15 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 	return balances;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async prepareShield(_asset: AssetAmount, from?: AccountId): Promise<ShieldPreparation> {
         const tongoAddress = this.config.deploys.get(_asset.asset);
 
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
 
-        const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
-        const fund = await tongoAccount.fund({ amount: _asset.amount, sender: "sender" });
+        const sender = from?.address ?? "0x0000000000000000000000000000000000000001";
+        const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
+        const fund = await tongoAccount.fund({ amount: _asset.amount, sender });
+        await fund.populateApprove();
 
         return { txns: [fund.approve, fund.toCalldata()] };
     }
@@ -61,9 +62,9 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
 
-        const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
-        const rollover = await tongoAccount.rollover({ sender: "sender" });
-        const withdraw = await tongoAccount.withdraw({ amount: _asset.amount, to: to.address, sender: "sender" });
+        const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
+        const rollover = await tongoAccount.rollover({ sender: "0x0000000000000000000000000000000000000001" });
+        const withdraw = await tongoAccount.withdraw({ amount: _asset.amount, to: to.address, sender: "0x0000000000000000000000000000000000000001" });
 
         return { txns: [rollover.toCalldata(), withdraw.toCalldata()] };
     }
@@ -75,9 +76,9 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
 
-        const tongoAccount = new TongoAccount(0n, tongoAddress, this.host.ethProvider);
-        const rollover = await tongoAccount.rollover({ sender: "sender" });
-        const transfer = await tongoAccount.transfer({ amount: asset.amount, to: pubKeyBase58ToAffine(to.address), sender: "sender" });
+        const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
+        const rollover = await tongoAccount.rollover({ sender: "0x0000000000000000000000000000000000000001" });
+        const transfer = await tongoAccount.transfer({ amount: asset.amount, to: pubKeyBase58ToAffine(to.address), sender: "0x0000000000000000000000000000000000000001" });
 
         return { txns: [rollover.toCalldata(), transfer.toCalldata()] };
     }

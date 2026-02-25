@@ -1,26 +1,24 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ethers } from 'ethers';
+import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
 
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
-import { setupWallet, mintERC20, approveERC20 } from '../utils/test-helpers';
+import { setupWallet, mintERC20 } from '../utils/test-helpers';
+import { TongoPlugin } from '../../src/tongo';
+import { Erc20Id, Eip155AccountId } from '@kohaku-eth/plugins';
+import type { Host } from '@kohaku-eth/plugins';
 
 const SEPOLIA_FORK_URL = getEnv('SEPOLIA_RPC_URL', 'https://no-fallback');
 
 const USDC_ADDRESS =
-  '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
+  '0xaBaAC28219739838C2428edb931b4BbB7B14bAB7';
 
 const TONGO_CONTRACT_ADDRESS =
   '0xDf978aD176352906a5dAC3D1c025Cf4CEE9B1124';
 
 const ERC20_ABI = [
   'function balanceOf(address) view returns (uint256)',
-];
-
-const TONGO_ABI = [
-  'function fund(address token, uint256 amount)',
-  'function balanceOf(address user, address token) view returns (uint256)',
-  'event Fund(address indexed user, address indexed token, uint256 amount)',
 ];
 
 describe('tongo EVM Fund E2E', () => {
@@ -43,145 +41,118 @@ describe('tongo EVM Fund E2E', () => {
   it('[fund] executes successful ERC20 fund on forked Sepolia', async () => {
     const pool = anvil.pool(1);
     const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-
     const receiver = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
+    const ethProvider = {
+      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
+        provider.send(method, Array.isArray(params) ? params : []),
+    };
+    const host = { ethProvider } as unknown as Host;
+    const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
 
-    const usdc = new ethers.Contract(
-      USDC_ADDRESS,
-      ERC20_ABI,
-      provider
-    );
-
-    const tongo = new ethers.Contract(
-      TONGO_CONTRACT_ADDRESS,
-      TONGO_ABI,
-      provider
-    );
-
+    const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
+    const usdcAssetId = new Erc20Id(USDC_ADDRESS);
+    const plugin = new TongoPlugin(host, {
+      chain: 11155111,
+      deploys: new Map([[usdcAssetId, TONGO_CONTRACT_ADDRESS]]),
+    });
     const FUND_AMOUNT = 100_000_000n;
 
+    const initialState = await tongoAccount.state();
+
+    expect(initialState.balance).toBe(0n);
+
+    const rate = await tongoAccount.rate();
+    const initialTongoUsdc = await usdc.balanceOf(TONGO_CONTRACT_ADDRESS);
+
+    await mintERC20(pool, USDC_ADDRESS, receiver.address, FUND_AMOUNT * rate);
+
     const initialUserUsdc = await usdc.balanceOf(receiver.address);
-    const initialtongoUsdc = await usdc.balanceOf(TONGO_CONTRACT_ADDRESS);
-    let initialInternalBalance = 0n;
-    try {
-      initialInternalBalance = await tongo.balanceOf(receiver.address, USDC_ADDRESS);
-    } catch {
-      initialInternalBalance = 0n;
-    }
 
-    expect(initialInternalBalance).toBe(0n);
-
-    await mintERC20(
-      pool,
-      USDC_ADDRESS,
-      receiver.address,
-      FUND_AMOUNT
+    const { txns } = await plugin.prepareShield(
+      { asset: usdcAssetId, amount: FUND_AMOUNT },
+      new Eip155AccountId(receiver.address as `0x${string}`)
     );
+    const [approveTxData, fundTxData] = txns;
 
-    await approveERC20(
-      receiver,
-      USDC_ADDRESS,
-      TONGO_CONTRACT_ADDRESS,
-      FUND_AMOUNT
-    );
+    const approveTx = await receiver.sendTransaction({
+      to: approveTxData.to, data: approveTxData.data, value: approveTxData.value,
+    });
 
-    const tx = await tongo
-      .connect(receiver)
-      .fund(USDC_ADDRESS, FUND_AMOUNT, {
-        gasLimit: 6_000_000n,
-      });
+    await approveTx.wait();
+
+    const fundTx = await receiver.sendTransaction({
+      to: fundTxData.to, data: fundTxData.data, value: fundTxData.value, gasLimit: 6_000_000n,
+    });
 
     await pool.mine(1);
 
-    const receipt = await provider.getTransactionReceipt(tx.hash);
+    const receipt = await provider.getTransactionReceipt(fundTx.hash);
 
     expect(receipt?.status).toBe(1);
 
-    const postUserUsdc = await usdc.balanceOf(receiver.address);
-    const posttongoUsdc = await usdc.balanceOf(TONGO_CONTRACT_ADDRESS);
-    const postInternalBalance = await tongo.balanceOf(
-      receiver.address,
-      USDC_ADDRESS
-    );
+    expect(await usdc.balanceOf(receiver.address)).toBe(initialUserUsdc - FUND_AMOUNT * rate);
+    expect(await usdc.balanceOf(TONGO_CONTRACT_ADDRESS)).toBe(initialTongoUsdc + FUND_AMOUNT * rate);
 
-    expect(postUserUsdc).toBe(initialUserUsdc + 0n);
-    expect(postUserUsdc).toBe(
-      initialUserUsdc + FUND_AMOUNT - FUND_AMOUNT
-    );
+    const postState = await tongoAccount.state();
 
-    expect(posttongoUsdc).toBe(
-      initialtongoUsdc + FUND_AMOUNT
-    );
-
-    expect(postInternalBalance).toBe(FUND_AMOUNT);
+    expect(postState.balance).toBe(FUND_AMOUNT);
 
     const fundEvent = receipt!.logs.find(
-      (log) =>
-        log.address.toLowerCase() ===
-        TONGO_CONTRACT_ADDRESS.toLowerCase()
+      (log) => log.address.toLowerCase() === TONGO_CONTRACT_ADDRESS.toLowerCase()
     );
 
     expect(fundEvent).toBeTruthy();
   });
 
+
   it('[fund] accumulates multiple deposits correctly', async () => {
     const pool = anvil.pool(2);
     const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-
     const receiver = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
+    const ethProvider = {
+      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
+        provider.send(method, Array.isArray(params) ? params : []),
+    };
+    const host = { ethProvider } as unknown as Host;
 
-    const usdc = new ethers.Contract(
-      USDC_ADDRESS,
-      ERC20_ABI,
-      provider
-    );
-
-    const tongo = new ethers.Contract(
-      TONGO_CONTRACT_ADDRESS,
-      TONGO_ABI,
-      provider
-    );
+    const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
+    const usdcAssetId = new Erc20Id(USDC_ADDRESS);
+    const plugin = new TongoPlugin(host, {
+      chain: 11155111,
+      deploys: new Map([[usdcAssetId, TONGO_CONTRACT_ADDRESS]]),
+    });
 
     const A = 100_000_000n;
     const B = 200_000_000n;
 
-    await mintERC20(
-      pool,
-      USDC_ADDRESS,
-      receiver.address,
-      A + B
+    const rate = await tongoAccount.rate();
+    
+    await mintERC20(pool, USDC_ADDRESS, receiver.address, (A + B) * rate);
+
+    // --- Deposit A ---
+    const { txns: txnsA } = await plugin.prepareShield(
+      { asset: usdcAssetId, amount: A },
+      new Eip155AccountId(receiver.address as `0x${string}`)
     );
 
-    await approveERC20(
-      receiver,
-      USDC_ADDRESS,
-      TONGO_CONTRACT_ADDRESS,
-      A + B
-    );
-
-    const tx1 = await tongo
-      .connect(receiver)
-      .fund(USDC_ADDRESS, A, {
-        gasLimit: 6_000_000n,
-      });
-
-    await tx1.wait();
+    await receiver.sendTransaction({ to: txnsA[0].to, data: txnsA[0].data, value: txnsA[0].value });
+    await pool.mine(1);
+    await receiver.sendTransaction({ to: txnsA[1].to, data: txnsA[1].data, value: txnsA[1].value, gasLimit: 6_000_000n });
     await pool.mine(1);
 
-    const tx2 = await tongo
-      .connect(receiver)
-      .fund(USDC_ADDRESS, B, {
-        gasLimit: 6_000_000n,
-      });
-
-    await tx2.wait();
-    await pool.mine(1);
-
-    const finalBalance = await tongo.balanceOf(
-      receiver.address,
-      USDC_ADDRESS
+    // --- Deposit B ---
+    const { txns: txnsB } = await plugin.prepareShield(
+      { asset: usdcAssetId, amount: B },
+      new Eip155AccountId(receiver.address as `0x${string}`)
     );
 
-    expect(finalBalance).toBe(A + B);
+    await receiver.sendTransaction({ to: txnsB[0].to, data: txnsB[0].data, value: txnsB[0].value });
+    await pool.mine(1);
+    await receiver.sendTransaction({ to: txnsB[1].to, data: txnsB[1].data, value: txnsB[1].value, gasLimit: 6_000_000n });
+    await pool.mine(1);
+
+    const finalState = await tongoAccount.state();
+    
+    expect(finalState.balance).toBe(A + B);
   });
 });
