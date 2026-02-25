@@ -371,11 +371,10 @@ export const storeStateManager = (
       }];
     },
     getRagequitPayloads: async ({
-      chainId,
-      entrypoint,
       assets = [],
     }: IRagequitAssetsOperationParams): Promise<StateRagequitPayload[]> => {
-      const store = getChainStore({ chainId, entrypoint });
+      const chainInfo = await getChainInfo();
+      const store = getChainStore(chainInfo);
 
       // 1. Get all unapproved notes for the specified assets
       const unapprovedNotes = assets.length > 0
@@ -416,22 +415,21 @@ export const storeStateManager = (
         }));
     },
     getRagequitByLabelPayloads: async ({
-      chainId,
-      entrypoint,
       labels = [],
     }: IRagequitLabelsOperationParams): Promise<StateRagequitPayload[]> => {
-      const store = getChainStore({ chainId, entrypoint });
+      const chainInfo = await getChainInfo();
+      const store = getChainStore(chainInfo);
 
       // 1. Get all unapproved notes for the specified assets
-      const unapprovedNotes = store.selectors.getUnapprovedNotes();
+      const allNotes = store.selectors.getAllNotes();
 
-      if (unapprovedNotes.length === 0) {
+      if (allNotes.length === 0) {
         return [];
       }
 
       // 2. Generate proofs for each note
       const ragequitResults = await Promise.all(
-        unapprovedNotes
+        allNotes
           .filter(note => labels.includes(note.label))
           .map(async (note) => {
             const resultAction = await store.dispatch(

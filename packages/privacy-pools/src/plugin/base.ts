@@ -24,12 +24,11 @@ import {
   PPv1AssetAmount,
   PPv1AssetBalance,
   PPv1Instance,
-} from "../v1/instance.js";
+} from "../v1/interfaces.js";
 import {
   PPv1Broadcaster,
   PPv1BroadcasterParameters,
 } from "../v1/interfaces.js";
-import { EthClient } from "../data/eth-client.js";
 import { TxData } from "packages/provider/dist/index.js";
 
 type RequireOnly<T, Keys extends keyof T> = Partial<T> & Pick<T, Keys>;
@@ -214,7 +213,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       };
     });
 
-    return { txns: ragequitTxs };
+    return { txns: ragequitTxs } as PPv1PublicOperation;
   }
 
   async prepareUnshield(assets: AssetAmount, to: AccountId): Promise<PPv1PrivateOperation> {
