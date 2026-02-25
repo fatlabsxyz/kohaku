@@ -281,6 +281,6 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const [balanceAfterWithdraws] = await protocol.balance([nativeAsset], "approved");
     expect(balanceAfterWithdraws.amount).toBe(0n);
 
-  }, 90_000); // Extended timeout for real proof generation
+  }, 120_000); // Extended timeout for real proof generation
 
 });

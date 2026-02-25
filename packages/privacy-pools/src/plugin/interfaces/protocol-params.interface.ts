@@ -1,4 +1,4 @@
-import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
+import { Prover, CommitmentPublicSignals } from "@fatsolutions/privacy-pools-core-circuits";
 import { ChainId, PrivateOperation, PublicOperation } from '@kohaku-eth/plugins';
 import { TxData } from '@kohaku-eth/provider';
 import { ISecretManager, SecretManagerParams } from "../../account/keys";
@@ -65,8 +65,12 @@ export interface IWithdrawapOperationParams extends Omit<IDepositOperationParams
   recipient: Address;
 }
 
-export interface IRagequitOperationParams extends IBaseOperationParams {
+export interface IRagequitAssetsOperationParams extends IBaseOperationParams {
   assets?: Address[];
+}
+
+export interface IRagequitLabelsOperationParams extends IBaseOperationParams {
+  labels: INote["label"][];
 }
 
 export interface IGetNotesParams extends IBaseOperationParams {
@@ -96,6 +100,17 @@ export type StateWithdrawalPayload = {
   chainId: ChainId;
 };
 
+export type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
+export type CommitmentProveOutput = Omit<ProveOutput, 'mappedSignals'> & {
+  mappedSignals: CommitmentPublicSignals;
+};
+
+export type StateRagequitPayload = {
+  note: INote;
+  poolAddress: Address;
+  proofResult: CommitmentProveOutput;
+};
+
 
 export interface IStateManager {
   /**
@@ -114,7 +129,12 @@ export interface IStateManager {
    * Generates the ragequit payloads for the specified assets. Only unapproved
    * amount will be ragequitted.
    */
-  getRagequitPayloads: (params: IRagequitOperationParams) => Promise<unknown[]>;
+  getRagequitPayloads: (params: IRagequitAssetsOperationParams) => Promise<StateRagequitPayload[]>;
+  /**
+   * Generates the ragequit payloads for the specified assets. Only unapproved
+   * amount will be ragequitted.
+   */
+  getRagequitByLabelPayloads: (params: IRagequitLabelsOperationParams) => Promise<StateRagequitPayload[]>;
   /**
    * Gets the balance of the specified assets.
    * All assets if not specified.

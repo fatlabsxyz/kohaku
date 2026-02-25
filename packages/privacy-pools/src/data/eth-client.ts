@@ -28,6 +28,13 @@ export class EthClient {
         return this.provider.request(...params);
     }
 
+    async getChainId() {
+        return this.provider.request({
+            method: "eth_chainId",
+            params: [],
+        }).then(r => BigInt(r as string))
+    }
+
     async getLogs({
         maxQuerySize = 5000,
         ...params
