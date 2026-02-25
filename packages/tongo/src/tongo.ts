@@ -27,6 +27,11 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         this.keystoreManager = keystoreManager({ host });
     }
 
+    private async getSender(): Promise<string> {
+        const accounts = await this.host.ethProvider.request({ method: 'eth_accounts' }) as string[];
+        return accounts[0];
+    }
+
     private deriveAccount(tongoContract: string): TongoAccount {
         return this.deriveAccountFromKey(tongoContract, this.keystoreManager.deriveKey());
     }
@@ -68,7 +73,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         if (tongoContract === undefined) { throw UnsupportedAssetError; }
 
-        const fund = await this.deriveAccount(tongoContract).fund({ amount: asset.amount, sender: "sender" });
+        const fund = await this.deriveAccount(tongoContract).fund({ amount: asset.amount, sender: from!.address });
 
         return { txns: [fund.approve, fund.toCalldata()] };
     }
@@ -82,8 +87,9 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         if (asset.amount > await this._balance(tongoAccount)) { throw InsufficientBalanceError; }
 
-        const rollover = await tongoAccount.rollover({ sender: "sender" });
-        const withdraw = await tongoAccount.withdraw({ amount: asset.amount, to: to.address, sender: "sender" });
+        const sender = await this.getSender();
+        const rollover = await tongoAccount.rollover({ sender });
+        const withdraw = await tongoAccount.withdraw({ amount: asset.amount, to: to.address, sender });
 
         return { txns: [rollover.toCalldata(), withdraw.toCalldata()] };
     }
@@ -97,8 +103,9 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         if (asset.amount > await this._balance(tongoAccount)) { throw InsufficientBalanceError; }
 
-        const rollover = await tongoAccount.rollover({ sender: "sender" });
-        const transfer = await tongoAccount.transfer({ amount: asset.amount, to: pubKeyBase58ToAffine(to.address), sender: "sender" });
+        const sender = await this.getSender();
+        const rollover = await tongoAccount.rollover({ sender });
+        const transfer = await tongoAccount.transfer({ amount: asset.amount, to: pubKeyBase58ToAffine(to.address), sender });
 
         return { txns: [rollover.toCalldata(), transfer.toCalldata()] };
     }
