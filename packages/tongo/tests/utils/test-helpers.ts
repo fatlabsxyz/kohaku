@@ -49,7 +49,6 @@ export async function mintERC20(
     AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [recipient, balanceSlot])
   );
   const value = zeroPadValue(toBeHex(amount), 32);
-  
   await provider.send('anvil_setStorageAt', [tokenAddress, slot, value]);
 }
 
@@ -63,4 +62,8 @@ export async function approveERC20(
   const token = new Contract(tokenAddress, erc20Abi, signer);
 
   await (await token.approve(spender, amount)).wait();
+}
+
+export async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
+  return signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
 }
