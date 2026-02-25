@@ -223,8 +223,8 @@ export async function sendTx(signer: Wallet, { to, data, value }: { to: string; 
 }
 
 export async function sendTxAndWait(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
-  const tx = await signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
-  return tx.wait();
+  return signer.sendTransaction({ to, data, value, gasLimit: 6000000n })
+    .then(tx => tx.wait());
 }
 
 export async function setupWallet(pool: AnvilPool, pk: string | SigningKey): Promise<Wallet> {

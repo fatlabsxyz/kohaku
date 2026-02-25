@@ -1,4 +1,4 @@
-import { ContractProof, withdrawObjectToCircuitBus, Prover, Circuits, WithdrawPublicSignals, CircuitName, CircuitInputSignalsMap, CircuitPublicSignalsMap } from "@fatsolutions/privacy-pools-core-circuits";
+import { ContractProof, withdrawObjectToCircuitBus, commitmentObjectToCircuitBus, Prover, Circuits, WithdrawPublicSignals, CommitmentPublicSignals, CircuitName, CircuitInputSignalsMap, CircuitPublicSignalsMap } from "@fatsolutions/privacy-pools-core-circuits";
 import * as snarkjs from "snarkjs";
 
 // Mock proof
@@ -45,18 +45,39 @@ const mockWithdrawPublicSignalsObject: WithdrawPublicSignals = {
   ASPTreeDepth: 0n,
 };
 
+const mockCommitmentPublicSignalsObject: CommitmentPublicSignals = {
+  commitment: 0n,
+  nullifierHash: 0n,
+  value: 0n,
+  label: 0n,
+};
+
 export const mockProver: ProverInstance = {
   circuits: new Circuits(),
   prove: <C extends CircuitName>(
-    _circuit: C,
-    _signals: CircuitInputSignalsMap[C]
+    circuit: C,
+    signals: CircuitInputSignalsMap[C]
   ): Promise<{
     proof: snarkjs.Groth16Proof;
     publicSignals: string[];
     mappedSignals: CircuitPublicSignalsMap[C];
   }> => {
-    // This mock only supports the "withdraw" circuit
-    // Cast the result to the generic return type
+    // Handle both withdraw and commitment circuits
+    if (circuit === "commitment") {
+      const commitmentSignals = signals as CircuitInputSignalsMap["commitment"];
+      const mappedSignals: CommitmentPublicSignals = {
+        ...mockCommitmentPublicSignalsObject,
+        value: commitmentSignals.value,
+        label: commitmentSignals.label,
+      };
+      return Promise.resolve({
+        proof: mockedGroth16Proof,
+        mappedSignals: mappedSignals as CircuitPublicSignalsMap[C],
+        publicSignals: commitmentObjectToCircuitBus(mappedSignals) as string[]
+      });
+    }
+
+    // Default: withdraw circuit
     return Promise.resolve({
       proof: mockedGroth16Proof,
       mappedSignals: mockWithdrawPublicSignalsObject as CircuitPublicSignalsMap[C],

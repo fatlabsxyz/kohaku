@@ -1,5 +1,5 @@
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
-import { encodeWithdrawalPayload } from "../utils.js";
+import { addressToHex, encodeRagequitPayload, encodeWithdrawalPayload } from "../utils.js";
 import {
   AccountId,
   AssetAmount,
@@ -29,6 +29,8 @@ import {
   PPv1Broadcaster,
   PPv1BroadcasterParameters,
 } from "../v1/interfaces.js";
+import { EthClient } from "../data/eth-client.js";
+import { TxData } from "packages/provider/dist/index.js";
 
 type RequireOnly<T, Keys extends keyof T> = Partial<T> & Pick<T, Keys>;
 
@@ -195,10 +197,27 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
     });
   }
 
-  async prepareUnshield(
-    assets: AssetAmount,
-    to: AccountId,
-  ): Promise<PPv1PrivateOperation> {
+  async ragequit(
+    labels: INote['label'][]
+  ) {
+    await this.stateManager.sync();
+
+    const ragequitRawPayloads = await this.stateManager.getRagequitByLabelPayloads({
+      labels,
+    });
+
+    const ragequitTxs: TxData[] = ragequitRawPayloads.map(({ proofResult, poolAddress }) => {
+      return {
+        to: addressToHex(poolAddress),
+        data: encodeRagequitPayload(proofResult),
+        value: 0n
+      };
+    });
+
+    return { txns: ragequitTxs };
+  }
+
+  async prepareUnshield(assets: AssetAmount, to: AccountId): Promise<PPv1PrivateOperation> {
     const { asset, amount } = assets;
     const entrypoint = this.entrypoint;
     const assetAddress = BigInt(asset.contract);
@@ -244,10 +263,6 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       },
       quoteData,
     } as PPv1PrivateOperation;
-  }
-
-  broadcast(operation: PPv1PrivateOperation): Promise<void> {
-    throw new Error("Method not implemented.");
   }
 
   sync() {

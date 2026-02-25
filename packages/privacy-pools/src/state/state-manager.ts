@@ -7,9 +7,11 @@ import {
   IEntrypoint,
   IGetNotesParams,
   INote,
-  IRagequitOperationParams,
+  IRagequitAssetsOperationParams,
+  IRagequitLabelsOperationParams,
   IStateManager,
   IWithdrawapOperationParams,
+  StateRagequitPayload,
   StateWithdrawalPayload,
 } from "../plugin/interfaces/protocol-params.interface";
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
@@ -38,6 +40,8 @@ import {
   createExistingNoteSecretsDeriver,
   createGetNoteSelector,
   createNextNoteDeriver,
+  createUnapprovedNotesSelector,
+  createUnapprovedNotesByAssetSelector,
 } from "./selectors/notes.selector";
 import { createMyPoolsSelector, poolFromAssetSelector } from "./selectors/pools.selector";
 import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
@@ -47,6 +51,7 @@ import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
 import { quoteThunk } from "./thunks/quoteThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
+import { ragequitThunk } from "./thunks/ragequitThunk";
 import { Store, unwrapResult } from "@reduxjs/toolkit";
 import { deserialize } from "./utils/serialize.utils";
 import { addressToHex } from "../utils";
@@ -130,6 +135,15 @@ const initializeSelectors = <const T extends Store>({
   const allAssetsBalanceSelector = createAllAssetsBalanceSelector(myAssetsBalanceSelector);
   const specificAssetsBalanceSelector = createSpecificAssetBalanceSelector(allAssetsBalanceSelector);
 
+  // Ragequit selectors for unapproved notes
+  const unapprovedNotesSelector = createUnapprovedNotesSelector({
+    myDepositsBalanceSelector,
+    myWithdrawalsSelector,
+  });
+  const unapprovedNotesByAssetSelector = createUnapprovedNotesByAssetSelector({
+    unapprovedNotesSelector,
+  });
+
   return {
     ...store,
     selectors: {
@@ -149,6 +163,11 @@ const initializeSelectors = <const T extends Store>({
 
       myUnsyncedAssetsSelector: () =>
         myUnsyncedAssetsSelector(store.getState()),
+
+      // Ragequit selectors
+      getUnapprovedNotes: () => unapprovedNotesSelector(store.getState()),
+      getUnapprovedNotesByAsset: (assets: Address[]) =>
+        unapprovedNotesByAssetSelector(store.getState(), assets),
     },
   };
 };
@@ -351,10 +370,95 @@ export const storeStateManager = (
         chainId: chainInfo.chainId,
       }];
     },
-    getRagequitPayloads: function (
-      params: IRagequitOperationParams,
-    ): Promise<unknown[]> {
-      throw new Error("Function not implemented.");
+    getRagequitPayloads: async ({
+      chainId,
+      entrypoint,
+      assets = [],
+    }: IRagequitAssetsOperationParams): Promise<StateRagequitPayload[]> => {
+      const store = getChainStore({ chainId, entrypoint });
+
+      // 1. Get all unapproved notes for the specified assets
+      const unapprovedNotes = assets.length > 0
+        ? store.selectors.getUnapprovedNotesByAsset(assets)
+        : store.selectors.getUnapprovedNotes();
+
+      if (unapprovedNotes.length === 0) {
+        return [];
+      }
+
+      // 2. Generate proofs for each note
+      const ragequitResults = await Promise.all(
+        unapprovedNotes.map(async (note) => {
+          const resultAction = await store.dispatch(
+            ragequitThunk({
+              note,
+              getExistingNoteSecrets: store.selectors.getExistingNoteSecrets,
+              proverFactory: params.proverFactory,
+            })
+          );
+
+          if (resultAction.meta.requestStatus === "rejected") {
+            console.warn(`Failed to generate ragequit proof for note ${note.label}`);
+            return null;
+          }
+
+          return unwrapResult(resultAction);
+        })
+      );
+
+      // 3. Filter out failed proofs and return payloads
+      return ragequitResults
+        .filter((result): result is NonNullable<typeof result> => result !== null)
+        .map(({ note, poolAddress, proofResult }) => ({
+          note,
+          poolAddress,
+          proofResult,
+        }));
+    },
+    getRagequitByLabelPayloads: async ({
+      chainId,
+      entrypoint,
+      labels = [],
+    }: IRagequitLabelsOperationParams): Promise<StateRagequitPayload[]> => {
+      const store = getChainStore({ chainId, entrypoint });
+
+      // 1. Get all unapproved notes for the specified assets
+      const unapprovedNotes = store.selectors.getUnapprovedNotes();
+
+      if (unapprovedNotes.length === 0) {
+        return [];
+      }
+
+      // 2. Generate proofs for each note
+      const ragequitResults = await Promise.all(
+        unapprovedNotes
+          .filter(note => labels.includes(note.label))
+          .map(async (note) => {
+            const resultAction = await store.dispatch(
+              ragequitThunk({
+                note,
+                getExistingNoteSecrets: store.selectors.getExistingNoteSecrets,
+                proverFactory: params.proverFactory,
+              })
+            );
+
+            if (resultAction.meta.requestStatus === "rejected") {
+              console.warn(`Failed to generate ragequit proof for note ${note.label}`);
+              return null;
+            }
+
+            return unwrapResult(resultAction);
+          })
+      );
+
+      // 3. Filter out failed proofs and return payloads
+      return ragequitResults
+        .filter((result): result is NonNullable<typeof result> => result !== null)
+        .map(({ note, poolAddress, proofResult }) => ({
+          note,
+          poolAddress,
+          proofResult,
+        }));
     },
     getNotes: async ({
       includeSpent = false,
