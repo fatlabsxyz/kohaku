@@ -43,30 +43,25 @@ export const ragequitThunk = createAsyncThunk<
 
     const { note, getExistingNoteSecrets, proverFactory } = params;
 
-    // 1. Validate note is unapproved
-    if (note.approved) {
-      throw new Error("Cannot ragequit an approved note. Use withdrawal instead.");
-    }
-
-    // 2. Validate note has balance
+    // 1. Validate note has balance
     if (note.balance <= 0n) {
       throw new Error("Note has no balance to ragequit.");
     }
 
-    // 3. Get the pool for this asset
+    // 2. Get the pool for this asset
     const poolInfo = poolFromAssetSelector(state, note.assetAddress);
     if (!poolInfo) {
       throw new Error(`No pool found for asset ${note.assetAddress}`);
     }
 
-    // 4. Get existing note's secrets
+    // 3. Get existing note's secrets
     const secrets = getExistingNoteSecrets(
       note,
       chainId,
       entrypointAddress
     );
 
-    // 5. Generate commitment proof
+    // 4. Generate commitment proof
     // The commitment circuit proves knowledge of (value, label, nullifier, secret)
     // and outputs (commitment, nullifierHash, value, label)
     const prover = await proverFactory();
