@@ -12,7 +12,7 @@ import { createMockHost } from '../../utils/mock-host';
 import { mockProverFactory } from '../../utils/mock-prover';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTx, setupWallet } from '../../utils/test-helpers';
+import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTx, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
 
 const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 
@@ -88,7 +88,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    await sendTx(alice, shieldTx);
+    const receipt = await sendTxAndWait(alice, shieldTx);
+    expect(receipt).toBeTruthy();
+    expect(receipt!.status).toEqual(1);
+
     await pool.mine(1);
 
     // 2. Verify deposit balance

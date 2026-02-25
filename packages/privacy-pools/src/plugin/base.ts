@@ -1,5 +1,5 @@
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
-import { encodeWithdrawalPayload, stringToAddress } from "../utils.js";
+import { addressToHex, encodeRagequitPayload, encodeWithdrawalPayload, stringToAddress } from "../utils.js";
 import { AccountId, AssetAmount, AssetId, ChainId, Eip155ChainId, Erc20Id, Host, Plugin, ShieldPreparation } from "@kohaku-eth/plugins";
 import { ISecretManager, SecretManager } from '../account/keys';
 import { AspService } from "../data/asp.service";
@@ -8,6 +8,8 @@ import { IQuoteResponse, IRelayerClient } from "../relayer/interfaces/relayer-cl
 import { RelayerClient } from "../relayer/relayer-client";
 import { storeStateManager } from '../state/state-manager';
 import { IEntrypoint, INote, IStateManager, ISyncOperationParams, PPv1PrivateOperation, PrivacyPoolsV1ProtocolContext, PrivacyPoolsV1ProtocolParams } from './interfaces/protocol-params.interface';
+import { EthClient } from "../data/eth-client.js";
+import { TxData } from "packages/provider/dist/index.js";
 
 const DefaultContext: PrivacyPoolsV1ProtocolContext = {};
 
@@ -228,6 +230,38 @@ export class PrivacyPoolsV1Protocol extends Plugin<
     return allNotes;
   }
 
+  async ragequit(
+    labels: INote['label'][]
+  ) {
+    const client = new EthClient(this.host.ethProvider);
+    const chainIdRpc = await client.getChainId();
+
+    const entrypoint = this.chainsEntrypoints.get(`eip155:${chainIdRpc.toString()}`);
+    if (!entrypoint)
+      throw Error(`Entrypoint not found for chain ${chainIdRpc}`);
+
+    // Parse chain ID (format: "eip155:1")
+    const chainId = new Eip155ChainId(Number(chainIdRpc));
+
+    await this.stateManager.sync({ chainId, entrypoint });
+
+    const ragequitRawPayloads = await this.stateManager.getRagequitByLabelPayloads({
+      chainId,
+      entrypoint,
+      labels,
+    });
+
+    const ragequitTxs: TxData[] = ragequitRawPayloads.map(({ proofResult, poolAddress }) => {
+      return {
+        to: addressToHex(poolAddress),
+        data: encodeRagequitPayload(proofResult),
+        value: 0n
+      };
+    });
+
+    return { txns: ragequitTxs };
+  }
+
   async prepareUnshield(assets: AssetAmount, to: AccountId): Promise<PPv1PrivateOperation> {
     const { asset, amount } = assets;
     const { chainId: _chainId } = asset;
@@ -295,10 +329,6 @@ export class PrivacyPoolsV1Protocol extends Plugin<
       },
       quoteData,
     };
-  }
-
-  broadcast(operation: PPv1PrivateOperation): Promise<void> {
-    throw new Error("Method not implemented.");
   }
 
   sync(params: ISyncOperationParams) {

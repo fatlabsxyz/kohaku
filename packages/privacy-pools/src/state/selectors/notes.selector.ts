@@ -145,3 +145,56 @@ export const createExistingNoteSecretsDeriver = ({
     });
   };
 };
+
+/**
+ * Creates a selector that returns all unapproved notes with positive balance.
+ * These are candidates for ragequit (exit without ASP approval).
+ */
+export const createUnapprovedNotesSelector = ({
+  myDepositsBalanceSelector,
+  myWithdrawalsSelector,
+}: {
+  myDepositsBalanceSelector: ReturnType<typeof createMyDepositsBalanceSelector>;
+  myWithdrawalsSelector: ReturnType<typeof createMyWithdrawalsSelector>;
+}) => {
+  return createSelector(
+    [myDepositsBalanceSelector, myWithdrawalsSelector],
+    (depositsMap, withdrawalsMap): INote[] => {
+      return Array.from(depositsMap.values())
+        .filter(deposit => !deposit.approved && deposit.balance > 0n)
+        .map(deposit => ({
+          label: deposit.label,
+          precommitment: deposit.precommitment,
+          value: deposit.value,
+          balance: deposit.balance,
+          assetAddress: deposit.assetAddress,
+          approved: deposit.approved,
+          deposit: deposit.index,
+          withdraw: (withdrawalsMap.get(deposit.precommitment) || []).length,
+        }));
+    }
+  );
+};
+
+/**
+ * Creates a selector that filters unapproved notes by asset addresses.
+ */
+export const createUnapprovedNotesByAssetSelector = ({
+  unapprovedNotesSelector,
+}: {
+  unapprovedNotesSelector: ReturnType<typeof createUnapprovedNotesSelector>;
+}) => {
+  return createSelector(
+    [
+      unapprovedNotesSelector,
+      (_state: unknown, assets: Address[]) => assets,
+    ],
+    (notes, assets): INote[] => {
+      if (assets.length === 0) {
+        return notes; // Return all if no filter
+      }
+      const assetSet = new Set(assets.map(a => a.toString()));
+      return notes.filter(note => assetSet.has(note.assetAddress.toString()));
+    }
+  );
+};

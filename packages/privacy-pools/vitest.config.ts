@@ -33,6 +33,14 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'ragequit',
+          include: ['tests/e2e/**/ragequit.test.ts'],
+          testTimeout: 600_000,
+        }
+      },
+      {
+        extends: true,
+        test: {
           name: 'e2e',
           include: ['tests/e2e/**/*.test.ts'],
           testTimeout: 600_000,

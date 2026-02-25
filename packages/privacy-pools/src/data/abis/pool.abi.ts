@@ -27,4 +27,39 @@ export const poolAbi = [
     ],
     "stateMutability": "view"
   },
+  {
+    type: "function",
+    name: "ragequit",
+    inputs: [
+      {
+        name: "_proof",
+        type: "tuple",
+        internalType: "struct ProofLib.RagequitProof",
+        components: [
+          {
+            name: "pA",
+            type: "uint256[2]",
+            internalType: "uint256[2]",
+          },
+          {
+            name: "pB",
+            type: "uint256[2][2]",
+            internalType: "uint256[2][2]",
+          },
+          {
+            name: "pC",
+            type: "uint256[2]",
+            internalType: "uint256[2]",
+          },
+          {
+            name: "pubSignals",
+            type: "uint256[4]",
+            internalType: "uint256[4]",
+          },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  }
 ] as const satisfies Abi;
