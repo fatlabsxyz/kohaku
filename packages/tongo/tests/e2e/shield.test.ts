@@ -38,7 +38,7 @@ describe('tongo EVM Fund E2E', () => {
     await anvil.stop();
   });
 
-  it.skip('[fund] executes successful ERC20 fund on forked Sepolia', async () => {
+  it('[fund] executes successful ERC20 fund on forked Sepolia', async () => {
     const pool = anvil.pool(1);
     const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
     const alice = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
@@ -108,7 +108,8 @@ describe('tongo EVM Fund E2E', () => {
   it('[fund] accumulates multiple deposits correctly', async () => {
     const pool = anvil.pool(2);
     const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-    const alice = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
+    const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
+    const alice = new ethers.NonceManager(aliceWallet);
     const ethProvider = {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
@@ -126,28 +127,26 @@ describe('tongo EVM Fund E2E', () => {
     const B = 200_000_000n;
 
     const rate = await tongoAccount.rate();
-    
-    await mintERC20(pool, USDC_ADDRESS, alice.address, (A + B) * rate);
+
+    await mintERC20(pool, USDC_ADDRESS, aliceWallet.address, (A + B) * rate);
 
     // --- Deposit A ---
-    const { txns: [txnsA] } = await plugin.prepareShield(
+    const { txns: txnsA } = await plugin.prepareShield(
       { asset: usdcAssetId, amount: A },
-      new Eip155AccountId(alice.address as `0x${string}`)
+      new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, txnsA);
-    await pool.mine(1);
+    await sendTx(alice, txnsA[0]);
+    await sendTx(alice, txnsA[1]);
 
     // --- Deposit B ---
-    const { txns: [txnsB] } = await plugin.prepareShield(
+    const { txns: txnsB } = await plugin.prepareShield(
       { asset: usdcAssetId, amount: B },
-      new Eip155AccountId(alice.address as `0x${string}`)
+      new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, txnsB);
-    await pool.mine(1);
-
-    await pool.mine(1);
+    await sendTx(alice, txnsB[0]);
+    await sendTx(alice, txnsB[1]);
 
     const finalState = await tongoAccount.state();
     
