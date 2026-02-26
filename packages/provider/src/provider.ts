@@ -1,4 +1,5 @@
 import { Filter } from "ox/Filter";
+import { RpcRequest } from "ox/RpcRequest";
 import { TxData, TxLog, TransactionReceipt } from "./tx";
 import { RpcRequest } from "ox/RpcRequest";
 
