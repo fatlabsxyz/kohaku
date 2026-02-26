@@ -66,6 +66,6 @@ export async function approveERC20(
 
 export async function sendTx(signer: Wallet | NonceManager, { to, data, value }: { to: string; data: string; value: bigint; }) {
   const response = await signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
-  
-  await response.wait();
+
+  return response.wait();
 }

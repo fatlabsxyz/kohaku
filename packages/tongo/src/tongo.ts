@@ -29,17 +29,17 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     }
 
     async balance(assets: Array<AssetId> | undefined): Promise<Array<AssetAmount>> {
-        const balances: AssetAmount[] = [];
+        const entries = [...this.config.deploys.entries()]
+            .filter(([assetId]) => assets === undefined || assets.includes(assetId));
 
-        this.config.deploys.forEach(async (tongoAddress, assetId) => {
-            if (assets === undefined || assets.includes(assetId)) {
+        return Promise.all(
+            entries.map(async ([assetId, tongoAddress]) => {
                 const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
                 const state = await tongoAccount.state();
 
-                balances.push({ asset: assetId, amount: state.balance + state.pending })
-            }
-        })
-	return balances;
+                return { asset: assetId, amount: state.balance + state.pending };
+            })
+        );
     }
 
     async prepareShield(_asset: AssetAmount, from?: AccountId): Promise<ShieldPreparation> {
@@ -63,10 +63,18 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
 
         const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
-        const rollover = await tongoAccount.rollover({ sender: "0x0000000000000000000000000000000000000001" });
-        const withdraw = await tongoAccount.withdraw({ amount: _asset.amount, to: to.address, sender: "0x0000000000000000000000000000000000000001" });
+        const { pending } = await tongoAccount.state();
+        const txns = [];
 
-        return { txns: [rollover.toCalldata(), withdraw.toCalldata()] };
+        if (pending > 0n) {
+            const rollover = await tongoAccount.rollover({ sender: to.address });
+            txns.push(rollover.toCalldata());
+        }
+
+        const withdraw = await tongoAccount.withdraw({ amount: _asset.amount, to: to.address, sender: to.address });
+        txns.push(withdraw.toCalldata());
+
+        return { txns };
     }
 
     override async prepareTransfer(asset: AssetAmount, to: AccountId): Promise<PrivateOperation> {
