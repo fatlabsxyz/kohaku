@@ -51,20 +51,17 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     }
 
     async balance(assets: Array<AssetId> | undefined): Promise<Array<AssetAmount>> {
-        const derivedKey = this.keystoreManager.deriveKey();
+        const entries = [...this.config.deploys.entries()]
+            .filter(([assetId]) => assets === undefined || assets.includes(assetId));
 
-        const balances: Promise<AssetAmount>[] = [];
+        return Promise.all(
+            entries.map(async ([assetId, tongoAddress]) => {
+                const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
+                const state = await tongoAccount.state();
 
-        this.deploys.forEach(async (tongoContract, assetId) => {
-            if (assets === undefined || assets.includes(assetId)) {
-                const tongoAccount = this.deriveAccountFromKey(tongoContract, derivedKey);
-                const amount = await this._balance(tongoAccount);
-
-                balances.push(new Promise((resolve) => { resolve({ asset: assetId, amount }); }));
-            }
-        });
-
-        return Promise.all(balances);
+                return { asset: assetId, amount: state.balance + state.pending };
+            })
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -78,20 +75,26 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         return { txns: [fund.approve, fund.toCalldata()] };
     }
 
-    async prepareUnshield(asset: AssetAmount, to: AccountId): Promise<PrivateOperation> {
-        const tongoContract = this.deploys.get(asset.asset);
+    async prepareUnshield(_asset: AssetAmount, to: AccountId): Promise<PrivateOperation> {
+        if (_asset.amount > (await this.balance([_asset.asset]))[0]!.amount) { throw InsufficientBalanceError; }
 
-        if (tongoContract === undefined) { throw UnsupportedAssetError; }
+        const tongoAddress = this.config.deploys.get(_asset.asset);
 
-        const tongoAccount = this.deriveAccount(tongoContract);
+        if (tongoAddress === undefined) { throw UnsupportedAssetError; }
 
-        if (asset.amount > await this._balance(tongoAccount)) { throw InsufficientBalanceError; }
+        const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
+        const { pending } = await tongoAccount.state();
+        const txns = [];
 
-        const sender = await this.getSender();
-        const rollover = await tongoAccount.rollover({ sender });
-        const withdraw = await tongoAccount.withdraw({ amount: asset.amount, to: to.address, sender });
+        if (pending > 0n) {
+            const rollover = await tongoAccount.rollover({ sender: to.address });
+            txns.push(rollover.toCalldata());
+        }
 
-        return { txns: [rollover.toCalldata(), withdraw.toCalldata()] };
+        const withdraw = await tongoAccount.withdraw({ amount: _asset.amount, to: to.address, sender: to.address });
+        txns.push(withdraw.toCalldata());
+
+        return { txns };
     }
 
     override async prepareTransfer(asset: AssetAmount, to: AccountId): Promise<PrivateOperation> {
