@@ -1,4 +1,4 @@
-import { EthProvider } from "@kohaku-eth/plugins";
+import { EthereumProvider } from "@kohaku-eth/provider";
 import {
   GetEventsFn,
   IDataService,
@@ -19,7 +19,7 @@ import { Address } from "../interfaces/types.interface";
 import { E_ADDRESS } from "../config";
 
 export interface DataServiceParams {
-  provider: EthProvider;
+  provider: EthereumProvider;
 }
 
 const depositEvents = new Set(["PoolDeposited", "EntrypointDeposited"]);

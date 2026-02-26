@@ -37,6 +37,7 @@ export interface IEntrypoint {
 }
 
 export interface PrivacyPoolsV1ProtocolParams {
+  accountIndex?: number;
   secretManager: (params: SecretManagerParams) => ISecretManager;
   stateManager: (params: StoreFactoryParams) => IStateManager;
   relayerClientFactory: () => IRelayerClient;
