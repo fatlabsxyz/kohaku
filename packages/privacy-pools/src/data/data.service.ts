@@ -44,8 +44,8 @@ export class DataService implements IDataService {
   }) => {
     const logs = await this.ethClient.getLogs({
       address: pad(toHex(address), { size: 20 }),
-      fromBlock: Number(fromBlock),
-      ...(toBlock ? { toBlock: Number(toBlock) } : {}),
+      fromBlock,
+      ...(toBlock ? { toBlock: toBlock } : {}),
     });
     const allEvents = events instanceof Array ? events : [events];
 
@@ -53,7 +53,7 @@ export class DataService implements IDataService {
       (parsedEvents, eventType) => ({
         ...parsedEvents,
         [eventType]: parseEventLogs({
-          logs,
+          logs: logs as any,
           abi: [EVENTS_SIGNATURES[eventType]] as const,
           eventName: (depositEvents.has(eventType)
             ? "Deposited"

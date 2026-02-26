@@ -1,4 +1,4 @@
-import type { EthProvider } from "@kohaku-eth/plugins";
+import type { EthereumProvider, TxLog } from "@kohaku-eth/provider";
 import { ContractFunctionName, decodeFunctionResult, DecodeFunctionResultReturnType, encodeFunctionData, EncodeFunctionDataParameters, erc20Abi, toHex, type RpcLog } from 'viem';
 import { Address } from "../interfaces/types.interface";
 import { entrypointAbi } from "./abis/entrypoint.abi";
@@ -6,9 +6,9 @@ import { poolAbi } from "./abis/pool.abi";
 
 export interface GetLogsParams {
     address: string;
-    fromBlock: number;
-    toBlock?: number;
-    maxQuerySize?: number;
+    fromBlock: bigint;
+    toBlock?: bigint;
+    maxQuerySize?: bigint;
 }
 
 const abis = {
@@ -18,61 +18,46 @@ const abis = {
 } as const;
 
 export class EthClient {
-    private readonly provider: EthProvider;
+    constructor(
+        private provider: EthereumProvider
+    ) {}
 
-    constructor(provider: EthProvider) {
-        this.provider = provider;
-    }
-
-    request: EthProvider['request'] = (...params): Promise<unknown> => {
+    request: EthereumProvider['request'] = (...params): Promise<unknown> => {
         return this.provider.request(...params);
     }
 
     async getChainId() {
-        return this.provider.request({
-            method: "eth_chainId",
-            params: [],
-        }).then(r => BigInt(r as string))
+        return this.provider.getChainId();
     }
 
     async getLogs({
-        maxQuerySize = 5000,
+        maxQuerySize = 5000n,
         ...params
-    }: GetLogsParams): Promise<RpcLog[]> {
+    }: GetLogsParams): Promise<TxLog[]> {
         const fromBlock = params.fromBlock;
-        const toBlock = params.toBlock ?? await this.getBlockNumber();
+        const toBlock = params.toBlock ?? await this.provider.getBlockNumber();
 
-        const logs: RpcLog[] = [];
-        for (let start = fromBlock; start <= toBlock; start += maxQuerySize + 1) {
-            const end = Math.min(start + maxQuerySize, toBlock);
-            const result = await this.provider.request({
-                method: "eth_getLogs",
-                params: [{
-                    address: params.address,
-                    fromBlock: toHex(start),
-                    toBlock: toHex(end),
-                }],
-            }) as RpcLog[];
+        const logs: TxLog[] = [];
+        for (let start = fromBlock; start <= toBlock; start += maxQuerySize) {
+            const rawEnd = start + maxQuerySize;
+            const end = rawEnd < toBlock ? rawEnd : toBlock;
+            const result = await this.provider.getLogs({
+                address: params.address as `0x${string}`,
+                fromBlock,
+                toBlock: end,
+            })
             logs.push(...result);
         }
 
         return logs;
     }
 
-    async getCode(address: string, blockNumber?: number): Promise<string> {
-        const block = blockNumber !== undefined ? toHex(blockNumber) : 'latest';
-        return this.provider.request({
-            method: 'eth_getCode',
-            params: [address, block],
-        }) as Promise<string>;
+    async getCode(address: string): Promise<string> {
+        return this.provider.getCode(address);
     }
 
-    async getBlockNumber(): Promise<number> {
-        const hex = await this.provider.request({
-            method: "eth_blockNumber",
-            params: [],
-        }) as string;
-        return parseInt(hex, 16);
+    async getBlockNumber() {
+        return this.provider.getBlockNumber();
     }
 
     async makeContractRequest<
