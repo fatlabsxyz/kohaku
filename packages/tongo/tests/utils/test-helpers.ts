@@ -1,4 +1,4 @@
-import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet, zeroPadValue } from 'ethers';
+import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet, zeroPadValue, NonceManager } from 'ethers';
 
 import { type AnvilPool } from './anvil';
 
@@ -64,6 +64,8 @@ export async function approveERC20(
   await (await token.approve(spender, amount)).wait();
 }
 
-export async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
-  return signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
+export async function sendTx(signer: Wallet | NonceManager, { to, data, value }: { to: string; data: string; value: bigint; }) {
+  const response = await signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
+  
+  await response.wait();
 }
