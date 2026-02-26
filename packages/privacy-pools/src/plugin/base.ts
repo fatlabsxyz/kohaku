@@ -33,7 +33,7 @@ import { TxData } from "packages/provider/dist/index.js";
 
 type RequireOnly<T, Keys extends keyof T> = Partial<T> & Pick<T, Keys>;
 
-interface PPv1RelayerConstructorParams {
+interface PPv1RelayerConstructorParams extends PPv1BroadcasterParameters {
   relayerClientFactory?: () => IRelayerClient;
   host: Host;
 }
@@ -45,16 +45,14 @@ export class PrivacyPoolsBroadcaster implements PPv1Broadcaster {
   constructor({
     host,
     relayerClientFactory = () => new RelayerClient({ network: host.network }),
+    broadcasterUrl,
   }: PPv1RelayerConstructorParams) {
     this.relayerClient = relayerClientFactory();
+    this.relayersList = this.parseRelayers(broadcasterUrl);
   }
 
   private parseRelayers(params: PPv1BroadcasterParameters["broadcasterUrl"]) {
     return typeof params === "string" ? { default: params } : params;
-  }
-
-  async config(params: PPv1BroadcasterParameters) {
-    this.relayersList = this.parseRelayers(params.broadcasterUrl);
   }
 
   async broadcast({
@@ -100,6 +98,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
   constructor(
     readonly host: Host,
     {
+      accountIndex = 0,
       initialState = {},
       secretManager = SecretManager,
       stateManager: stateManagerFactory = storeStateManager,
@@ -111,7 +110,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       proverFactory = Prover,
     }: RequireOnly<PrivacyPoolsV1ProtocolParams, "entrypoint">,
   ) {
-    this.accountIndex = 0;
+    this.accountIndex = accountIndex;
     this.entrypoint = entrypoint;
     this.relayersList = new Map(Object.entries(relayersList));
     this.relayerClient = relayerClientFactory();
@@ -123,7 +122,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       initialState: { ...initialState },
       secretManager: this.secretManager,
       aspService: aspServiceFactory(),
-      dataService: new DataService({ provider: host.ethProvider }),
+      dataService: new DataService({ provider: host.provider }),
       relayerClient: this.relayerClient,
       relayersList: this.relayersList,
       proverFactory,
