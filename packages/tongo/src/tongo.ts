@@ -20,6 +20,8 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     constructor(readonly host: Host, config: TongoPluginConfig) {
         super();
         this.config = config;
+
+        if (config.deriveKey === undefined) { this.config.deriveKey = this.defaultKeyDerivationBN254; }
     }
 
     private deriveKey(): bigint {
@@ -109,5 +111,13 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async broadcastPrivateOperation(operation: PrivateOperation): Promise<void> {
         throw new Error("Method not implemented.");
+    }
+
+    private defaultKeyDerivationBN254() {
+        const accountIndex = "0";
+        const derivation = BigInt(this.host.keystore.deriveAt("m/701160/"+accountIndex)); //TONGO
+        const BN254_GROUP_ORDER = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
+
+        return derivation % BN254_GROUP_ORDER;
     }
 }
