@@ -29,9 +29,11 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         return derivation % BN254_GROUP_ORDER;
     }
 
-    private deriveAccount(tongoContract: string, derivedKey?: bigint): TongoAccount {
-        if (derivedKey === undefined) { derivedKey = this.deriveKey(); }
+    private deriveAccount(tongoContract: string): TongoAccount {
+        return this.deriveAccountFromKey(tongoContract, this.deriveKey());
+    }
 
+    private deriveAccountFromKey(tongoContract: string, derivedKey: bigint): TongoAccount {
         return new TongoAccount(derivedKey, tongoContract, this.host.ethProvider);
     }
 
@@ -52,7 +54,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         this.config.deploys.forEach(async (tongoContract, assetId) => {
             if (assets === undefined || assets.includes(assetId)) {
-                const tongoAccount = this.deriveAccount(tongoContract, derivedKey);
+                const tongoAccount = this.deriveAccountFromKey(tongoContract, derivedKey);
 
                 balances.push({ asset: assetId, amount: await this._balance(tongoAccount) });
             }
