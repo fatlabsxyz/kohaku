@@ -113,7 +113,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         throw new Error("Method not implemented.");
     }
 
-    private defaultKeyDerivationBN254() {
+    defaultKeyDerivationBN254() {
         const accountIndex = "0";
         const derivation = BigInt(this.host.keystore.deriveAt("m/701160/"+accountIndex)); //TONGO
         const BN254_GROUP_ORDER = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
