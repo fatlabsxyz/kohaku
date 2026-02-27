@@ -7,8 +7,8 @@ import { pubKeyBase58ToAffine, Account as TongoAccount } from "@fatsolutions/ton
 
 interface TongoPluginConfig {
     chain: number;
-    index: string;
     client: PublicClient;
+    accountIndex: string;
     deploys: Map<AssetId, Address>;
 }
 
@@ -23,7 +23,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     }
 
     private deriveKey(): bigint {
-        const derivation = BigInt(this.host.keystore.deriveAt("m/701160/"+this.config.index)); //TONGO
+        const derivation = BigInt(this.host.keystore.deriveAt("m/701160/"+this.config.accountIndex)); //TONGO
         const BN254_GROUP_ORDER = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
 
         return derivation % BN254_GROUP_ORDER;
