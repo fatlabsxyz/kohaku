@@ -77,21 +77,35 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         return { txns };
     }
 
-    override async prepareTransfer(asset: AssetAmount, to: AccountId): Promise<PrivateOperation> {
+    override async prepareTransfer(asset: AssetAmount, to: AccountId, from?: AccountId): Promise<PrivateOperation> {
         if (asset.amount > (await this.balance([asset.asset]))[0]!.amount) { throw InsufficientBalanceError; }
 
         const tongoAddress = this.config.deploys.get(asset.asset);
 
         if (tongoAddress === undefined) { throw UnsupportedAssetError; }
 
-        const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
-        const rollover = await tongoAccount.rollover({ sender: "0x0000000000000000000000000000000000000001" });
-        const transfer = await tongoAccount.transfer({ amount: asset.amount, to: pubKeyBase58ToAffine(to.address), sender: "0x0000000000000000000000000000000000000001" });
+        const sender = from?.address ?? "0x0000000000000000000000000000000000000001";
 
-        return { txns: [rollover.toCalldata(), transfer.toCalldata()] };
+        const tongoAccount = new TongoAccount(1n, tongoAddress, this.host.ethProvider);
+        const { pending } = await tongoAccount.state();
+        const txns = [];
+
+        if (pending > 0n) {
+            const rollover = await tongoAccount.rollover({ sender });
+            txns.push(rollover.toCalldata());
+        }
+
+        const transfer = await tongoAccount.transfer({
+            amount: asset.amount,
+            to: pubKeyBase58ToAffine(to.address),
+            sender,
+        });
+        txns.push(transfer.toCalldata());
+
+        return { txns };
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override prepareTransferMulti(assets: Array<AssetAmount>, to: AccountId): Promise<PrivateOperation> {
+    override prepareTransferMulti(assets: Array<AssetAmount>, to: AccountId, from?: AccountId): Promise<PrivateOperation> {
         throw new MultiAssetsNotSupportedError();
     }
 
