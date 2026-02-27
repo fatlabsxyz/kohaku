@@ -49,15 +49,12 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
         const balances: Promise<AssetAmount>[] = [];
 
-        this.config.deploys.forEach((tongoContract, assetId) => {
+        this.config.deploys.forEach(async (tongoContract, assetId) => {
             if (assets === undefined || assets.includes(assetId)) {
                 const tongoAccount = this.deriveAccountFromKey(tongoContract, derivedKey);
+                const amount = await this._balance(tongoAccount);
 
-                balances.push(new Promise(async resolve => {
-                    const amount = await this._balance(tongoAccount);
-
-                    resolve({ asset: assetId, amount });
-                 }));
+                balances.push(new Promise((resolve) => { resolve({ asset: assetId, amount }); }));
             }
         });
 
