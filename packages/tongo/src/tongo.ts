@@ -55,10 +55,12 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
                 balances.push(new Promise(async resolve => {
                     const amount = await this._balance(tongoAccount);
+
                     resolve({ asset: assetId, amount });
                  }));
             }
         });
+
         return Promise.all(balances);
     }
 
