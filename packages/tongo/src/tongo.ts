@@ -113,7 +113,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
         return { txns: [rollover.toCalldata(), transfer.toCalldata()] };
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override prepareTransferMulti(assets: Array<AssetAmount>, to: AccountId): Promise<PrivateOperation> {
+    override prepareTransferMulti(assets: Array<AssetAmount>, to: AccountId, from?: AccountId): Promise<PrivateOperation> {
         throw new MultiAssetsNotSupportedError();
     }
 
