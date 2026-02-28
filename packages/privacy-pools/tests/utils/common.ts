@@ -1,7 +1,8 @@
+import { type ERC20AssetId } from '@kohaku-eth/plugins';
 import { readFileSync, existsSync } from "node:fs";
-import { Eip155ChainId } from "@kohaku-eth/plugins";
 import { MAINNET_CONFIG } from "../../src";
 import type { RootState } from "../../src/state/store";
+import { getAddress } from 'viem';
 
 // Helper to get environment variable with fallback
 export function getEnv(key: string, fallback: string): string {
@@ -38,7 +39,10 @@ export function loadInitialState(): InitialState {
     }
 
     const rawState = readFileSync(statePath, 'utf-8');
-    return JSON.parse(rawState) as InitialState;
+    const state = JSON.parse(rawState) as InitialState;
+    Object.entries(state).forEach(([key, val]) => console.log("Last synced block:", key, Number(val.sync.lastSyncedBlock)));
+    console.log(`[loadInitialState] Loaded state file succesfully from ${statePath}`);
+    return state;
   } catch (error) {
     console.warn(`[loadInitialState] Failed to load state from ${statePath}:`, error);
     return {};
@@ -46,7 +50,13 @@ export function loadInitialState(): InitialState {
 }
 
 export const MAINNET_ENTRYPOINT = {
-  chainId: new Eip155ChainId(1),
   address: BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS),
   deploymentBlock: 22153713n,
+};
+
+export function ERC20AssetId(address: string): ERC20AssetId {
+  return {
+    contract: getAddress(address),
+    __type: 'erc20'
+  };
 }

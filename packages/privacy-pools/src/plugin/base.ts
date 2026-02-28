@@ -122,7 +122,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       initialState: { ...initialState },
       secretManager: this.secretManager,
       aspService: aspServiceFactory(),
-      dataService: new DataService({ provider: host.provider }),
+      dataService: new DataService({ provider: host.ethProvider }),
       relayerClient: this.relayerClient,
       relayersList: this.relayersList,
       proverFactory,

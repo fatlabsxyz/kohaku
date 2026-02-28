@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
+import { AccountId, Eip155ChainId } from '@kohaku-eth/plugins';
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, MAINNET_ENTRYPOINT, loadInitialState, InitialState } from '../../utils/common';
+import { getEnv, MAINNET_ENTRYPOINT, loadInitialState, InitialState, ERC20AssetId } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { mockProverFactory } from '../../utils/mock-prover';
@@ -26,7 +26,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
   const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
 
-  const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+  const nativeAsset = ERC20AssetId(E_ADDRESS);
   let vettingFees = 0n;
 
   beforeAll(async () => {
@@ -55,7 +55,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   beforeEach(async () => {
   });
 
-  it('[prepareUnshield] prepares withdrawal after deposit', async () => {
+  it('[prepareUnshield] prepares withdrawal after deposit', { timeout: 60_000 }, async () => {
     const pool = anvil.pool(10);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -69,9 +69,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
-      },
+      entrypoint: MAINNET_ENTRYPOINT,
       initialState: latestState,
       proverFactory: mockProverFactory,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -79,7 +77,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
     const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
 
@@ -95,8 +93,8 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
-    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset]);
+    expect(balanceAfterDeposit.pendingAmount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
@@ -107,7 +105,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
     );
 
-    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset], "approved");
+    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset]);
     expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal
@@ -125,9 +123,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     expect(withdrawOp.rawData).toBeDefined();
     expect(withdrawOp.rawData.proof).toBeDefined();
     expect(withdrawOp.txData).toBeDefined();
-  }, { time: 60_000 });
+  });
 
-  it('[prepareUnshield] selects lowest fee relayer', async () => {
+  it('[prepareUnshield] selects lowest fee relayer', { timeout: 60_000 }, async () => {
     const pool = anvil.pool(11);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -154,7 +152,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
     const protocol = new PrivacyPoolsV1Protocol(host, {
       chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
+        [MAINNET_CHAIN_ID.toString()]: MAINNET_CHAIN_ID
       },
       relayersList: {
         'expensive-relayer': 'http://expensive.relayer',
@@ -166,7 +164,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       relayerClientFactory: () => multiRelayerClient,
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n;
     const WITHDRAW_AMOUNT = 500000000000000000n;
 
@@ -187,7 +185,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
     );
 
-    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset], "approved");
+    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset]);
     expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal - should select cheap relayer
@@ -200,9 +198,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     // 4. Verify cheapest relayer was selected
     expect(withdrawOp.quoteData.quote.feeBPS).toBe('50');
     expect(withdrawOp.quoteData.relayerId).toBe('cheap-relayer');
-  }, { timeout: 60_000 });
+  });
 
-  it('[prepareUnshield] throws when no sufficient balance', async () => {
+  it('[prepareUnshield] throws when no sufficient balance', { timeout: 60_000 }, async () => {
     const pool = anvil.pool(12);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -224,13 +222,13 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const WITHDRAW_AMOUNT = 1000000000000000000n; // 1 ETH (no deposit made)
 
     // Try to withdraw without depositing first
     const recipientAccount = { address: alice.address } as unknown as AccountId;
 
-    const [approvedBalance] = await protocol.balance([nativeAsset], "approved");
+    const [approvedBalance] = await protocol.balance([nativeAsset]);
     expect(approvedBalance.amount < WITHDRAW_AMOUNT).toBeTruthy();
 
     await expect(
@@ -240,9 +238,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       )
     ).rejects.toThrow('No note with sufficient balance');
 
-  }, { timeout: 60_000 });
+  });
 
-  it('[prepareUnshield] throws when all relayers fail', async () => {
+  it('[prepareUnshield] throws when all relayers fail', { timeout: 60_000 }, async () => {
     const pool = anvil.pool(13);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -259,7 +257,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       relayerClientFactory: () => failingRelayer,
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n;
     const WITHDRAW_AMOUNT = 500000000000000000n;
 
@@ -286,6 +284,6 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       )
     ).rejects.toThrow('Failed to get quote from relayers');
 
-  }, { timeout: 60_000 });
+  });
 
 });
