@@ -1,31 +1,45 @@
 import * as fs from "fs";
 
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
-
-import { generateMerkleProof } from "@0xbow/privacy-pools-core-sdk";
-import { Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { E_ADDRESS } from '../src/config/constants';
 import { MAINNET_CONFIG } from '../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../src/index';
 import { defineAnvil, type AnvilInstance } from './utils/anvil';
-import { getEnv, loadInitialState, MAINNET_ENTRYPOINT } from './utils/common';
+import { ERC20AssetId, getEnv, loadInitialState, MAINNET_ENTRYPOINT } from './utils/common';
 import { createMockAspService } from './utils/mock-asp-service';
 import { createMockHost } from './utils/mock-host';
 import { mockProverFactory } from './utils/mock-prover';
 import { createMockRelayerClient } from './utils/mock-relayer';
 import { TEST_ACCOUNTS } from './utils/test-accounts';
 import { assetVettingFee, getPoolStateRoot, setupWallet } from './utils/test-helpers';
+import { generateMerkleProof } from "../src/utils/proof.util";
 
+const mockParams = () => {
+  // Create mock asp
+  const mockAspService = createMockAspService();
+  mockAspService.addLabels([0n, 1n, 2n]);
+  // Create mock relayer
+  const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
+  return {
+    mockAspService,
+    mockRelayerClient,
+    params: {
+      proverFactory: mockProverFactory,
+      relayersList: { 'mock-relayer': 'http://mock.relayer' },
+      relayerClientFactory: () => mockRelayerClient,
+      aspServiceFactory: () => mockAspService,
+    }
+  };
+};
 
 describe("Creates the dump state payload", () => {
   let anvil: AnvilInstance;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_CHAIN_ID = new Eip155ChainId(1);
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
 
-  const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+  const nativeAsset = ERC20AssetId(E_ADDRESS);
   let vettingFees = 0n;
 
   beforeAll(async () => {
@@ -47,74 +61,49 @@ describe("Creates the dump state payload", () => {
     vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
   });
 
-  it.skip("syncs [from 0]", async () => {
+  it.skip("syncs [from 0]", { timeout: 0 }, async () => {
     const pool = anvil.pool(10);
-    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
-    // Create mock asp
-    const mockAspService = createMockAspService();
-    mockAspService.addLabels([0n, 1n, 2n]);
-
-    // Create mock relayer
-    const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
-
+    const { params } = mockParams();
     const host = createMockHost(undefined, pool.rpcUrl);
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
-      },
-      proverFactory: mockProverFactory,
-      relayersList: { 'mock-relayer': 'http://mock.relayer' },
-      relayerClientFactory: () => mockRelayerClient,
-      aspServiceFactory: () => mockAspService,
+      entrypoint: MAINNET_ENTRYPOINT,
+      ...params
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
-    await protocol.balance([nativeAsset], "unapproved");
+    await protocol.sync();
 
     const state = protocol.dumpState();
 
     fs.writeFileSync("./state.new.json", JSON.stringify(state));
 
-  }, { timeout: 0 });
+  });
 
-  it.skip("syncs [progressively]", async () => {
+  it.skip("syncs [progressively]", { timeout: 0 }, async () => {
     const pool = anvil.pool(10);
-    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
-    // Create mock asp
-    const mockAspService = createMockAspService();
-
-    // Create mock relayer
-    const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
-
+    const { params } = mockParams();
     const host = createMockHost(undefined, pool.rpcUrl);
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
-      },
+      entrypoint: MAINNET_ENTRYPOINT,
       initialState: loadInitialState(),
-      proverFactory: mockProverFactory,
-      relayersList: { 'mock-relayer': 'http://mock.relayer' },
-      relayerClientFactory: () => mockRelayerClient,
-      aspServiceFactory: () => mockAspService,
+      ...params
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
-    await protocol.balance([nativeAsset], "unapproved");
+    await protocol.sync();
 
     const state = protocol.dumpState();
 
-    fs.writeFileSync("./state.new.json", JSON.stringify(state));
+    fs.writeFileSync("./state.updated.json", JSON.stringify(state));
 
-  }, { timeout: 0 });
+  });
 
-  it("no missing state leaves", async () => {
+  it("no missing state leaves", { timeout: 0 }, async () => {
     const pool = anvil.pool(1);
     const initialState = loadInitialState();
-    const oxbow = "eip155:1-594281462506414692893575336808578746593838263110";
+    const oxbow = "1-594281462506414692893575336808578746593838263110";
     const state = initialState[oxbow];
     for (const [address, leaves] of state.poolsLeaves.poolLeavesTuples) {
       const sortedLeaves = leaves.map(([index, leaf]) => leaf).sort((a, b) => Number(a.index) - Number(b.index));
@@ -122,8 +111,10 @@ describe("Creates the dump state payload", () => {
       const commitments = sortedLeaves.map(leaf => BigInt(leaf.commitment));
       const root = (await getPoolStateRoot(pool, BigInt(address))).toString(16);
       const { root: computedRoot } = generateMerkleProof(commitments, commitments[0]);
+      expect(`0x${root}`).toEqual(`0x${computedRoot.toString(16)}`);
+      expect(indexes.length).toEqual(indexes[indexes.length - 1]);
       console.log(address, `[chain] 0x${root}`, `[comp] 0x${computedRoot.toString(16)}`, indexes.length, indexes[indexes.length - 1]);
     }
-  }, { timeout: 0 });
+  });
 
 });

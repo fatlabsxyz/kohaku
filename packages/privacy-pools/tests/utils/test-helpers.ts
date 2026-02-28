@@ -1,6 +1,6 @@
 import { AbiCoder, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
 
-import { Erc20Id, Host } from '@kohaku-eth/plugins';
+import { ERC20AssetId, Erc20Id, Host } from '@kohaku-eth/plugins';
 
 import { PrivacyPoolsV1Protocol } from '../../src';
 import { type AnvilPool } from './anvil';
@@ -154,7 +154,7 @@ export async function pushNewAspRoot(
   return { hash, txData: { data, to, from: normalizedPostman } };
 }
 
-export async function assetVettingFee(provider: any, entrypointAddress: bigint, asset: Erc20Id) {
+export async function assetVettingFee(provider: any, entrypointAddress: bigint, asset: ERC20AssetId) {
   const epAbi = [{
     "type": "function",
     "name": "assetConfig",
@@ -178,7 +178,7 @@ export async function assetVettingFee(provider: any, entrypointAddress: bigint, 
     _minimumDepositAmount,
     vettingFeeBPS,
     _maxRelayFeeBPS
-  ] = await ep.assetConfig(asset.reference);
+  ] = await ep.assetConfig(asset.contract);
 
   return vettingFeeBPS as bigint;
 }
@@ -207,15 +207,11 @@ export const getProtocolWithState = ({
   initialState = loadInitialState()
 }: Partial<SimplifiedProtocolParams> = {}) => new PrivacyPoolsV1Protocol(host, {
   initialState,
-  chainsEntrypoints: {
-    [MAINNET_ENTRYPOINT.chainId.toString()]: MAINNET_ENTRYPOINT,
-  }
+  entrypoint: MAINNET_ENTRYPOINT,
 });
 
 export const getProtocol = (host = createMockHost()) => new PrivacyPoolsV1Protocol(host, {
-  chainsEntrypoints: {
-    [MAINNET_ENTRYPOINT.chainId.toString()]: MAINNET_ENTRYPOINT,
-  }
+  entrypoint: MAINNET_ENTRYPOINT,
 });
 
 export async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {

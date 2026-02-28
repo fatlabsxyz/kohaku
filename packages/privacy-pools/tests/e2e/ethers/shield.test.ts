@@ -1,36 +1,35 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
+import getPort from "get-port";
 import { ethers } from '@kohaku-eth/provider/ethers';
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState } from '../../utils/common';
+import { getEnv, InitialState, ERC20AssetId } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { approveERC20, assetVettingFee, deductVettingFees, getProtocol, getProtocolWithState, sendTx, sendTxAndWait, setupWallet, transferERC20FromWhale } from '../../utils/test-helpers';
+import { approveERC20, assetVettingFee, deductVettingFees, getProtocolWithState, sendTxAndWait, setupWallet, transferERC20FromWhale } from '../../utils/test-helpers';
 
 describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_CHAIN_ID = new Eip155ChainId(1);
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
 
   beforeAll(async () => {
 
     anvil = defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: ANVIL_PORT + 1,
+      port: await getPort(),
       chainId: 1,
     });
 
     await anvil.start();
 
     const _protocol = getProtocolWithState();
-    await _protocol.syncAll();
+    await _protocol.sync();
     latestState = _protocol.dumpState();
 
   }, 300_000);
@@ -43,7 +42,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const protocol = getProtocolWithState({ initialState: latestState });
 
     // E_ADDRESS represents native ETH in Privacy Pools
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
 
     const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: 1000000000000000000n } // 1 ETH
@@ -57,8 +56,8 @@ describe('PrivacyPools v1 E2E Flow', () => {
     expect(tx.data).toMatch(/^0x/);
   });
 
-  it('[prepareShield] executes successful deposit on forked mainnet', async () => {
-    const pool = anvil.pool(2);
+  it('[prepareShield] executes successful deposit on forked mainnet', { timeout: 600_000 }, async () => {
+    const pool = anvil.pool(1);
     const provider = ethers(await pool.getProvider());
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -69,16 +68,13 @@ describe('PrivacyPools v1 E2E Flow', () => {
     });
 
     // E_ADDRESS represents native ETH in Privacy Pools
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
 
     // 1. Check initial balance is 0
-    const initialBalancesApproved = await protocol.balance([nativeAsset], 'unapproved');
-
-    expect(initialBalancesApproved[0].amount).toBe(0n);
-    const initialBalancesUnapproved = await protocol.balance([nativeAsset], "unapproved");
-
-    expect(initialBalancesUnapproved[0].amount).toBe(0n);
+    const [preDepositBalance] = await protocol.balance([nativeAsset]);
+    expect(preDepositBalance.amount).toBe(0n);
+    expect(preDepositBalance.pendingAmount).toBe(0n);
 
     // 2. Prepare and execute deposit
     const { txns } = await protocol.prepareShield(
@@ -97,22 +93,23 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const receipt = await provider.getTransactionReceipt(txResponse.hash);
 
     expect(receipt).toBeTruthy();
-    expect(receipt?.status).toBe(1); // Success
+    expect(receipt?.status).toBe(1n); // Success
 
     // 3. Verify state after deposit
-    const postDepositBalances = await protocol.balance([nativeAsset], 'unapproved');
+    const [postDepositBalance] = await protocol.balance([nativeAsset]);
 
     const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, nativeAsset);
     const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFees);
 
-    expect(postDepositBalances[0].amount).toBe(DEPOSIT_AMOUNT_AFTER_EP_FEE);
-  }, { timeout: 60_000 });
+    expect(postDepositBalance.amount).toBe(0n);
+    expect(postDepositBalance.pendingAmount).toBe(DEPOSIT_AMOUNT_AFTER_EP_FEE);
+  });
 
-  it('[prepareShield] generates valid ERC20 deposit transaction', async () => {
+  it('[prepareShield] generates valid ERC20 deposit transaction', { timeout: 60_000 }, async () => {
     const protocol = getProtocolWithState({ initialState: latestState });
 
     const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
-    const usdcAsset = new Erc20Id(USDC_ADDRESS, MAINNET_CHAIN_ID);
+    const usdcAsset = ERC20AssetId(USDC_ADDRESS);
 
     const { txns } = await protocol.prepareShield(
       { asset: usdcAsset, amount: 100000000n } // 100 USDC
@@ -124,10 +121,10 @@ describe('PrivacyPools v1 E2E Flow', () => {
     expect(tx.to?.toLowerCase()).toBe(MAINNET_CONFIG.ENTRYPOINT_ADDRESS.toLowerCase());
     expect(tx.value).toBe(0n); // ERC20 has no ETH value
     expect(tx.data).toMatch(/^0x/);
-  }, { timeout: 60_000 });
+  });
 
-  it('[prepareShield] executes successful ERC20 deposit on forked mainnet', async () => {
-    const pool = anvil.pool(4);
+  it('[prepareShield] executes successful ERC20 deposit on forked mainnet', { timeout: 60_000 }, async () => {
+    const pool = anvil.pool(2);
     const provider = ethers(await pool.getProvider());
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -141,15 +138,12 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const USDC_WHALE = '0x55FE002aefF02f77364de339a1292923A15844B8'; // Circle Treasury
     const DEPOSIT_AMOUNT = 100000000n; // 100 USDC (6 decimals)
 
-    const usdcAsset = new Erc20Id(USDC_ADDRESS, MAINNET_CHAIN_ID);
+    const usdcAsset = ERC20AssetId(USDC_ADDRESS);
 
     // 1. Check initial balance is 0
-    const initialBalancesApproved = await protocol.balance([usdcAsset]);
-
-    expect(initialBalancesApproved[0].amount).toBe(0n);
-    const initialBalancesUnapproved = await protocol.balance([usdcAsset], "unapproved");
-
-    expect(initialBalancesUnapproved[0].amount).toBe(0n);
+    const [initialBalance] = await protocol.balance([usdcAsset]);
+    expect(initialBalance.amount).toBe(0n);
+    expect(initialBalance.pendingAmount).toBe(0n);
 
     // 2. Setup: Transfer USDC from whale to Alice
     await transferERC20FromWhale(pool.rpcUrl, USDC_ADDRESS, USDC_WHALE, alice.address, DEPOSIT_AMOUNT);
@@ -174,19 +168,20 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const receipt = await provider.getTransactionReceipt(txResponse.hash);
 
     expect(receipt).toBeTruthy();
-    expect(receipt?.status).toBe(1); // Success
+    expect(receipt?.status).toBe(1n); // Success
 
     // 5. Verify state after deposit
-    const postDepositBalances = await protocol.balance([usdcAsset], "unapproved");
+    const [postDepositBalance] = await protocol.balance([usdcAsset]);
 
     const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, usdcAsset);
     const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFees);
 
-    expect(postDepositBalances[0].amount).toBe(DEPOSIT_AMOUNT_AFTER_EP_FEE);
-  }, { timeout: 60_000 });
+    expect(postDepositBalance.amount).toBe(0n);
+    expect(postDepositBalance.pendingAmount).toBe(DEPOSIT_AMOUNT_AFTER_EP_FEE);
+  });
 
-  it('[prepareShield] accumulates multiple deposits correctly', async () => {
-    const pool = anvil.pool(5);
+  it('[prepareShield] accumulates multiple deposits correctly', { timeout: 60_000 }, async () => {
+    const pool = anvil.pool(3);
 
     // Fund with enough ETH for multiple deposits
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
@@ -197,7 +192,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
       initialState: latestState
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT_1 = 1000000000000000000n; // 1 ETH
     const DEPOSIT_AMOUNT_2 = 2000000000000000000n; // 2 ETH
 
@@ -212,13 +207,16 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // 1.b broadcast tx
     const tx1Receipt = await sendTxAndWait(alice, tx);
+    console.log(tx1Receipt)
     expect(tx1Receipt?.status).toEqual(1);
+    await pool.mine(1);
+    console.log(tx1Receipt!)
 
     // 2. Verify first deposit balance
-    const [approvedBalance1] = await protocol.balance([nativeAsset], "approved");
-    expect(approvedBalance1.amount).toBe(0n);
-    const [balance1] = await protocol.balance([nativeAsset], "unapproved");
-    expect(balance1.amount).toBe(POST_FEE_DEPOSIT_AMOUNT_1);
+    const [balance1] = await protocol.balance([nativeAsset]);
+    console.log(balance1);
+    expect(balance1.amount).toBe(0n);
+    expect(balance1.pendingAmount).toBe(POST_FEE_DEPOSIT_AMOUNT_1);
 
     // 3. Second deposit
     const { txns: [tx2] } = await protocol.prepareShield(
@@ -228,12 +226,12 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // 3.b broadcast tx
     const tx2Receipt = await sendTxAndWait(alice, tx2);
     expect(tx2Receipt?.status).toEqual(1);
+    await pool.mine(1);
 
     // 4. Verify cumulative balance
-    const [approvedBalance2] = await protocol.balance([nativeAsset], "approved");
-    expect(approvedBalance2.amount).toBe(0n);
-    const [balance2] = await protocol.balance([nativeAsset], "unapproved");
-    expect(balance2.amount).toBe(POST_FEE_DEPOSIT_AMOUNT_1 + POST_FEE_DEPOSIT_AMOUNT_2);
-  }, { timeout: 60_000 });
+    const [balance2] = await protocol.balance([nativeAsset]);
+    expect(balance2.amount).toBe(0n);
+    expect(balance2.pendingAmount).toBe(POST_FEE_DEPOSIT_AMOUNT_1 + POST_FEE_DEPOSIT_AMOUNT_2);
+  });
 
 });

@@ -1,13 +1,13 @@
 import { Prover } from '@fatsolutions/privacy-pools-core-circuits';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { AccountId, Eip155ChainId, Erc20Id } from '@kohaku-eth/plugins';
+import { AccountId, Eip155ChainId } from '@kohaku-eth/plugins';
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState, loadInitialState, MAINNET_ENTRYPOINT } from '../../utils/common';
+import { getEnv, InitialState, loadInitialState, MAINNET_ENTRYPOINT, ERC20AssetId } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
@@ -25,7 +25,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
   const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
 
-  const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+  const nativeAsset = ERC20AssetId(E_ADDRESS);
   let vettingFees = 0n;
 
   beforeAll(async () => {
@@ -54,7 +54,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   beforeEach(async () => {
   });
 
-  it('[prepareUnshield] prepares withdrawal with real prover after deposit', async () => {
+  it('[prepareUnshield] prepares withdrawal with real prover after deposit', { timeout: 300000 }, async () => {
     const pool = anvil.pool(20);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -78,7 +78,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
     const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
 
@@ -91,8 +91,8 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
-    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset]);
+    expect(balanceAfterDeposit.pendingAmount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
@@ -103,7 +103,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
     );
 
-    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset], "approved");
+    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset]);
     expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal with real prover
@@ -131,9 +131,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     expect(proof.mappedSignals.context).toEqual(context);
 
     expect(withdrawOp.txData).toBeDefined();
-  }, 300000); // Extended timeout for real proof generation
+  }); // Extended timeout for real proof generation
 
-  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws', async () => {
+  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws', { timeout: 300000 }, async () => {
     const pool = anvil.pool(21);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -157,7 +157,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
     const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
 
@@ -170,8 +170,8 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
-    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset]);
+    expect(balanceAfterDeposit.pendingAmount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
@@ -189,15 +189,15 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       recipientAccount
     );
 
-    // 4. 
+    // 4.
     const receipt = await sendTxAndWait(alice, withdrawOp.txData);
     await pool.mine(1);
     expect(receipt).toBeTruthy();
     expect(receipt!.status).toEqual(1);
 
-  }, 300000); // Extended timeout for real proof generation
+  }); // Extended timeout for real proof generation
 
-  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws multiple times', async () => {
+  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws multiple times', { timeout: 120_000 }, async () => {
     const pool = anvil.pool(22);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -221,7 +221,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = new Erc20Id(E_ADDRESS, MAINNET_CHAIN_ID);
+    const nativeAsset = ERC20AssetId(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
     const WITHDRAW_AMOUNT = 100000000000000000n; // 0.1 ETH
 
@@ -234,8 +234,8 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const [balanceAfterDeposit] = await protocol.balance([nativeAsset], "unapproved");
-    expect(balanceAfterDeposit.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const [balanceAfterDeposit] = await protocol.balance([nativeAsset]);
+    expect(balanceAfterDeposit.pendingAmount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
@@ -258,7 +258,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     for (const i in Array(withdrawNumber).fill(null)) {
 
       // We withdraw 0.1 at a time, until the last one in which we take out the rest.
-      const withdraw_amount = (Number(i) + 1) === withdrawNumber ? balanceAfterDeposit.amount - 3n * WITHDRAW_AMOUNT : WITHDRAW_AMOUNT;
+      const withdraw_amount = (Number(i) + 1) === withdrawNumber ? balanceAfterDeposit.pendingAmount - 3n * WITHDRAW_AMOUNT : WITHDRAW_AMOUNT;
 
       // 3. Prepare withdrawal with real prover
       const withdrawOp = await protocol.prepareUnshield(
@@ -268,7 +268,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
       receiverBalance += withdraw_amount - (withdraw_amount * BigInt(withdrawOp.quoteData.quote.feeBPS)) / 10_000n;
 
-      // 4. 
+      // 4.
       const receipt = await sendTxAndWait(alice, withdrawOp.txData);
       await pool.mine(1);
       expect(receipt).toBeTruthy();
@@ -278,9 +278,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     }
 
     // shielded balance should be 0
-    const [balanceAfterWithdraws] = await protocol.balance([nativeAsset], "approved");
+    const [balanceAfterWithdraws] = await protocol.balance([nativeAsset]);
     expect(balanceAfterWithdraws.amount).toBe(0n);
 
-  }, 120_000); // Extended timeout for real proof generation
+  }); // Extended timeout for real proof generation
 
 });
