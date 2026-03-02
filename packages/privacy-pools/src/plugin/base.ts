@@ -152,12 +152,15 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
         approved: 0n,
         unapproved: 0n
       }
-      return {
+      return [{
         asset,
         amount: approved,
-        pendingAmount: unapproved
-      };
-    });
+      }, {
+        asset,
+        amount: unapproved,
+        tag: 'pending' as const
+      }];
+    }).flat();
   }
 
   async prepareShield(

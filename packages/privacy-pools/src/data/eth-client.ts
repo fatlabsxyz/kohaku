@@ -43,7 +43,7 @@ export class EthClient {
             const end = rawEnd < toBlock ? rawEnd : toBlock;
             const result = await this.provider.getLogs({
                 address: params.address as `0x${string}`,
-                fromBlock,
+                fromBlock: start,
                 toBlock: end,
             })
             logs.push(...result);

@@ -1,4 +1,4 @@
-import { EthereumProvider } from "@kohaku-eth/provider";
+import { EthereumProvider, TxLog } from "@kohaku-eth/provider";
 import {
   GetEventsFn,
   IDataService,
@@ -6,7 +6,7 @@ import {
   IPoolConfig,
   IPoolEvents,
 } from "./interfaces/data.service.interface";
-import { parseEventLogs, pad, toHex } from "viem";
+import { parseEventLogs, pad, toHex, type RpcLog, type Hex } from "viem";
 import {
   ENTRYPOINT_EVENTS_SIGNATURES,
   EVENTS_SIGNATURES,
@@ -17,6 +17,24 @@ import { EthClient } from "./eth-client";
 import type { IAsset } from "./interfaces/events.interface";
 import { Address } from "../interfaces/types.interface";
 import { E_ADDRESS } from "../config";
+
+const txLogToRpcLog = ({
+  address,
+  data,
+  topics,
+  blockNumber
+}: TxLog, index = 0): RpcLog => ({
+  address: address as Hex,
+  data: data as Hex,
+  topics: topics as [Hex, ...Hex[]],
+  transactionHash: '0x0',
+  transactionIndex: '0x0',
+  blockHash: '0x0',
+  blockNumber: toHex(blockNumber),
+  blockTimestamp: '0x0',
+  logIndex: `0x${index}` as const,
+  removed: false,
+})
 
 export interface DataServiceParams {
   provider: EthereumProvider;
@@ -53,7 +71,7 @@ export class DataService implements IDataService {
       (parsedEvents, eventType) => ({
         ...parsedEvents,
         [eventType]: parseEventLogs({
-          logs: logs as any,
+          logs: logs.map(txLogToRpcLog),
           abi: [EVENTS_SIGNATURES[eventType]] as const,
           eventName: (depositEvents.has(eventType)
             ? "Deposited"

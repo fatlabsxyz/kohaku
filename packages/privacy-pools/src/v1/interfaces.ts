@@ -17,10 +17,8 @@ export interface PPv1PluginWithMnemonicParameters extends PPv1PluginParameters {
 
 export type PPv1Address = Address;
 
-export type PPv1AssetAmount = AssetAmount<ERC20AssetId>;
-export type PPv1AssetBalance = PPv1AssetAmount & {
-    pendingAmount: bigint;
-}
+export type PPv1AssetAmount<Tag extends string | undefined = undefined> = AssetAmount<ERC20AssetId, bigint, Tag>;
+export type PPv1AssetBalance = PPv1AssetAmount<'pending'>;
 
 interface PPv1BaseCredential {
     accountIndex: number;
@@ -44,17 +42,18 @@ type PPv1InsanceFactory<Credential extends PPv1Credentials> = PluginInstance<
             prepareShield: true,
             prepareUnshield: true,
         },
-        assetsAmounts: {
+        assetAmounts: {
             input: PPv1AssetAmount,
             internal: PPv1AssetAmount,
             output: PPv1AssetAmount,
+            read: PPv1AssetBalance,
         },
-        extraFeatures: {
+        extras: {
             notes(assets: ERC20AssetId[], includeSpent?: boolean): Promise<INote[]>;
             ragequit(labels: INote['label'][]): Promise<PPv1PublicOperation>
         }
         publicOp: PPv1PublicOperation,
-        privateOp: PPv1PrivateOperation
+        privateOp: PPv1PrivateOperation,
     }
 >;
 

@@ -77,7 +77,6 @@ export const raw = (client: Provider): EthereumProvider<Provider> => {
 
             return hex ?? '0x';
         },
-        request: client.request.bind(client),
         getTransactionReceipt,
     }
 }
