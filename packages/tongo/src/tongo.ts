@@ -8,29 +8,44 @@ import { pubKeyBase58ToAffine, Account as TongoAccount } from "@fatsolutions/ton
 interface TongoPluginConfig {
     chain: number;
     deploys: Map<AssetId, Address>;
-    deriveKey: (keystore: Keystore) => bigint;
+    keystoreManager: KeystoreManager
+}
+
+abstract class KeystoreManager {
+    constructor(readonly keystore: Keystore) {}
+    abstract deriveKey(): bigint;
+}
+
+class KeystoreManagerBN245 extends KeystoreManager  {
+    deriveKey(): bigint {
+        const accountIndex = "0";
+        const derivation = BigInt(this.keystore.deriveAt("m/701160/"/*TONGO*/+accountIndex));
+        const BN254_GROUP_ORDER = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
+
+        return derivation % BN254_GROUP_ORDER;
+    }
 }
 
 export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateOperation> {
     chain: number;
     deploys: Map<AssetId, Address>;
-    deriveKey: (keystore: Keystore) => bigint;
+    keystoreManager: KeystoreManager;
 
     tempmocktongoaccount!: TongoAccount;
 
     constructor(readonly host: Host, {
         chain = 1,
         deploys = new Map(),
-        deriveKey = TongoPlugin.defaultKeyDerivationBN254
+        keystoreManager = new KeystoreManagerBN245(host.keystore),
     }: Partial<TongoPluginConfig> = {}) {
         super();
         this.chain = chain;
         this.deploys = deploys;
-        this.deriveKey = deriveKey;
+        this.keystoreManager = keystoreManager;
     }
 
     private deriveAccount(tongoContract: string): TongoAccount {
-        return this.deriveAccountFromKey(tongoContract, this.deriveKey(this.host.keystore));
+        return this.deriveAccountFromKey(tongoContract, this.keystoreManager.deriveKey());
     }
 
     private deriveAccountFromKey(tongoContract: string, derivedKey: bigint): TongoAccount {
@@ -48,7 +63,7 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     }
 
     async balance(assets: Array<AssetId> | undefined): Promise<Array<AssetAmount>> {
-        const derivedKey = this.deriveKey(this.host.keystore);
+        const derivedKey = this.keystoreManager.deriveKey();
 
         const balances: Promise<AssetAmount>[] = [];
 
@@ -112,13 +127,5 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async broadcastPrivateOperation(operation: PrivateOperation): Promise<void> {
         throw new Error("Method not implemented.");
-    }
-
-    static defaultKeyDerivationBN254(keystore: Keystore) {
-        const accountIndex = "0";
-        const derivation = BigInt(keystore.deriveAt("m/701160/"+accountIndex)); //TONGO
-        const BN254_GROUP_ORDER = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
-
-        return derivation % BN254_GROUP_ORDER;
     }
 }
