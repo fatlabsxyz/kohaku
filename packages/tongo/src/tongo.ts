@@ -7,14 +7,12 @@ import { pubKeyBase58ToAffine, Account as TongoAccount } from "@fatsolutions/ton
 
 interface TongoPluginConfig {
     chain: number;
-    client: PublicClient;
     deploys: Map<AssetId, Address>;
     deriveKey: (keystore: Keystore) => bigint;
 }
 
 export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateOperation> {
     chain: number;
-    client: PublicClient;
     deploys: Map<AssetId, Address>;
     deriveKey: (keystore: Keystore) => bigint;
 
@@ -22,13 +20,11 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
 
     constructor(readonly host: Host, {
         chain = 1,
-        client = createPublicClient({transport: http("localhost:8545") }),
         deploys = new Map(),
         deriveKey = TongoPlugin.defaultKeyDerivationBN254
     }: Partial<TongoPluginConfig> = {}) {
         super();
         this.chain = chain;
-        this.client = client;
         this.deploys = deploys;
         this.deriveKey = deriveKey;
     }
