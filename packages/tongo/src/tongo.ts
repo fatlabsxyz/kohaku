@@ -30,8 +30,6 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     deploys: Map<AssetId, Address>;
     keystoreManager: KeystoreManager;
 
-    tempmocktongoaccount!: TongoAccount;
-
     constructor(readonly host: Host, {
         chain = 1,
         deploys = new Map(),
