@@ -3,27 +3,28 @@ import { AccountId, AssetId, Host, MultiAssetsNotSupportedError } from "@kohaku-
 import { Address } from "@kohaku-eth/provider";
 import { pubKeyBase58ToAffine, Account as TongoAccount } from "@fatsolutions/tongo-evm";
 
+import { IKeystoreManager, IKeystoreManagerFactory, KeystoreManagerFactory } from "./keystoreManager";
 
 interface TongoPluginConfig {
     chain: number;
     deploys: Map<AssetId, Address>;
-    keystoreManager: KeystoreManager
+    keystoreManager: IKeystoreManagerFactory
 }
 
 export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateOperation> {
     chain: number;
     deploys: Map<AssetId, Address>;
-    keystoreManager: KeystoreManager;
+    keystoreManager: IKeystoreManager;
 
     constructor(readonly host: Host, {
         chain = 1,
         deploys = new Map(),
-        keystoreManager = new KeystoreManagerBN245(host.keystore),
+        keystoreManager = KeystoreManagerFactory,
     }: Partial<TongoPluginConfig> = {}) {
         super();
         this.chain = chain;
         this.deploys = deploys;
-        this.keystoreManager = keystoreManager;
+        this.keystoreManager = keystoreManager({ host });
     }
 
     private deriveAccount(tongoContract: string): TongoAccount {
@@ -109,20 +110,5 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async broadcastPrivateOperation(operation: PrivateOperation): Promise<void> {
         throw new Error("Method not implemented.");
-    }
-}
-
-abstract class KeystoreManager {
-    constructor(readonly keystore: Keystore) {}
-    abstract deriveKey(): bigint;
-}
-
-class KeystoreManagerBN245 extends KeystoreManager  {
-    deriveKey(): bigint {
-        const accountIndex = "0";
-        const derivation = BigInt(this.keystore.deriveAt("m/701160/"/*TONGO*/+accountIndex));
-        const BN254_GROUP_ORDER = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
-
-        return derivation % BN254_GROUP_ORDER;
     }
 }
