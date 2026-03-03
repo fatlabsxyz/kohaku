@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { Eip155ChainId } from '@kohaku-eth/plugins';
+import getPort from "get-port";
 import { ethers } from '@kohaku-eth/provider/ethers';
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
-import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
 import { getEnv, InitialState, ERC20AssetId } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
@@ -16,21 +16,20 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_CHAIN_ID = new Eip155ChainId(1);
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
 
   beforeAll(async () => {
 
     anvil = defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: ANVIL_PORT + 1,
+      port: await getPort(),
       chainId: 1,
     });
 
     await anvil.start();
 
     const _protocol = getProtocolWithState();
-    await _protocol.syncAll();
+    await _protocol.sync();
     latestState = _protocol.dumpState();
 
   }, 300_000);
@@ -39,7 +38,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     await anvil.stop();
   });
 
-  it('[prepareShield] executes successful deposit on forked mainnet', { timeout: 120_000 }, async () => {
+  it('[ragequit] executes successful deposit on forked mainnet and ragequit several times', { timeout: 120_000 }, async () => {
     const pool = anvil.pool(31);
     const provider = ethers(await pool.getProvider());
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
@@ -106,7 +105,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const txReceipt = await sendTxAndWait(bob, tx3);
     expect(txReceipt).toBeTruthy();
     expect(txReceipt?.status).toBe(0); // Failure
-    console.log(txReceipt)
+    console.log(txReceipt);
 
   });
 

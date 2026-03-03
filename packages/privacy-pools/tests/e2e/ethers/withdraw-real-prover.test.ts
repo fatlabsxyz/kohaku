@@ -1,13 +1,14 @@
 import { Prover } from '@fatsolutions/privacy-pools-core-circuits';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { AccountId, Eip155ChainId } from '@kohaku-eth/plugins';
+import getPort from "get-port";
+import { AccountId } from '@kohaku-eth/plugins';
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
-import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState, loadInitialState, MAINNET_ENTRYPOINT, ERC20AssetId } from '../../utils/common';
+import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { getEnv, InitialState, MAINNET_ENTRYPOINT, ERC20AssetId } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
@@ -21,7 +22,6 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_CHAIN_ID = new Eip155ChainId(1);
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
   const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
 
@@ -32,12 +32,12 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     anvil = defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: ANVIL_PORT + 3,
+      port: await getPort(),
       chainId: 1,
     });
 
     const _protocol = getProtocolWithState();
-    await _protocol.syncAll();
+    await _protocol.sync();
     latestState = _protocol.dumpState();
 
     await anvil.start();
@@ -68,9 +68,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
-      },
+      entrypoint: MAINNET_ENTRYPOINT,
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -87,7 +85,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    await sendTx(alice, shieldTx);
+    const txReceipt = await sendTxAndWait(alice, shieldTx);
+    expect(txReceipt).toBeTruthy();
+    expect(txReceipt!.status).toEqual(1);
     await pool.mine(1);
 
     // 2. Verify deposit balance
@@ -107,7 +107,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal with real prover
-    const recipientAccount = { address: alice.address } as unknown as AccountId;
+    const recipientAccount = alice.address as AccountId;
     const withdrawOp = await protocol.prepareUnshield(
       { asset: nativeAsset, amount: WITHDRAW_AMOUNT },
       recipientAccount
@@ -147,9 +147,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
-      },
+      entrypoint: MAINNET_ENTRYPOINT,
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -166,7 +164,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    await sendTx(alice, shieldTx);
+    const txReceipt = await sendTxAndWait(alice, shieldTx);
+    expect(txReceipt).toBeTruthy();
+    expect(txReceipt!.status).toEqual(1);
     await pool.mine(1);
 
     // 2. Verify deposit balance
@@ -183,7 +183,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     );
 
     // 3. Prepare withdrawal with real prover
-    const recipientAccount = { address: alice.address } as unknown as AccountId;
+    const recipientAccount = alice.address as AccountId;
     const withdrawOp = await protocol.prepareUnshield(
       { asset: nativeAsset, amount: WITHDRAW_AMOUNT },
       recipientAccount
@@ -197,7 +197,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
   }); // Extended timeout for real proof generation
 
-  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws multiple times', { timeout: 120_000 }, async () => {
+  it('[prepareUnshield] prepares withdrawal with real prover after deposit and withdraws multiple times', { timeout: 300_000 }, async () => {
     const pool = anvil.pool(22);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
@@ -211,9 +211,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const host = createMockHost(undefined, pool.rpcUrl);
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      chainsEntrypoints: {
-        [MAINNET_CHAIN_ID.toString()]: MAINNET_ENTRYPOINT
-      },
+      entrypoint: MAINNET_ENTRYPOINT,
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -230,7 +228,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    await sendTx(alice, shieldTx);
+    const txReceipt = await sendTxAndWait(alice, shieldTx);
+    expect(txReceipt).toBeTruthy();
+    expect(txReceipt!.status).toEqual(1);
     await pool.mine(1);
 
     // 2. Verify deposit balance
@@ -249,11 +249,12 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     const provider = await pool.getProvider();
     const withdrawNumber = 4;
-    const recipientAccount = { address: "0xfE0fe0Fe0fe0fe0fE0fe0fe0Fe0fE0Fe0fE0fe00" } as unknown as AccountId;
+    const recipientAddress = "0xfE0fe0Fe0fe0fe0fE0fe0fe0Fe0fE0Fe0fE0fe00";
+    const recipientAccount = recipientAddress as AccountId;
     let receiverBalance = 0n;
 
     // reciever starts with 0 ETH
-    expect(await provider.getBalance(recipientAccount.address)).toEqual(receiverBalance);
+    expect(await provider.getBalance(recipientAddress)).toEqual(receiverBalance);
 
     for (const i in Array(withdrawNumber).fill(null)) {
 
@@ -273,7 +274,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       await pool.mine(1);
       expect(receipt).toBeTruthy();
       expect(receipt!.status).toEqual(1);
-      expect(await provider.getBalance(recipientAccount.address)).toEqual(receiverBalance);
+      expect(await provider.getBalance(recipientAddress)).toEqual(receiverBalance);
 
     }
 
