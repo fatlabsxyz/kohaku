@@ -53,7 +53,8 @@ describe('tongo EVM Transfer E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -97,7 +98,8 @@ describe('tongo EVM Transfer E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
 
     const account1 = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
@@ -145,7 +147,8 @@ describe('tongo EVM Transfer E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -191,7 +194,8 @@ describe('tongo EVM Transfer E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {

@@ -59,7 +59,8 @@ describe('tongo EVM Unshield E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -78,9 +79,11 @@ describe('tongo EVM Unshield E2E', () => {
     await sendTx(alice, shieldTxns[0]);
     await sendTx(alice, shieldTxns[1]);
 
+    const aliceAccountId = new Eip155AccountId(aliceWallet.address as `0x${string}`);
     const { txns } = await plugin.prepareUnshield(
       { asset: usdcAssetId, amount: FUND_AMOUNT },
-      new Eip155AccountId(aliceWallet.address as `0x${string}`)
+      aliceAccountId,
+      aliceAccountId,
     );
 
     // After a normal fund, pending = 0, so no rollover — just withdraw
@@ -103,7 +106,8 @@ describe('tongo EVM Unshield E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
     const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
 
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
@@ -132,9 +136,11 @@ describe('tongo EVM Unshield E2E', () => {
     const usdcBeforeUnshield = await usdc.balanceOf(aliceWallet.address);
 
     // --- Unshield ---
+    const aliceAccountId = new Eip155AccountId(aliceWallet.address as `0x${string}`);
     const { txns } = await plugin.prepareUnshield(
       { asset: usdcAssetId, amount: FUND_AMOUNT },
-      new Eip155AccountId(aliceWallet.address as `0x${string}`)
+      aliceAccountId,
+      aliceAccountId,
     );
 
     const receipt = await sendTx(alice, txns[0]);
@@ -160,7 +166,8 @@ describe('tongo EVM Unshield E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -205,7 +212,8 @@ describe('tongo EVM Unshield E2E', () => {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
     };
-    const host = { ethProvider } as unknown as Host;
+    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+    const host = { ethProvider, keystore } as unknown as Host;
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
