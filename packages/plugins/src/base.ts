@@ -59,7 +59,7 @@ export type Transact<
     TAccountId extends string,
     C extends PICapabilities
 > = Pick<TxFeatureMap<TAccountId, C['assetAmounts'], C['privateOp'], C['publicOp']>, EnabledKeys<TxFeatureMap<TAccountId, C['assetAmounts'], C['privateOp'], C['publicOp']>, C['features']>> & {
-    balance: (assets?: Array<C['assetAmounts']['read']['asset']>) => Promise<Array<C['assetAmounts']['read']>>;
+    balance: (assets: Array<C['assetAmounts']['read']['asset']> | undefined) => Promise<Array<C['assetAmounts']['read']>>;
 };
 
 export type PluginInstance<
