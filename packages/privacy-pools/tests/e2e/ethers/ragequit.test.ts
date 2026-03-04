@@ -15,6 +15,9 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
+  // E_ADDRESS represents native ETH in Privacy Pools
+  const nativeAsset = ERC20Asset(E_ADDRESS);
+  let vettingFees: bigint;
 
   beforeAll(async () => {
 
@@ -30,6 +33,8 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     await _protocol.sync();
     latestState = _protocol.dumpState();
+
+    vettingFees = await assetVettingFee(await anvil.pool(1).getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
 
   }, 300_000);
 
@@ -48,13 +53,13 @@ describe('PrivacyPools v1 E2E Flow', () => {
       initialState: latestState
     });
 
-    // E_ADDRESS represents native ETH in Privacy Pools
-    const nativeAsset = ERC20Asset(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
 
     // 1. Check initial balance is 0
     const initialBalance = await protocol.balance([nativeAsset]);
-    let { pending, approved } = unwrapBalance(initialBalance, nativeAsset);
+    const unwrapped = unwrapBalance(initialBalance, nativeAsset);
+    const { approved } = unwrapped;
+    let { pending } = unwrapped;
 
     expect(approved?.amount).toBe(0n);
     expect(pending?.amount).toBe(0n);
@@ -75,8 +80,6 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // 3. Verify state after deposit
     const postDepositBalance = await protocol.balance([nativeAsset]);
-
-    const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, nativeAsset);
     const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFees);
 
     ({ pending } = unwrapBalance(postDepositBalance, nativeAsset));

@@ -18,16 +18,6 @@ export async function fundAccountWithETH(
 }
 
 /**
- * Get ETH balance of an address
- */
-export async function getETHBalance(
-  provider: any,
-  address: string
-): Promise<bigint> {
-  return await provider.getBalance(address);
-}
-
-/**
  * Calculate storage slot for a mapping(address => uint256)
  * slot = keccak256(abi.encode(key, baseSlot))
  */
@@ -64,7 +54,7 @@ export async function fundAccountWithERC20(
  * Approve ERC20 spending
  */
 export async function approveERC20(
-  signer: any,
+  signer: Wallet,
   tokenAddress: string,
   spender: string,
   amount: bigint
@@ -157,7 +147,7 @@ export async function pushNewAspRoot(
   return { hash, txData: { data, to, from: normalizedPostman } };
 }
 
-export async function assetVettingFee(provider: any, entrypointAddress: bigint, asset: ERC20AssetId) {
+export async function assetVettingFee(provider: JsonRpcProvider, entrypointAddress: bigint, asset: ERC20AssetId) {
   const epAbi = [{
     "type": "function",
     "name": "assetConfig",
@@ -176,12 +166,12 @@ export async function assetVettingFee(provider: any, entrypointAddress: bigint, 
   }] as const;
   const eadd = toBeHex(entrypointAddress);
   const ep = new Contract(eadd, epAbi, provider);
+  const assetConfig = await ep.assetConfig(asset.contract);
   const [
-    _pool,
-    _minimumDepositAmount,
+    _pool,                      // eslint-disable-line @typescript-eslint/no-unused-vars
+    _minimumDepositAmount,      // eslint-disable-line @typescript-eslint/no-unused-vars
     vettingFeeBPS,
-    _maxRelayFeeBPS
-  ] = await ep.assetConfig(asset.contract);
+  ] = assetConfig;
 
   return vettingFeeBPS as bigint;
 }
@@ -227,7 +217,7 @@ export async function sendTxAndWait(signer: Wallet, { to, data, value }: { to: s
     .then(tx => tx.wait())
     .catch(e => {
       if (e?.code === "CALL_EXCEPTION") {
-        const { transaction, receipt } = e as CallExceptionError;
+        const { receipt } = e as CallExceptionError;
 
         return receipt;
       } else {

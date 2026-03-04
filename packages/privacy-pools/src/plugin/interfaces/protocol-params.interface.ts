@@ -50,7 +50,7 @@ export interface PrivacyPoolsV1ProtocolParams {
   ipfsUrl?: string;
 }
 
-interface IBaseOperationParams { }
+interface IBaseOperationParams { }  // eslint-disable-line @typescript-eslint/no-empty-object-type
 
 export interface IDepositOperationParams extends IBaseOperationParams {
   asset: Address;

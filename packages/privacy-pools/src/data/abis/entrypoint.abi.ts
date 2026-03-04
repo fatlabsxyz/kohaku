@@ -1,4 +1,4 @@
-import { Abi, AbiParameter } from "viem";
+import { Abi } from "viem";
 
 export const entrypointDepositErc20Abi = [
   {

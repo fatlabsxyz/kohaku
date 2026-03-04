@@ -18,6 +18,15 @@ describe('PrivacyPools v1 E2E Flow', () => {
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
 
+  // E_ADDRESS represents native ETH in Privacy Pools
+  const nativeAsset = ERC20Asset(E_ADDRESS);
+
+  const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+  const usdcAsset = ERC20Asset(USDC_ADDRESS);
+
+  let vettingFeesNative: bigint;
+  let vettingFeesUsdc: bigint;
+
   beforeAll(async () => {
 
     anvil = defineAnvil({
@@ -33,6 +42,9 @@ describe('PrivacyPools v1 E2E Flow', () => {
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
+    vettingFeesNative = await assetVettingFee(await anvil.pool(1).getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
+    vettingFeesUsdc = await assetVettingFee(await anvil.pool(1).getProvider(), ENTRYPOINT_ADDRESS, usdcAsset);
+
   }, 300_000);
 
   afterAll(async () => {
@@ -42,8 +54,6 @@ describe('PrivacyPools v1 E2E Flow', () => {
   it('[prepareShield] generates valid native ETH deposit transaction', async () => {
     const protocol = getProtocolWithState({ initialState: latestState });
 
-    // E_ADDRESS represents native ETH in Privacy Pools
-    const nativeAsset = ERC20Asset(E_ADDRESS);
 
     const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: 1000000000000000000n } // 1 ETH
@@ -67,8 +77,6 @@ describe('PrivacyPools v1 E2E Flow', () => {
       initialState: latestState
     });
 
-    // E_ADDRESS represents native ETH in Privacy Pools
-    const nativeAsset = ERC20Asset(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
 
     // 1. Check initial balance is 0
@@ -94,8 +102,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // 3. Verify state after deposit
     const postDepositBalance = await protocol.balance([nativeAsset]);
 
-    const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, nativeAsset);
-    const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFees);
+    const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFeesNative);
 
     ({ pending, approved } = unwrapBalance(postDepositBalance, nativeAsset));
     expect(approved?.amount).toBe(0n);
@@ -105,8 +112,6 @@ describe('PrivacyPools v1 E2E Flow', () => {
   it('[prepareShield] generates valid ERC20 deposit transaction', { timeout: 60_000 }, async () => {
     const protocol = getProtocolWithState({ initialState: latestState });
 
-    const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
-    const usdcAsset = ERC20Asset(USDC_ADDRESS);
 
     const { txns } = await protocol.prepareShield(
       { asset: usdcAsset, amount: 100000000n } // 100 USDC
@@ -172,8 +177,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // 5. Verify state after deposit
     const postDepositBalance = await protocol.balance([usdcAsset]);
 
-    const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, usdcAsset);
-    const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFees);
+    const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFeesUsdc);
 
     ({ pending, approved } = unwrapBalance(postDepositBalance, usdcAsset));
     expect(approved?.amount).toBe(0n);
@@ -197,9 +201,8 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const DEPOSIT_AMOUNT_1 = 1000000000000000000n; // 1 ETH
     const DEPOSIT_AMOUNT_2 = 2000000000000000000n; // 2 ETH
 
-    const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, nativeAsset);
-    const POST_FEE_DEPOSIT_AMOUNT_1 = deductVettingFees(DEPOSIT_AMOUNT_1, vettingFees);
-    const POST_FEE_DEPOSIT_AMOUNT_2 = deductVettingFees(DEPOSIT_AMOUNT_2, vettingFees);
+    const POST_FEE_DEPOSIT_AMOUNT_1 = deductVettingFees(DEPOSIT_AMOUNT_1, vettingFeesNative);
+    const POST_FEE_DEPOSIT_AMOUNT_2 = deductVettingFees(DEPOSIT_AMOUNT_2, vettingFeesNative);
 
     // 1. First deposit
     const { txns: [tx] } = await protocol.prepareShield(

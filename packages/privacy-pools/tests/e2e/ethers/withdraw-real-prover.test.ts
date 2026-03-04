@@ -42,9 +42,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     await anvil.start();
 
-    const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
-
-    vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
+    vettingFees = await assetVettingFee(await anvil.pool(1).getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
 
   }, 300000);
 

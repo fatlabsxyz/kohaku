@@ -109,5 +109,6 @@ export function encodeRagequitPayload(proveOutput: CommitmentProveOutput) {
 
 export function decodeRelayData(encodedData: `0x${string}`) {
   const [relayData] = decodeAbiParameters([relayDataAbi], encodedData);
+
   return relayData;
 }
