@@ -1,4 +1,4 @@
-import { Abi, parseAbiItem } from "viem";
+import { parseAbiItem } from "viem";
 
 export const POOL_EVENTS_SIGNATURES = {
   PoolDeposited: parseAbiItem(

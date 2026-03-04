@@ -1,5 +1,5 @@
-import { poseidon } from "maci-crypto/build/ts/hashing.js";
 import { Host } from '@kohaku-eth/plugins';
+import { poseidon } from "maci-crypto/build/ts/hashing.js";
 
 /** BIP32-BIP43 - Privacy Pools v1
  *   2**31
@@ -53,7 +53,7 @@ export function SecretManager({
 }: SecretManagerParams): ISecretManager {
 
   const deriveSecrets = ({ chainId, entrypointAddress, depositIndex, secretIndex }: DeriveSecretsParams) => {
-    const saltSecret = keystore.deriveAt(ppPath({ secretType: "salt", accountIndex, depositIndex, secretIndex }));
+    const saltSecret = keystore.deriveAt(ppPath({ accountIndex, secretType: "salt", depositIndex, secretIndex }));
     const nullifierSecret = keystore.deriveAt(ppPath({ accountIndex, secretType: "nullifier", depositIndex, secretIndex }));
     const nullifier = hashToSnarkField([chainId.toString(), BigInt(entrypointAddress), BigInt(nullifierSecret)]);
     const salt = hashToSnarkField([chainId.toString(), BigInt(entrypointAddress), BigInt(saltSecret)]);
@@ -96,11 +96,7 @@ function hashToSnarkField(numberLikes: (string | bigint)[]) {
 
   for (const n of numberLikes) {
     if (typeof n === 'string') {
-      try {
-        _bigints.push(BigInt(n));
-      } catch (e) {
-        throw e;
-      }
+      _bigints.push(BigInt(n));
     } else {
       _bigints.push(n);
     }

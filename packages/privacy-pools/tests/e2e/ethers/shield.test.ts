@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import getPort from "get-port";
 import { ethers } from '@kohaku-eth/provider/ethers';
+import getPort from "get-port";
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
-import { ANVIL_PORT, defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState, ERC20Asset, unwrapBalance } from '../../utils/common';
+import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { ERC20Asset, getEnv, InitialState, unwrapBalance } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { approveERC20, assetVettingFee, deductVettingFees, getProtocolWithState, sendTxAndWait, setupWallet, transferERC20FromWhale } from '../../utils/test-helpers';
@@ -29,6 +29,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     await anvil.start();
 
     const _protocol = getProtocolWithState();
+
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
@@ -73,6 +74,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // 1. Check initial balance is 0
     const preDepositBalance = await protocol.balance([nativeAsset]);
     let { pending, approved } = unwrapBalance(preDepositBalance, nativeAsset);
+
     expect(pending?.amount).toBe(0n);
     expect(approved?.amount).toBe(0n);
 
@@ -83,6 +85,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     const [tx] = txns;
     const receipt = await sendTxAndWait(alice, tx);
+
     await pool.mine(1);
 
     expect(receipt).toBeTruthy();
@@ -137,6 +140,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // 1. Check initial balance is 0
     const initialBalance = await protocol.balance([usdcAsset]);
     let { pending, approved } = unwrapBalance(initialBalance, usdcAsset);
+
     expect(approved?.amount).toBe(0n);
     expect(pending?.amount).toBe(0n);
 
@@ -204,11 +208,13 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // 1.b broadcast tx
     const tx1Receipt = await sendTxAndWait(alice, tx);
+
     expect(tx1Receipt?.status).toEqual(1);
 
     // 2. Verify first deposit balance
     const balance1 = await protocol.balance([nativeAsset]);
     let { pending, approved } = unwrapBalance(balance1, nativeAsset);
+
     expect(approved?.amount).toBe(0n);
     expect(pending?.amount).toBe(POST_FEE_DEPOSIT_AMOUNT_1);
 
@@ -219,10 +225,12 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // 3.b broadcast tx
     const tx2Receipt = await sendTxAndWait(alice, tx2);
+
     expect(tx2Receipt?.status).toEqual(1);
 
     // 4. Verify cumulative balance
     const balance2 = await protocol.balance([nativeAsset]);
+
     ({ pending, approved } = unwrapBalance(balance2, nativeAsset));
     expect(approved?.amount).toBe(0n);
     expect(pending?.amount).toBe(POST_FEE_DEPOSIT_AMOUNT_1 + POST_FEE_DEPOSIT_AMOUNT_2);
