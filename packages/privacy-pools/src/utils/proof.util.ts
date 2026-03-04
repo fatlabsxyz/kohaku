@@ -14,60 +14,60 @@ const SNARK_SCALAR_FIELD = BigInt('218882428718392752222464057452572750885483644
  * @throws {Error} If the leaf is not found in the leaves array.
  */
 export function generateMerkleProof(
-    leaves: bigint[],
-    leaf: bigint,
+  leaves: bigint[],
+  leaf: bigint,
 ): LeanIMTMerkleProof<bigint> {
-    const tree = new LeanIMT<bigint>((a, b) => poseidon([a, b]));
+  const tree = new LeanIMT<bigint>((a, b) => poseidon([a, b]));
 
-    tree.insertMany(leaves);
+  tree.insertMany(leaves);
 
-    const leafIndex = tree.indexOf(leaf);
+  const leafIndex = tree.indexOf(leaf);
 
-    // if leaf does not exist in tree, throw error
-    if (leafIndex === -1) {
-        throw new Error(
-            "Leaf not found in the leaves array.",
-        );
-    }
+  // if leaf does not exist in tree, throw error
+  if (leafIndex === -1) {
+    throw new Error(
+      "Leaf not found in the leaves array.",
+    );
+  }
 
-    const proof = tree.generateProof(leafIndex);
+  const proof = tree.generateProof(leafIndex);
 
-    if (proof.siblings.length < 32) {
-        proof.siblings = [
-        ...proof.siblings,
-        ...Array(32 - proof.siblings.length).fill(BigInt(0)),
-        ];
-    }
+  if (proof.siblings.length < 32) {
+    proof.siblings = [
+      ...proof.siblings,
+      ...Array(32 - proof.siblings.length).fill(BigInt(0)),
+    ];
+  }
 
-    return proof;
+  return proof;
 }
 
 export function calculateContext(withdrawal: WithdrawalPayload, scope: bigint): string {
-    const hash =
-        BigInt(
-            keccak256(
-                encodeAbiParameters(
-                    [
-                        {
-                            name: "withdrawal",
-                            type: "tuple",
-                            components: [
-                                { name: "processooor", type: "address" },
-                                { name: "data", type: "bytes" },
-                            ],
-                        },
-                        { name: "scope", type: "uint256" },
-                    ],
-                    [
-                        {
-                            processooor: withdrawal.processooor,
-                            data: withdrawal.data,
-                        },
-                        scope,
-                    ],
-                ),
-            ),
-        ) % SNARK_SCALAR_FIELD;
+  const hash =
+    BigInt(
+      keccak256(
+        encodeAbiParameters(
+          [
+            {
+              name: "withdrawal",
+              type: "tuple",
+              components: [
+                { name: "processooor", type: "address" },
+                { name: "data", type: "bytes" },
+              ],
+            },
+            { name: "scope", type: "uint256" },
+          ],
+          [
+            {
+              processooor: withdrawal.processooor,
+              data: withdrawal.data,
+            },
+            scope,
+          ],
+        ),
+      ),
+    ) % SNARK_SCALAR_FIELD;
 
-    return numberToHex(hash);
+  return numberToHex(hash);
 }
