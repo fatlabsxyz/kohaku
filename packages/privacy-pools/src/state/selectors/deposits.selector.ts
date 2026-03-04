@@ -1,15 +1,16 @@
-import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '../store';
-import { IEntrypointDepositEvent, IIndexedDepositEvent } from '../../data/interfaces/events.interface';
-import { BaseSelectorParams } from '../interfaces/selectors.interface';
-import { Address, Precommitment } from '../../interfaces/types.interface';
 import { TxData } from '@kohaku-eth/provider';
+import { createSelector } from '@reduxjs/toolkit';
+
+import { Secret } from '../../account/keys';
 import { prepareErc20Shield, prepareNativeShield } from '../../account/tx/shield';
 import { E_ADDRESS } from '../../config';
+import { IEntrypointDepositEvent, IIndexedDepositEvent } from '../../data/interfaces/events.interface';
+import { Address, Precommitment } from '../../interfaces/types.interface';
 import { addressToHex } from '../../utils';
-import { depositsSelector, entrypointDepositSelector, entrypointInfoSelector } from './slices.selectors';
+import { BaseSelectorParams } from '../interfaces/selectors.interface';
+import { RootState } from '../store';
 import { aspLeavesSelector } from './asp.selector';
-import { Secret } from '../../account/keys';
+import { depositsSelector, entrypointDepositSelector, entrypointInfoSelector } from './slices.selectors';
 
 /**
  * Returns a Map with every deposit we own. We also check approved status.

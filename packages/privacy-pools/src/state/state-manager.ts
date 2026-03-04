@@ -1,6 +1,7 @@
-import { ChainId, Storage } from "@kohaku-eth/plugins";
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
+import { ChainId, Storage } from "@kohaku-eth/plugins";
 
+import { Store, unwrapResult } from "@reduxjs/toolkit";
 import { Address } from "../interfaces/types.interface";
 import {
   IDepositOperationParams,
@@ -15,6 +16,8 @@ import {
   StateWithdrawalPayload,
 } from "../plugin/interfaces/protocol-params.interface";
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
+import { addressToHex } from "../utils";
+import { calculateContext } from "../utils/proof.util";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import {
@@ -40,22 +43,19 @@ import {
   createExistingNoteSecretsDeriver,
   createGetNoteSelector,
   createNextNoteDeriver,
-  createUnapprovedNotesSelector,
   createUnapprovedNotesByAssetSelector,
+  createUnapprovedNotesSelector,
 } from "./selectors/notes.selector";
 import { createMyPoolsSelector, poolFromAssetSelector } from "./selectors/pools.selector";
 import { createMyRagequitsSelector } from "./selectors/ragequits.selector";
 import { createMyWithdrawalsSelector } from "./selectors/withdrawals.selector";
 import { RootState, storeFactory } from "./store";
+import { quoteThunk } from "./thunks/quoteThunk";
+import { ragequitThunk } from "./thunks/ragequitThunk";
 import { SyncAspThunkParams } from "./thunks/syncAspThunk";
 import { syncThunk } from "./thunks/syncThunk";
-import { quoteThunk } from "./thunks/quoteThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
-import { ragequitThunk } from "./thunks/ragequitThunk";
-import { Store, unwrapResult } from "@reduxjs/toolkit";
 import { deserialize } from "./utils/serialize.utils";
-import { addressToHex } from "../utils";
-import { calculateContext } from "../utils/proof.util";
 
 export interface StoreFactoryParams
   extends BaseSelectorParams, SyncAspThunkParams {

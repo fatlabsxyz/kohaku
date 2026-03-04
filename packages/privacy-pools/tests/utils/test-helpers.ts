@@ -1,6 +1,5 @@
-import { AbiCoder, CallExceptionError, CallExceptionTransaction, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
-
-import { ERC20AssetId, Erc20Id, Host } from '@kohaku-eth/plugins';
+import { ERC20AssetId, Host } from '@kohaku-eth/plugins';
+import { AbiCoder, CallExceptionError, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
 
 import { PrivacyPoolsV1Protocol } from '../../src';
 import { type AnvilPool } from './anvil';

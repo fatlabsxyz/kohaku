@@ -1,5 +1,6 @@
+import { LeanIMT } from "@zk-kit/lean-imt";
 import { poseidon } from 'maci-crypto/build/ts/hashing';
-import { LeanIMT, LeanIMTMerkleProof } from "@zk-kit/lean-imt";
+
 import { IAspService } from '../../src/data/asp.service';
 
 /**

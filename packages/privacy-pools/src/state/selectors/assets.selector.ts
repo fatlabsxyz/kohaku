@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "../store";
+
 import { createMyPoolsSelector } from "./pools.selector";
 import { assetSelector } from "./slices.selectors";
 

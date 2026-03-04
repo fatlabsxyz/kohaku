@@ -1,12 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
-import getPort from "get-port";
 import { ethers } from '@kohaku-eth/provider/ethers';
+import getPort from "get-port";
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState, ERC20Asset, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, getEnv, InitialState, unwrapBalance } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { assetVettingFee, deductVettingFees, getProtocolWithState, sendTxAndWait, setupWallet } from '../../utils/test-helpers';

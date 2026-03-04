@@ -1,17 +1,26 @@
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
-import { addressToHex, encodeRagequitPayload, encodeWithdrawalPayload } from "../utils.js";
 import {
   AccountId,
   AssetAmount,
   ERC20AssetId,
   Host,
 } from "@kohaku-eth/plugins";
+
+import { TxData } from "packages/provider/dist/index.js";
 import { ISecretManager, SecretManager } from "../account/keys";
 import { AspService } from "../data/asp.service";
 import { DataService } from "../data/data.service";
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 import { RelayerClient } from "../relayer/relayer-client";
 import { storeStateManager } from "../state/state-manager";
+import { addressToHex, encodeRagequitPayload, encodeWithdrawalPayload } from "../utils.js";
+import {
+  PPv1AssetAmount,
+  PPv1AssetBalance,
+  PPv1Broadcaster,
+  PPv1BroadcasterParameters,
+  PPv1Instance,
+} from "../v1/interfaces.js";
 import {
   IEntrypoint,
   INote,
@@ -20,16 +29,6 @@ import {
   PPv1PublicOperation,
   PrivacyPoolsV1ProtocolParams,
 } from "./interfaces/protocol-params.interface";
-import {
-  PPv1AssetAmount,
-  PPv1AssetBalance,
-  PPv1Instance,
-} from "../v1/interfaces.js";
-import {
-  PPv1Broadcaster,
-  PPv1BroadcasterParameters,
-} from "../v1/interfaces.js";
-import { TxData } from "packages/provider/dist/index.js";
 
 type RequireOnly<T, Keys extends keyof T> = Partial<T> & Pick<T, Keys>;
 

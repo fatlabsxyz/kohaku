@@ -1,9 +1,8 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "../store";
-import { IIndexedWithdrawalEvent } from "../../data/interfaces/events.interface";
-import { createMyDepositsSelector } from "./deposits.selector";
-import { Precommitment } from "../../interfaces/types.interface";
 import { ISecretManager } from "../../account/keys";
+import { IIndexedWithdrawalEvent } from "../../data/interfaces/events.interface";
+import { Precommitment } from "../../interfaces/types.interface";
+import { createMyDepositsSelector } from "./deposits.selector";
 import {
   entrypointInfoSelector,
   withdrawalsSelector,

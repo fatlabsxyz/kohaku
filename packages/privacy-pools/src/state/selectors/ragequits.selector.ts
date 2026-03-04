@@ -1,8 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '../store';
+
 import { IRagequitEvent } from '../../data/interfaces/events.interface';
-import { createMyDepositsSelector } from './deposits.selector';
 import { Precommitment } from '../../interfaces/types.interface';
+import { createMyDepositsSelector } from './deposits.selector';
 import { ragequitsSelector } from './slices.selectors';
 
 export const createMyRagequitsSelector = (

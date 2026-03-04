@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { Label } from '../../interfaces/types.interface';
 import { Serializable } from '../interfaces/utils.interface';
 import { serialize } from '../utils/serialize.utils';
-import { Label } from '../../interfaces/types.interface';
 
 export interface AspState {
   leaves: Label[];

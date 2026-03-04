@@ -1,11 +1,12 @@
 import { createSelector } from '@reduxjs/toolkit';
+
 import { IDepositWithAsset, IDepositWithBalance } from '../../data/interfaces/events.interface';
-import { createMyWithdrawalsSelector } from './withdrawals.selector';
-import { createMyRagequitsSelector } from './ragequits.selector';
 import { Address, Precommitment } from '../../interfaces/types.interface';
-import { createMyDepositsSelector } from './deposits.selector';
-import { assetSelector, entrypointDepositSelector, poolsSelector } from './slices.selectors';
 import { RootState } from '../store';
+import { createMyDepositsSelector } from './deposits.selector';
+import { createMyRagequitsSelector } from './ragequits.selector';
+import { assetSelector, entrypointDepositSelector, poolsSelector } from './slices.selectors';
+import { createMyWithdrawalsSelector } from './withdrawals.selector';
 
 /**
  * Provides a map of every precommitment mapped to a deposit+assetAddress

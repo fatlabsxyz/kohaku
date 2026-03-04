@@ -1,15 +1,15 @@
 import { encodeAbiParameters, getAddress } from 'viem';
+
 import {
+  IQuoteRequest,
   IQuoteResponse,
   IRelayerClient,
-  IRelayFeesRequest,
   IRelayerFeeResponse,
-  IQuoteRequest,
+  IRelayFeesRequest,
   IRelayRequest,
   ISuccessfullRelayResponse,
 } from '../../src/relayer/interfaces/relayer-client.interface';
 
-import { FeeData } from 'ethers';
 export interface MockRelayerOptions {
   feeBPS?: string;
   baseFeeBPS?: string;

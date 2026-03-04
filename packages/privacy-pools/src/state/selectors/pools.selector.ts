@@ -1,8 +1,9 @@
 import { createSelector } from "@reduxjs/toolkit";
+
 import { IPool } from "../../data/interfaces/events.interface";
+import { Address, Commitment } from "../../interfaces/types.interface";
 import { RootState } from "../store";
 import { createMyEntrypointDepositsSelector } from "./deposits.selector";
-import { Address, Commitment } from "../../interfaces/types.interface";
 import {
   depositsSelector,
   poolsLeavesSelector,

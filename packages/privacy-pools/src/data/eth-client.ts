@@ -1,5 +1,5 @@
 import type { EthereumProvider, TxLog } from "@kohaku-eth/provider";
-import { ContractFunctionName, decodeFunctionResult, DecodeFunctionResultReturnType, encodeFunctionData, EncodeFunctionDataParameters, erc20Abi, toHex, type RpcLog } from 'viem';
+import { ContractFunctionName, decodeFunctionResult, DecodeFunctionResultReturnType, encodeFunctionData, EncodeFunctionDataParameters, erc20Abi, toHex } from 'viem';
 import { Address } from "../interfaces/types.interface";
 import { entrypointAbi } from "./abis/entrypoint.abi";
 import { poolAbi } from "./abis/pool.abi";

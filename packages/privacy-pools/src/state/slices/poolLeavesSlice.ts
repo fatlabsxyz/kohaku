@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { ILeafInsertedEvent } from '../../data/interfaces/events.interface';
 import { Address } from '../../interfaces/types.interface';
 import { Serializable } from '../interfaces/utils.interface';

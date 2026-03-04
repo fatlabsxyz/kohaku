@@ -3,23 +3,23 @@ import {
   configureStore,
   Middleware,
   PayloadAction,
-  ReducersMapObject,
-  Store,
+  ReducersMapObject
 } from "@reduxjs/toolkit";
+
+import aspReducer from "./slices/aspSlice";
+import assetsReducer from "./slices/assetsSlice";
 import depositsReducer from "./slices/depositsSlice";
 import entrypointDepositsReducer from "./slices/entrypointDepositsSlice";
-import withdrawalsReducer from "./slices/withdrawalsSlice";
-import ragequitsReducer from "./slices/ragequitsSlice";
-import assetsReducer from "./slices/assetsSlice";
-import poolsReducer from "./slices/poolsSlice";
 import poolInfoReducer, {
   EntrypointInfoState,
   setEntrypointInfo,
 } from "./slices/entrypointInfoSlice";
-import aspReducer from "./slices/aspSlice";
-import updateRootEventsReducer from "./slices/updateRootEventsSlice";
 import poolsLeavesReducer from "./slices/poolLeavesSlice";
+import poolsReducer from "./slices/poolsSlice";
+import ragequitsReducer from "./slices/ragequitsSlice";
 import syncReducer from "./slices/syncSlice";
+import updateRootEventsReducer from "./slices/updateRootEventsSlice";
+import withdrawalsReducer from "./slices/withdrawalsSlice";
 
 const reducers = {
   deposits: depositsReducer,

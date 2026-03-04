@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { IEntrypointDepositEvent } from '../../data/interfaces/events.interface';
 import { Commitment } from '../../interfaces/types.interface';
 import { Serializable } from '../interfaces/utils.interface';

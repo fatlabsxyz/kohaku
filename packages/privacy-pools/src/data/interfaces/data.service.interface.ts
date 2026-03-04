@@ -1,5 +1,10 @@
+import { ChainId } from "@kohaku-eth/plugins";
 import { ParseAbiItem } from "viem";
 import { Address } from "../../interfaces/types.interface";
+import {
+  ENTRYPOINT_EVENTS_SIGNATURES,
+  POOL_EVENTS_SIGNATURES,
+} from "../abis/events.abi";
 import {
   IAsset,
   IEntrypointDepositEvent,
@@ -11,11 +16,6 @@ import {
   IRawWithdrawalEvent,
   IRootUpdatedEvent,
 } from "./events.interface";
-import {
-  ENTRYPOINT_EVENTS_SIGNATURES,
-  POOL_EVENTS_SIGNATURES,
-} from "../abis/events.abi";
-import { ChainId } from "@kohaku-eth/plugins";
 
 type IEventsMap = Record<string, ParseAbiItem<any>>;
 

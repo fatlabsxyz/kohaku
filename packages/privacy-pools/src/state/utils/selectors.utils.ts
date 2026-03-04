@@ -1,6 +1,7 @@
-import { createSelector, Tuple } from "@reduxjs/toolkit";
-import { RootState } from "../store";
+import { createSelector } from "@reduxjs/toolkit";
+
 import { Deserialize } from "../interfaces/utils.interface";
+import { RootState } from "../store";
 import { deserialize } from "./serialize.utils";
 
 export const selectEntityMap = <

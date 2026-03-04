@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { IWithdrawalEvent } from '../../data/interfaces/events.interface';
 import { Nullifier } from '../../interfaces/types.interface';
 import { Serializable } from '../interfaces/utils.interface';

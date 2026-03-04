@@ -5,15 +5,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { E_ADDRESS } from '../src/config/constants';
 import { MAINNET_CONFIG } from '../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../src/index';
+import { generateMerkleProof } from "../src/utils/proof.util";
 import { defineAnvil, type AnvilInstance } from './utils/anvil';
-import { ERC20AssetId, getEnv, loadInitialState, MAINNET_ENTRYPOINT } from './utils/common';
+import { ERC20Asset, getEnv, loadInitialState, MAINNET_ENTRYPOINT } from './utils/common';
 import { createMockAspService } from './utils/mock-asp-service';
 import { createMockHost } from './utils/mock-host';
 import { mockProverFactory } from './utils/mock-prover';
 import { createMockRelayerClient } from './utils/mock-relayer';
 import { TEST_ACCOUNTS } from './utils/test-accounts';
 import { assetVettingFee, getPoolStateRoot, setupWallet } from './utils/test-helpers';
-import { generateMerkleProof } from "../src/utils/proof.util";
 
 const mockParams = () => {
   // Create mock asp
@@ -41,7 +41,7 @@ describe("Creates the dump state payload", () => {
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
 
-  const nativeAsset = ERC20AssetId(E_ADDRESS);
+  const nativeAsset = ERC20Asset(E_ADDRESS);
   let vettingFees = 0n;
 
   beforeAll(async () => {

@@ -1,12 +1,13 @@
 import { Prover, WithdrawPublicSignals } from "@fatsolutions/privacy-pools-core-circuits";
 import { createAsyncThunk } from '@reduxjs/toolkit';
+
 import { Secret } from '../../account/keys';
 import { Address } from '../../interfaces/types.interface';
 import { INote } from '../../plugin/interfaces/protocol-params.interface';
 import { aspMerkleProofSelector, stateMerkleProofSelector } from '../selectors/merkle.selector';
-import { entrypointInfoSelector, poolsSelector } from '../selectors/slices.selectors';
-import { RootState } from '../store';
 import { poolFromAssetSelector } from "../selectors/pools.selector";
+import { entrypointInfoSelector } from '../selectors/slices.selectors';
+import { RootState } from '../store';
 
 export type ProveOutput = Awaited<ReturnType<Awaited<ReturnType<typeof Prover>>['prove']>>;
 export type WithdrawProveOutput = Omit<ProveOutput, 'mappedSignals'> & {

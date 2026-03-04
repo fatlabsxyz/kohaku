@@ -1,19 +1,18 @@
 import { Prover } from '@fatsolutions/privacy-pools-core-circuits';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-
-import getPort from "get-port";
 import { AccountId } from '@kohaku-eth/plugins';
+import getPort from "get-port";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState, MAINNET_ENTRYPOINT, ERC20Asset, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, getEnv, InitialState, MAINNET_ENTRYPOINT, unwrapBalance } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTx, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
+import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
 
 const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 

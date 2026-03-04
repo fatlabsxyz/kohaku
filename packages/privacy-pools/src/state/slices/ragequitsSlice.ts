@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { IRagequitEvent } from '../../data/interfaces/events.interface';
 import { Label } from '../../interfaces/types.interface';
 import { Serializable } from '../interfaces/utils.interface';

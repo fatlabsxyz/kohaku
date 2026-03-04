@@ -1,4 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
+
 import { ISecretManager, Secret } from '../../account/keys';
 import { Address } from '../../interfaces/types.interface';
 import { INote } from '../../plugin/interfaces/protocol-params.interface';

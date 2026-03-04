@@ -1,4 +1,4 @@
-import { ContractEventName, Log, ParseEventLogsReturnType } from "viem";
+import { ContractEventName, ParseEventLogsReturnType } from "viem";
 import { EVENTS_SIGNATURES } from "../abis/events.abi";
 import {
   IEntrypointEvents,
