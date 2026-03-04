@@ -1,8 +1,8 @@
 /* eslint-disable max-lines */
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
 import { ChainId, Storage } from "@kohaku-eth/plugins";
-
 import { Store, unwrapResult } from "@reduxjs/toolkit";
+
 import { relayDataAbi } from "../data/abis/entrypoint.abi";
 import { Address } from "../interfaces/types.interface";
 import {
@@ -18,7 +18,8 @@ import {
   StateWithdrawalPayload,
 } from "../plugin/interfaces/protocol-params.interface";
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
-import { addressToHex, decodeRelayData } from "../utils";
+import { addressToHex } from "../utils";
+import { decodeRelayData } from "../utils/encoding.utils";
 import { calculateContext } from "../utils/proof.util";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";

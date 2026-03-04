@@ -14,7 +14,8 @@ import { DataService } from "../data/data.service";
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 import { RelayerClient } from "../relayer/relayer-client";
 import { storeStateManager } from "../state/state-manager";
-import { addressToHex, encodeRagequitPayload, encodeWithdrawalPayload } from "../utils.js";
+import { addressToHex, } from "../utils.js";
+import { encodeRagequitPayload, encodeWithdrawalPayload } from "../utils/encoding.utils.js";
 import {
   PPv1AssetAmount,
   PPv1AssetBalance,
@@ -101,7 +102,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       const { approved, unapproved } = balances.get(parsedAssets[index]!) || {
         approved: 0n,
         unapproved: 0n
-      }
+      };
 
       return [{
         asset,
