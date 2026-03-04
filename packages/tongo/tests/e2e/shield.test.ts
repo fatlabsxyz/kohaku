@@ -7,10 +7,9 @@ import getPort from "get-port";
 
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
-import { setupWallet, mintERC20, sendTx, createProvider } from '../utils/test-helpers';
+import { setupWallet, mintERC20, sendTx, createProvider, createMockHost } from '../utils/test-helpers';
 import { TongoPlugin } from '../../src/tongo';
 import { Erc20Id, Eip155AccountId } from '@kohaku-eth/plugins';
-import type { Host } from '@kohaku-eth/plugins';
 
 const SEPOLIA_FORK_URL = getEnv('SEPOLIA_RPC_URL', 'https://no-fallback');
 
@@ -46,12 +45,7 @@ describe('tongo EVM Fund E2E', () => {
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
     const alice = new ethers.NonceManager(aliceWallet);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
-    const host = { ethProvider, keystore } as unknown as Host;
+    const { host, ethProvider } = createMockHost(provider);
     const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
 
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
@@ -99,11 +93,7 @@ describe('tongo EVM Fund E2E', () => {
   it('[fund] prepareShield returns correctly shaped transactions', async () => {
     const pool = anvil.pool(3);
     const provider = createProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const host = { ethProvider } as unknown as Host;
+    const { host } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -135,12 +125,7 @@ describe('tongo EVM Fund E2E', () => {
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
     const alice = new ethers.NonceManager(aliceWallet);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
-    const host = { ethProvider, keystore } as unknown as Host;
+    const { host, ethProvider } = createMockHost(provider);
 
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);

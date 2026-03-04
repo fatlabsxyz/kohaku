@@ -1,9 +1,24 @@
 import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet, zeroPadValue, NonceManager } from 'ethers';
 
 import { type AnvilPool } from './anvil';
+import type { Host } from '@kohaku-eth/plugins';
 
 export function createProvider(rpcUrl: string): JsonRpcProvider {
   return new JsonRpcProvider(rpcUrl, undefined, { cacheTimeout: 0, batchMaxCount: 1, staticNetwork: true });
+}
+
+export type EthProvider = {
+  request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>;
+};
+
+export function createMockHost(provider: JsonRpcProvider, overrides?: Partial<Host>): { host: Host; ethProvider: EthProvider } {
+  const ethProvider: EthProvider = {
+    request: ({ method, params }) =>
+      provider.send(method, Array.isArray(params) ? params : []),
+  };
+  const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
+  const host = { ethProvider, keystore, ...overrides } as unknown as Host;
+  return { host, ethProvider };
 }
 
 async function fundAccountWithETH(pool: AnvilPool, address: string, balance: bigint): Promise<void> {

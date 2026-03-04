@@ -4,10 +4,9 @@ import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
 
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
-import { setupWallet, mintERC20, sendTx, createProvider } from '../utils/test-helpers';
+import { setupWallet, mintERC20, sendTx, createProvider, createMockHost } from '../utils/test-helpers';
 import { TongoPlugin } from '../../src/tongo';
 import { Erc20Id, CustomAccountId, CustomChainId, Eip155AccountId, InsufficientBalanceError } from '@kohaku-eth/plugins';
-import type { Host } from '@kohaku-eth/plugins';
 import getPort from 'get-port';
 
 const SEPOLIA_FORK_URL = getEnv('SEPOLIA_RPC_URL', 'https://no-fallback');
@@ -39,10 +38,7 @@ describe('tongo EVM Transfer E2E', () => {
   beforeEach(async () => {
     const pool = anvil.pool(1);
     const provider = createProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
+    const { ethProvider } = createMockHost(provider);
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
     rate = await tongoAccount.rate();
   });
@@ -50,12 +46,7 @@ describe('tongo EVM Transfer E2E', () => {
   it('[prepareTransfer] returns correctly shaped transaction', async () => {
     const pool = anvil.pool(10);
     const provider = createProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
-    const host = { ethProvider, keystore } as unknown as Host;
+    const { host, ethProvider } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -95,12 +86,7 @@ describe('tongo EVM Transfer E2E', () => {
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
     const alice = new ethers.NonceManager(aliceWallet);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
-    const host = { ethProvider, keystore } as unknown as Host;
+    const { host, ethProvider } = createMockHost(provider);
 
     const account1 = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
@@ -144,12 +130,7 @@ describe('tongo EVM Transfer E2E', () => {
   it('[prepareTransfer] includes rollover when account has pending balance', async () => {
     const pool = anvil.pool(12);
     const provider = createProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
-    const host = { ethProvider, keystore } as unknown as Host;
+    const { host, ethProvider } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -191,12 +172,7 @@ describe('tongo EVM Transfer E2E', () => {
   it('[prepareTransfer] throws when there is not sufficient balance', async () => {
     const pool = anvil.pool(13);
     const provider = createProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
-    const host = { ethProvider, keystore } as unknown as Host;
+    const { host, ethProvider } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
