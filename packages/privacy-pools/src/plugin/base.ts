@@ -17,7 +17,6 @@ import { addressToHex, encodeRagequitPayload, encodeWithdrawalPayload } from "..
 import {
   PPv1AssetAmount,
   PPv1AssetBalance,
-  PPv1Broadcaster,
   PPv1BroadcasterParameters,
   PPv1Instance,
 } from "../v1/interfaces.js";
@@ -32,58 +31,9 @@ import {
 
 type RequireOnly<T, Keys extends keyof T> = Partial<T> & Pick<T, Keys>;
 
-interface PPv1RelayerConstructorParams extends PPv1BroadcasterParameters {
+export interface PPv1RelayerConstructorParams extends PPv1BroadcasterParameters {
   relayerClientFactory?: () => IRelayerClient;
   host: Host;
-}
-
-export class PrivacyPoolsBroadcaster implements PPv1Broadcaster {
-  relayersList: Record<string, string> = {};
-  private relayerClient: IRelayerClient;
-
-  constructor({
-    host,
-    relayerClientFactory = () => new RelayerClient({ network: host.network }),
-    broadcasterUrl,
-  }: PPv1RelayerConstructorParams) {
-    this.relayerClient = relayerClientFactory();
-    this.relayersList = this.parseRelayers(broadcasterUrl);
-  }
-
-  private parseRelayers(params: PPv1BroadcasterParameters["broadcasterUrl"]) {
-    return typeof params === "string" ? { default: params } : params;
-  }
-
-  async broadcast({
-    rawData: {
-      chainId,
-      scope,
-      proof: { proof, publicSignals },
-      withdrawalPayload,
-    },
-    quoteData: {
-      relayerId,
-      quote: { feeCommitment },
-    },
-  }: PPv1PrivateOperation): Promise<void> {
-    const relayerUrl = this.relayersList[relayerId];
-
-    if (!relayerUrl) {
-      throw new Error("Specified relayer not found.");
-    }
-
-    await this.relayerClient.relay({
-      chainId,
-      scope,
-      feeCommitment,
-      relayerUrl,
-      withdrawal: withdrawalPayload,
-      publicSignals,
-      proof,
-    });
-
-    return void 0;
-  }
 }
 
 export class PrivacyPoolsV1Protocol implements PPv1Instance {
@@ -165,7 +115,6 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
 
   async prepareShield(
     assets: PPv1AssetAmount,
-    from?: AccountId,
   ): Promise<PPv1PublicOperation> {
     const { asset, amount } = assets;
 
