@@ -1,6 +1,6 @@
 import { type ERC20AssetId } from '@kohaku-eth/plugins';
 import { readFileSync, existsSync } from "node:fs";
-import { MAINNET_CONFIG } from "../../src";
+import { MAINNET_CONFIG, PPv1AssetBalance } from "../../src";
 import type { RootState } from "../../src/state/store";
 import { getAddress } from 'viem';
 
@@ -54,9 +54,22 @@ export const MAINNET_ENTRYPOINT = {
   deploymentBlock: 22153713n,
 };
 
-export function ERC20AssetId(address: string): ERC20AssetId {
+export function ERC20Asset(address: string): ERC20AssetId {
   return {
     contract: getAddress(address),
     __type: 'erc20'
   };
+}
+
+
+export type PPv1AssetBalancePending = PPv1AssetBalance & { tag: "pending"; };
+export type PPv1AssetBalanceApproved = Omit<PPv1AssetBalance, "tag">;
+
+export function unwrapBalance(
+  preDepositBalance: PPv1AssetBalance[],
+  nativeAsset: ERC20AssetId
+): { pending?: PPv1AssetBalancePending; approved?: PPv1AssetBalanceApproved; } {
+  let pending = preDepositBalance.find(b => (b.asset.contract === nativeAsset.contract) && b.tag && b.tag === "pending") as PPv1AssetBalancePending | undefined;
+  const approved = preDepositBalance.find(b => (b.asset.contract === nativeAsset.contract) && b.tag === undefined);
+  return { pending, approved };
 }

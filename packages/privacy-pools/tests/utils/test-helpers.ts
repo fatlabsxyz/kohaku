@@ -1,4 +1,4 @@
-import { AbiCoder, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
+import { AbiCoder, CallExceptionError, CallExceptionTransaction, Contract, ContractTransactionResponse, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet } from "ethers";
 
 import { ERC20AssetId, Erc20Id, Host } from '@kohaku-eth/plugins';
 
@@ -220,7 +220,16 @@ export async function sendTx(signer: Wallet, { to, data, value }: { to: string; 
 
 export async function sendTxAndWait(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
   return signer.sendTransaction({ to, data, value, gasLimit: 6000000n })
-    .then(tx => tx.wait());
+    .then(tx => tx.wait())
+    .catch(e => {
+      if (e?.code === "CALL_EXCEPTION") {
+        const { transaction, receipt } = e as CallExceptionError;
+        return receipt;
+      } else {
+        console.log(e);
+        return { status: 0 };
+      }
+    });
 }
 
 export async function setupWallet(pool: AnvilPool, pk: string | SigningKey): Promise<Wallet> {

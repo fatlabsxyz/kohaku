@@ -42,7 +42,7 @@ const createMockSecretStorage = (): PluginSecretStorage => {
 };
 
 const createEthProvider = (rpcUrl = 'http://127.0.0.1:8545'): EthProvider => {
-  const publicClient = createPublicClient({ transport: http(rpcUrl) });
+  const publicClient = createPublicClient({ transport: http(rpcUrl),  cacheTime: 0 });
   return viem(publicClient);
 };
 

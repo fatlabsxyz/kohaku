@@ -6,7 +6,7 @@ import { ethers } from '@kohaku-eth/provider/ethers';
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState, ERC20AssetId } from '../../utils/common';
+import { getEnv, InitialState, ERC20Asset, unwrapBalance } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { assetVettingFee, deductVettingFees, getProtocolWithState, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
@@ -51,13 +51,14 @@ describe('PrivacyPools v1 E2E Flow', () => {
     });
 
     // E_ADDRESS represents native ETH in Privacy Pools
-    const nativeAsset = ERC20AssetId(E_ADDRESS);
+    const nativeAsset = ERC20Asset(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
 
     // 1. Check initial balance is 0
-    const [initialBalance] = await protocol.balance([nativeAsset]);
-    expect(initialBalance.amount).toBe(0n);
-    expect(initialBalance.pendingAmount).toBe(0n);
+    const initialBalance = await protocol.balance([nativeAsset]);
+    let { pending, approved } = unwrapBalance(initialBalance, nativeAsset);
+    expect(approved?.amount).toBe(0n);
+    expect(pending?.amount).toBe(0n);
 
     for (let _i in Array(3).fill(null)) {
       // 2. Prepare and execute deposit
@@ -72,11 +73,12 @@ describe('PrivacyPools v1 E2E Flow', () => {
     }
 
     // 3. Verify state after deposit
-    const [postDepositBalance] = await protocol.balance([nativeAsset]);
+    const postDepositBalance = await protocol.balance([nativeAsset]);
 
     const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, nativeAsset);
     const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFees);
-    expect(postDepositBalance.pendingAmount).toBe(3n * DEPOSIT_AMOUNT_AFTER_EP_FEE);
+    ({ pending } = unwrapBalance(postDepositBalance, nativeAsset));
+    expect(pending?.amount).toBe(3n * DEPOSIT_AMOUNT_AFTER_EP_FEE);
 
     const notes = await protocol.notes([nativeAsset]);
     expect(notes.length).toEqual(3);
@@ -105,7 +107,6 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const txReceipt = await sendTxAndWait(bob, tx3);
     expect(txReceipt).toBeTruthy();
     expect(txReceipt?.status).toBe(0); // Failure
-    console.log(txReceipt);
 
   });
 

@@ -8,7 +8,7 @@ import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, InitialState, MAINNET_ENTRYPOINT, ERC20AssetId } from '../../utils/common';
+import { getEnv, InitialState, MAINNET_ENTRYPOINT, ERC20Asset, unwrapBalance } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
@@ -25,7 +25,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
   const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
 
-  const nativeAsset = ERC20AssetId(E_ADDRESS);
+  const nativeAsset = ERC20Asset(E_ADDRESS);
   let vettingFees = 0n;
 
   beforeAll(async () => {
@@ -76,7 +76,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = ERC20AssetId(E_ADDRESS);
+    const nativeAsset = ERC20Asset(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
     const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
 
@@ -91,8 +91,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const [balanceAfterDeposit] = await protocol.balance([nativeAsset]);
-    expect(balanceAfterDeposit.pendingAmount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const balanceAfterDeposit = await protocol.balance([nativeAsset]);
+    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
@@ -103,8 +104,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       { _root: mockAspService.getRoot(), _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" }
     );
 
-    const [balanceAfterDepositApproved] = await protocol.balance([nativeAsset]);
-    expect(balanceAfterDepositApproved.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const balanceAfterDepositApproved = await protocol.balance([nativeAsset]);
+    let { approved } = unwrapBalance(balanceAfterDepositApproved, nativeAsset);
+    expect(approved?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal with real prover
     const recipientAccount = alice.address as AccountId;
@@ -155,7 +157,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = ERC20AssetId(E_ADDRESS);
+    const nativeAsset = ERC20Asset(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
     const WITHDRAW_AMOUNT = 500000000000000000n; // 0.5 ETH
 
@@ -170,8 +172,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const [balanceAfterDeposit] = await protocol.balance([nativeAsset]);
-    expect(balanceAfterDeposit.pendingAmount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const balanceAfterDeposit = await protocol.balance([nativeAsset]);
+    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
@@ -219,7 +222,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
       aspServiceFactory: () => mockAspService,
     });
 
-    const nativeAsset = ERC20AssetId(E_ADDRESS);
+    const nativeAsset = ERC20Asset(E_ADDRESS);
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
     const WITHDRAW_AMOUNT = 100000000000000000n; // 0.1 ETH
 
@@ -234,8 +237,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     await pool.mine(1);
 
     // 2. Verify deposit balance
-    const [balanceAfterDeposit] = await protocol.balance([nativeAsset]);
-    expect(balanceAfterDeposit.pendingAmount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
+    const balanceAfterDeposit = await protocol.balance([nativeAsset]);
+    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
@@ -259,7 +263,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     for (const i in Array(withdrawNumber).fill(null)) {
 
       // We withdraw 0.1 at a time, until the last one in which we take out the rest.
-      const withdraw_amount = (Number(i) + 1) === withdrawNumber ? balanceAfterDeposit.pendingAmount - 3n * WITHDRAW_AMOUNT : WITHDRAW_AMOUNT;
+      const withdraw_amount = (Number(i) + 1) === withdrawNumber ? pending!.amount - 3n * WITHDRAW_AMOUNT : WITHDRAW_AMOUNT;
 
       // 3. Prepare withdrawal with real prover
       const withdrawOp = await protocol.prepareUnshield(
@@ -279,8 +283,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     }
 
     // shielded balance should be 0
-    const [balanceAfterWithdraws] = await protocol.balance([nativeAsset]);
-    expect(balanceAfterWithdraws.amount).toBe(0n);
+    const balanceAfterWithdraws = await protocol.balance([nativeAsset]);
+    const { approved: finalApproved } = unwrapBalance(balanceAfterWithdraws, nativeAsset);
+    expect(finalApproved?.amount).toBe(0n);
 
   }); // Extended timeout for real proof generation
 

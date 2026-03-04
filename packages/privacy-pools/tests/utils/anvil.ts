@@ -16,6 +16,7 @@ export interface AnvilPool {
   poolId: number;
   getProvider(): Promise<JsonRpcProvider>;
   mine(blocks?: number): Promise<void>;
+  getBlockNumber(): Promise<number>;
   setBalance(address: string, balance: string): Promise<void>;
 }
 
@@ -24,39 +25,37 @@ export interface AnvilInstance {
   start(): Promise<void>;
   stop(): Promise<void>;
   pool(poolId: number): AnvilPool;
+
+  raw(): AnvilPool;
+
 }
 
 function createPool(baseUrl: string, poolId: number): AnvilPool {
   const rpcUrl = `${baseUrl}/${poolId}`;
 
+  const provider = new JsonRpcProvider(rpcUrl, undefined, {
+    staticNetwork: true,
+    batchMaxCount: 1,
+    cacheTimeout: 0,
+  });
+
   return {
     rpcUrl,
     poolId,
 
-    async getProvider() {
-      const provider = new JsonRpcProvider(rpcUrl, undefined, {
-        staticNetwork: true,
-        batchMaxCount: 1,
-      });
-
-      await provider.getBlockNumber();
-
-      return provider;
+    getBlockNumber() {
+      return provider.getBlockNumber();
     },
 
-    async mine(blocks = 1) {
-      const provider = new JsonRpcProvider(rpcUrl, undefined, {
-        staticNetwork: true,
-      });
+    getProvider() {
+      return Promise.resolve(provider);
+    },
 
-      await provider.send('anvil_mine', [`0x${blocks.toString(16)}`]);
+    async mine(blocks?: number) {
+      await provider.send('anvil_mine', [`0x${(blocks || 1).toString(16)}`]);
     },
 
     async setBalance(address: string, balance: string) {
-      const provider = new JsonRpcProvider(rpcUrl, undefined, {
-        staticNetwork: true,
-      });
-
       await provider.send('anvil_setBalance', [address, balance]);
     },
   };
@@ -105,5 +104,38 @@ export function defineAnvil(params: DefineAnvilParameters): AnvilInstance {
     pool(poolId: number): AnvilPool {
       return createPool(baseUrl, poolId);
     },
+
+    raw(): AnvilPool {
+      const anvilUrl = `http://127.0.0.1:8545`;
+
+      const provider = new JsonRpcProvider(anvilUrl, undefined, {
+        staticNetwork: true,
+        batchMaxCount: 1,
+        cacheTimeout: 0,
+      });
+
+      return {
+        rpcUrl: anvilUrl,
+        poolId: -1,
+
+        getBlockNumber() {
+          return provider.getBlockNumber();
+        },
+
+        getProvider() {
+          return Promise.resolve(provider);
+        },
+
+        async mine(blocks?: number) {
+          await provider.send('anvil_mine', [`0x${(blocks || 1).toString(16)}`]);
+        },
+
+        setBalance(address: string, balance: string) {
+          return provider.send('anvil_setBalance', [address, balance]);
+        }
+      };
+
+    }
+
   };
 }
