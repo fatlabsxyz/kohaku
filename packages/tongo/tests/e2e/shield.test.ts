@@ -1,10 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ethers } from 'ethers';
 import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
+import getPort from "get-port";
+
+
 
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
-import { setupWallet, mintERC20, sendTx } from '../utils/test-helpers';
+import { setupWallet, mintERC20, sendTx, createProvider } from '../utils/test-helpers';
 import { TongoPlugin } from '../../src/tongo';
 import { Erc20Id, Eip155AccountId } from '@kohaku-eth/plugins';
 import type { Host } from '@kohaku-eth/plugins';
@@ -27,7 +30,7 @@ describe('tongo EVM Fund E2E', () => {
   beforeAll(async () => {
     anvil = defineAnvil({
       forkUrl: SEPOLIA_FORK_URL,
-      port: 8560,
+      port: await getPort(),
       chainId: 11155111,
     });
 
@@ -38,9 +41,9 @@ describe('tongo EVM Fund E2E', () => {
     await anvil.stop();
   });
 
-  it.skip('[fund] executes successful ERC20 fund on forked Sepolia', async () => {
+  it('[fund] executes successful ERC20 fund on forked Sepolia', async () => {
     const pool = anvil.pool(1);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
     const alice = new ethers.NonceManager(aliceWallet);
     const ethProvider = {
@@ -93,9 +96,9 @@ describe('tongo EVM Fund E2E', () => {
   });
 
 
-  it.skip('[fund] prepareShield returns correctly shaped transactions', async () => {
+  it('[fund] prepareShield returns correctly shaped transactions', async () => {
     const pool = anvil.pool(3);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const ethProvider = {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
@@ -127,9 +130,9 @@ describe('tongo EVM Fund E2E', () => {
   });
 
 
-  it.skip('[fund] accumulates multiple deposits correctly', async () => {
+  it('[fund] accumulates multiple deposits correctly', async () => {
     const pool = anvil.pool(2);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
     const alice = new ethers.NonceManager(aliceWallet);
     const ethProvider = {

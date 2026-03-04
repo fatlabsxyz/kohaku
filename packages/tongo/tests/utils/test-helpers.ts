@@ -2,6 +2,10 @@ import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey,
 
 import { type AnvilPool } from './anvil';
 
+export function createProvider(rpcUrl: string): JsonRpcProvider {
+  return new JsonRpcProvider(rpcUrl, undefined, { cacheTimeout: 0, batchMaxCount: 1, staticNetwork: true });
+}
+
 async function fundAccountWithETH(pool: AnvilPool, address: string, balance: bigint): Promise<void> {
   await pool.setBalance(address, `0x${balance.toString(16)}`);
 }
@@ -22,7 +26,7 @@ export async function transferERC20FromWhale(
   recipient: string,
   amount: bigint
 ): Promise<void> {
-  const provider = new JsonRpcProvider(rpcUrl, undefined, { staticNetwork: true });
+  const provider = createProvider(rpcUrl);
   const normalizedWhale = getAddress(whaleAddress.toLowerCase());
 
   await provider.send('anvil_impersonateAccount', [normalizedWhale]);
@@ -44,12 +48,11 @@ export async function mintERC20(
   amount: bigint,
   balanceSlot = 9
 ): Promise<void> {
-  const provider = new JsonRpcProvider(pool.rpcUrl, undefined, { staticNetwork: true });
   const slot = keccak256(
     AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [recipient, balanceSlot])
   );
   const value = zeroPadValue(toBeHex(amount), 32);
-  await provider.send('anvil_setStorageAt', [tokenAddress, slot, value]);
+  await pool.setStorageAt(tokenAddress, slot, value);
 }
 
 export async function approveERC20(

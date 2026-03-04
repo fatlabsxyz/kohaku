@@ -4,10 +4,11 @@ import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
 
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
-import { setupWallet, mintERC20, sendTx } from '../utils/test-helpers';
+import { setupWallet, mintERC20, sendTx, createProvider } from '../utils/test-helpers';
 import { TongoPlugin } from '../../src/tongo';
 import { Erc20Id, CustomAccountId, CustomChainId, Eip155AccountId, InsufficientBalanceError } from '@kohaku-eth/plugins';
 import type { Host } from '@kohaku-eth/plugins';
+import getPort from 'get-port';
 
 const SEPOLIA_FORK_URL = getEnv('SEPOLIA_RPC_URL', 'https://no-fallback');
 
@@ -24,7 +25,7 @@ describe('tongo EVM Transfer E2E', () => {
   beforeAll(async () => {
     anvil = defineAnvil({
       forkUrl: SEPOLIA_FORK_URL,
-      port: 8562,
+      port: await getPort(),
       chainId: 11155111,
     });
 
@@ -37,7 +38,7 @@ describe('tongo EVM Transfer E2E', () => {
 
   beforeEach(async () => {
     const pool = anvil.pool(1);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const ethProvider = {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
@@ -48,7 +49,7 @@ describe('tongo EVM Transfer E2E', () => {
 
   it('[prepareTransfer] returns correctly shaped transaction', async () => {
     const pool = anvil.pool(10);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const ethProvider = {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
@@ -91,7 +92,7 @@ describe('tongo EVM Transfer E2E', () => {
 
   it('[prepareTransfer] executes successful transfer on forked Sepolia', async () => {
     const pool = anvil.pool(11);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
     const alice = new ethers.NonceManager(aliceWallet);
     const ethProvider = {
@@ -142,7 +143,7 @@ describe('tongo EVM Transfer E2E', () => {
 
   it('[prepareTransfer] includes rollover when account has pending balance', async () => {
     const pool = anvil.pool(12);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const ethProvider = {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),
@@ -189,7 +190,7 @@ describe('tongo EVM Transfer E2E', () => {
 
   it('[prepareTransfer] throws when there is not sufficient balance', async () => {
     const pool = anvil.pool(13);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const ethProvider = {
       request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
         provider.send(method, Array.isArray(params) ? params : []),

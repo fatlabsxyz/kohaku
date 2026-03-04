@@ -15,6 +15,7 @@ export interface AnvilPool {
   getProvider(): Promise<JsonRpcProvider>;
   mine(blocks?: number): Promise<void>;
   setBalance(address: string, balance: string): Promise<void>;
+  setStorageAt(address: string, slot: string, value: string): Promise<void>;
 }
 
 export interface AnvilInstance {
@@ -27,36 +28,32 @@ export interface AnvilInstance {
 function createPool(baseUrl: string, poolId: number): AnvilPool {
   const rpcUrl = `${baseUrl}/${poolId}`;
 
+  const provider = new JsonRpcProvider(rpcUrl, undefined, {
+    staticNetwork: true,
+    batchMaxCount: 1,
+    cacheTimeout: 0
+  });
+
   return {
     rpcUrl,
     poolId,
 
     async getProvider() {
-      const provider = new JsonRpcProvider(rpcUrl, undefined, {
-        staticNetwork: true,
-        batchMaxCount: 1,
-      });
-
-      await provider.getBlockNumber();
-
       return provider;
     },
 
     async mine(blocks = 1) {
-      const provider = new JsonRpcProvider(rpcUrl, undefined, {
-        staticNetwork: true,
-      });
-
       await provider.send('anvil_mine', [`0x${blocks.toString(16)}`]);
     },
 
     async setBalance(address: string, balance: string) {
-      const provider = new JsonRpcProvider(rpcUrl, undefined, {
-        staticNetwork: true,
-      });
-
       await provider.send('anvil_setBalance', [address, balance]);
     },
+
+    async setStorageAt(address: string, slot: string, value: string) {
+      await provider.send('anvil_setStorageAt', [address, slot, value]);
+    }
+
   };
 }
 
