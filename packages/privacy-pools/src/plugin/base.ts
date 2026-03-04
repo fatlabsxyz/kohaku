@@ -122,7 +122,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       initialState: { ...initialState },
       secretManager: this.secretManager,
       aspService: aspServiceFactory(),
-      dataService: new DataService({ provider: host.ethProvider }),
+      dataService: new DataService({ provider: host.provider }),
       relayerClient: this.relayerClient,
       relayersList: this.relayersList,
       proverFactory,
@@ -152,6 +152,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
         approved: 0n,
         unapproved: 0n
       }
+
       return [{
         asset,
         amount: approved,

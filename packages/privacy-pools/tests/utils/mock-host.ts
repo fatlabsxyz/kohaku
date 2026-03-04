@@ -1,6 +1,6 @@
 import { HDNodeWallet, Mnemonic } from 'ethers';
 import { viem } from '@kohaku-eth/provider/viem';
-import { EthProvider, Host, Keystore, Storage as PluginStorage, SecretStorage as PluginSecretStorage } from '@kohaku-eth/plugins';
+import { Host, Keystore, Storage as PluginStorage } from '@kohaku-eth/plugins';
 import { createPublicClient, http } from 'viem';
 
 export const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
@@ -31,18 +31,10 @@ const createMockStorage = (): PluginStorage => {
   };
 };
 
-const createMockSecretStorage = (): PluginSecretStorage => {
-  const storageMap = new Map<string, string>();
-
-  return {
-    _brand: "SecureStorage",
-    set: storageMap.set.bind(storageMap),
-    get: (key) => storageMap.get(key) || null,
-  };
-};
 
 const createEthProvider = (rpcUrl = 'http://127.0.0.1:8545'): EthProvider => {
   const publicClient = createPublicClient({ transport: http(rpcUrl),  cacheTime: 0 });
+
   return viem(publicClient);
 };
 
@@ -51,8 +43,7 @@ export function createMockHost(mnemonic?: string, rpcUrl = 'http://127.0.0.1:854
     keystore: createMockKeystore(mnemonic),
     network: { fetch },
     storage: createMockStorage(),
-    secretStorage: createMockSecretStorage(),
-    ethProvider: createEthProvider(rpcUrl),
+    provider: createEthProvider(rpcUrl),
     // log: console
   };
 }

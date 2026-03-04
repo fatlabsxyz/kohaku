@@ -39,11 +39,13 @@ export type RootState = ReturnType<ReturnType<typeof combineReducers<typeof redu
 
 const logger: Middleware<object, RootState> = (api) => (next) => (action) => {
   const result = next(action);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const error = (action as any).error;
 
   const { type, payload } = action as PayloadAction<unknown>;
   const transformedAction = {
     action: type,
-    payload: payload instanceof Array ? { count: payload.length } : payload,
+    payload: error || (payload instanceof Array ? { count: payload.length } : payload),
   };
 
   const {
