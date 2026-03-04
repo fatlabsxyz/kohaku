@@ -208,7 +208,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       rawData,
       txData: {
         to: `0x${entrypoint.address.toString(16).padStart(40, "0")}`,
-        data: encodedWithdrawalData, // TODO: encode actual withdrawal call
+        data: encodedWithdrawalData,
         value: 0n,
       },
       quoteData,
