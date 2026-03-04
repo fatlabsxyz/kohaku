@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
 import { ChainId, Storage } from "@kohaku-eth/plugins";
 

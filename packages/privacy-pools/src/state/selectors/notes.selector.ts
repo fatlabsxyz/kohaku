@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { createSelector } from '@reduxjs/toolkit';
 
 import { ISecretManager, Secret } from '../../account/keys';
