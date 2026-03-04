@@ -68,5 +68,6 @@ export function calculateContext(withdrawal: WithdrawalPayload, scope: bigint): 
                 ),
             ),
         ) % SNARK_SCALAR_FIELD;
+
     return numberToHex(hash);
 }

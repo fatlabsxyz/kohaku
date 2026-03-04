@@ -70,6 +70,7 @@ export const mockProver: ProverInstance = {
         value: commitmentSignals.value,
         label: commitmentSignals.label,
       };
+
       return Promise.resolve({
         proof: mockedGroth16Proof,
         mappedSignals: mappedSignals as CircuitPublicSignalsMap[C],

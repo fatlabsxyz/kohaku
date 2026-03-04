@@ -16,6 +16,7 @@ export class AspService implements IAspService {
 
   constructor({ network: { fetch }, ipfsUrl }: IAspServiceParams) {
     this.fetch = fetch;
+
     if (ipfsUrl) {
       this.providerUrl = ipfsUrl;
     }
@@ -24,6 +25,7 @@ export class AspService implements IAspService {
   async getAspTree(ipfsCID: string): Promise<bigint[][]> {
     const response = await this.fetch(`${this.providerUrl}${ipfsCID}`);
     const tree: string[][] = await response.json();
+
     return tree.map((level) => level.map(BigInt));
   }
 }

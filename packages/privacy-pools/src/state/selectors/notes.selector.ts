@@ -193,7 +193,9 @@ export const createUnapprovedNotesByAssetSelector = ({
       if (assets.length === 0) {
         return notes; // Return all if no filter
       }
+
       const assetSet = new Set(assets.map(a => a.toString()));
+
       return notes.filter(note => assetSet.has(note.assetAddress.toString()));
     }
   );

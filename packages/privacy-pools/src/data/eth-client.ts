@@ -38,6 +38,7 @@ export class EthClient {
         const toBlock = params.toBlock ?? await this.provider.getBlockNumber();
 
         const logs: TxLog[] = [];
+
         for (let start = fromBlock; start <= toBlock; start += maxQuerySize) {
             const rawEnd = start + maxQuerySize;
             const end = rawEnd < toBlock ? rawEnd : toBlock;
@@ -46,6 +47,7 @@ export class EthClient {
                 fromBlock: start,
                 toBlock: end,
             })
+
             logs.push(...result);
         }
 

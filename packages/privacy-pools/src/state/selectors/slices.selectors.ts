@@ -42,6 +42,7 @@ export const poolsLeavesSelector = createSelector(
   [(state: RootState) => state.poolsLeaves.poolLeavesTuples],
   (poolsLeaves): Map<Address, Map<bigint, ILeafInsertedEvent>> => {
     const deserializedPoolsLeaves = deserialize(poolsLeaves);
+
     return new Map(
       deserializedPoolsLeaves.map(
         ([poolAddress, leavesMap]) =>

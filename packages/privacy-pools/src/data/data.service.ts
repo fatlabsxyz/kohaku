@@ -108,6 +108,7 @@ export class DataService implements IDataService {
         symbol: "ETH",
       };
     }
+
     const [name, decimals, symbol] = await Promise.all([
       this.ethClient.makeContractRequest(address, "erc20", "name"),
       this.ethClient.makeContractRequest(address, "erc20", "decimals"),
@@ -152,6 +153,7 @@ export class DataService implements IDataService {
       method: "eth_chainId",
       params: [],
     }) as string;
+
     return BigInt(chainIdHex);
   }
 }

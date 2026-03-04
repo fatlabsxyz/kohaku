@@ -61,6 +61,7 @@ export const withdrawThunk = createAsyncThunk<
     );
 
     const poolInfo = poolFromAssetSelector(state, params.asset)
+
     if (!poolInfo) {
       throw new Error(`No pool found for asset ${params.asset}`);
     }
@@ -73,6 +74,7 @@ export const withdrawThunk = createAsyncThunk<
 
     // 6. Generate ZK proof
     const prover = await params.proverFactory();
+
     return prover.prove("withdraw", {
       context: params.context,
       label: existingNote.label,

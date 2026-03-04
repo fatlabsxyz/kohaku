@@ -50,6 +50,7 @@ export const ragequitThunk = createAsyncThunk<
 
     // 2. Get the pool for this asset
     const poolInfo = poolFromAssetSelector(state, note.assetAddress);
+
     if (!poolInfo) {
       throw new Error(`No pool found for asset ${note.assetAddress}`);
     }

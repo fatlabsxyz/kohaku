@@ -29,6 +29,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     await anvil.start();
 
     const _protocol = getProtocolWithState();
+
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
@@ -57,16 +58,18 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // 1. Check initial balance is 0
     const initialBalance = await protocol.balance([nativeAsset]);
     let { pending, approved } = unwrapBalance(initialBalance, nativeAsset);
+
     expect(approved?.amount).toBe(0n);
     expect(pending?.amount).toBe(0n);
 
-    for (let _i in Array(3).fill(null)) {
+    for (const _i in Array(3).fill(null)) {
       // 2. Prepare and execute deposit
       const { txns: [tx] } = await protocol.prepareShield(
         { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
       );
 
       const txReceipt = await sendTxAndWait(alice, tx);
+
       expect(txReceipt).toBeTruthy();
       expect(txReceipt?.status).toBe(1); // Success
       await pool.mine(1);
@@ -77,13 +80,16 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     const vettingFees = await assetVettingFee(alice, ENTRYPOINT_ADDRESS, nativeAsset);
     const DEPOSIT_AMOUNT_AFTER_EP_FEE = deductVettingFees(DEPOSIT_AMOUNT, vettingFees);
+
     ({ pending } = unwrapBalance(postDepositBalance, nativeAsset));
     expect(pending?.amount).toBe(3n * DEPOSIT_AMOUNT_AFTER_EP_FEE);
 
     const notes = await protocol.notes([nativeAsset]);
+
     expect(notes.length).toEqual(3);
 
     const ragequitTxs = await protocol.ragequit(notes.map(n => n.label));
+
     expect(ragequitTxs.txns.length).toEqual(3);
 
     ragequitTxs.txns.map(({ to, data }) => {
@@ -98,6 +104,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     // alice should be the only one with ragequit authority
     for (const tx of [tx1, tx2]) {
       const txReceipt = await sendTxAndWait(alice, tx);
+
       expect(txReceipt).toBeTruthy();
       expect(txReceipt?.status).toBe(1); // Success
       await pool.mine(1);
@@ -105,6 +112,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // bob cant ragequit alice's deposit
     const txReceipt = await sendTxAndWait(bob, tx3);
+
     expect(txReceipt).toBeTruthy();
     expect(txReceipt?.status).toBe(0); // Failure
 

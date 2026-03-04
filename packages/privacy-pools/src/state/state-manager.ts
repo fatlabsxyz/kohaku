@@ -295,6 +295,7 @@ export const storeStateManager = (
           specificAssetsBalanceSelector,
         },
       } = getChainStore(await getChainInfo());
+
       return specificAssetsBalanceSelector(assets, balanceType);
     },
     getDepositPayload: async ({
@@ -331,6 +332,7 @@ export const storeStateManager = (
       const { quote, relayerId } = unwrapResult(quoteResultAction);
 
       const poolInfo = store.selectors.poolFromAssetSelector(asset);
+
       if (!poolInfo)
         throw new Error(`No pool found for asset ${asset}`);
 
@@ -398,6 +400,7 @@ export const storeStateManager = (
 
           if (resultAction.meta.requestStatus === "rejected") {
             console.warn(`Failed to generate ragequit proof for note ${note.label}`);
+
             return null;
           }
 
@@ -442,6 +445,7 @@ export const storeStateManager = (
 
             if (resultAction.meta.requestStatus === "rejected") {
               console.warn(`Failed to generate ragequit proof for note ${note.label}`);
+
               return null;
             }
 

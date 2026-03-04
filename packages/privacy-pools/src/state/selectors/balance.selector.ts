@@ -215,13 +215,17 @@ export const createSpecificAssetBalanceSelector = (
     (assetsBalanceMap, assetAddress, balanceType) => {
       if (assetAddress instanceof Array) {
         const addresses = assetAddress.length === 0 ? [...assetsBalanceMap.keys()] : assetAddress;
+
         return new Map(addresses.map((address) => {
           const balance = assetsBalanceMap.get(address) || { approved: 0n, unapproved: 0n };
           const returnBalance: BalanceOutput<typeof balanceType> = balanceType === 'both' ? balance : balance[balanceType];
+
           return [address, returnBalance] as const
         }));
       }
+
       const balance = assetsBalanceMap.get(assetAddress) || { approved: 0n, unapproved: 0n };
+
       return balanceType === 'both' ? balance : balance[balanceType];
     }
   ) as SpecificAssetBalanceSelectorFn;

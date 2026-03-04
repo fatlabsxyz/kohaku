@@ -36,9 +36,11 @@ export const selectPoolLeaves = createSelector(
   [poolsLeavesSelector, (_, poolAddress: Address) => poolAddress],
   (poolsLeaves, poolAddress) => {
     const poolLeaves = poolsLeaves.get(poolAddress);
+
     if (!poolLeaves) {
       throw new Error('Pool to get leaves for not found.')
     }
+
     return poolLeaves;
   },
 );
@@ -105,10 +107,13 @@ export const poolFromAssetSelector = createSelector(
     const addressPoolTuple = Array.from(pools).find(
       ([_, p]) => p.asset === assetAddress,
     );
+
     if (!addressPoolTuple) {
       return undefined;
     }
+
     const [_, poolInfo] = addressPoolTuple;
+
     return poolInfo;
   },
 );

@@ -117,7 +117,9 @@ interface Callback<T> {
 async function impersonate<T>(provider: JsonRpcProvider, address: string, f: Callback<T>): Promise<T> {
   await provider.send('anvil_impersonateAccount', [address]);
   const r = await f();
+
   await provider.send('anvil_stopImpersonatingAccount', [address]);
+
   return r;
 }
 
@@ -149,8 +151,10 @@ export async function pushNewAspRoot(
   const { hash, data, to } = await impersonate(provider, normalizedPostman, async () => {
     const impersonatedSigner = await provider.getSigner(normalizedPostman);
     const entrypoint = new Contract(getAddress(entrypointAddress), postmanAbi, impersonatedSigner);
+
     return (await entrypoint.updateRoot(_root, _ipfsCID)) as ContractTransactionResponse;
   });
+
   return { hash, txData: { data, to, from: normalizedPostman } };
 }
 
@@ -195,6 +199,7 @@ export async function getPoolStateRoot(pool: AnvilPool, poolAddress: bigint) {
   const padd = toBeHex(poolAddress);
   const poolSC = new Contract(padd, poolRootAbi, provider);
   const root = await poolSC.currentRoot();
+
   return root as bigint;
 }
 
@@ -224,9 +229,11 @@ export async function sendTxAndWait(signer: Wallet, { to, data, value }: { to: s
     .catch(e => {
       if (e?.code === "CALL_EXCEPTION") {
         const { transaction, receipt } = e as CallExceptionError;
+
         return receipt;
       } else {
         console.log(e);
+
         return { status: 0 };
       }
     });

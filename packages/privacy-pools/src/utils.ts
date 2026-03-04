@@ -42,6 +42,7 @@ export function encodeWithdrawalPayload(
   } = proveOutput;
 
   const pubSignals = publicSignals.map(BigInt) as WithdrawSignals;
+
   if (pubSignals.length !== 8) {
     throw new Error("Invalid proof");
   }
@@ -50,6 +51,7 @@ export function encodeWithdrawalPayload(
     if (i) {
       return i;
     }
+
     throw new Error("Undefined");
   };
 
@@ -77,6 +79,7 @@ export function encodeRagequitPayload(proveOutput: CommitmentProveOutput) {
   } = proveOutput;
 
   const pubSignals = publicSignals.map(BigInt) as CommitmentSignals;
+
   if (pubSignals.length !== 4) {
     throw new Error("Invalid proof");
   }
@@ -85,6 +88,7 @@ export function encodeRagequitPayload(proveOutput: CommitmentProveOutput) {
     if (i) {
       return i;
     }
+
     throw new Error("Undefined");
   };
 

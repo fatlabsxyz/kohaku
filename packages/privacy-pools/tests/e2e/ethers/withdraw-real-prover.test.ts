@@ -37,12 +37,14 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     });
 
     const _protocol = getProtocolWithState();
+
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
     await anvil.start();
 
     const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
+
     vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
 
   }, 300000);
@@ -60,6 +62,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     // Create mock asp
     const mockAspService = createMockAspService();
+
     mockAspService.addLabels([0n, 1n, 2n]);
 
     // Create mock relayer
@@ -86,17 +89,20 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     );
 
     const txReceipt = await sendTxAndWait(alice, shieldTx);
+
     expect(txReceipt).toBeTruthy();
     expect(txReceipt!.status).toEqual(1);
     await pool.mine(1);
 
     // 2. Verify deposit balance
     const balanceAfterDeposit = await protocol.balance([nativeAsset]);
-    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    const { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
+
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
       "0x" + ENTRYPOINT_ADDRESS.toString(16),
@@ -105,7 +111,8 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     );
 
     const balanceAfterDepositApproved = await protocol.balance([nativeAsset]);
-    let { approved } = unwrapBalance(balanceAfterDepositApproved, nativeAsset);
+    const { approved } = unwrapBalance(balanceAfterDepositApproved, nativeAsset);
+
     expect(approved?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal with real prover
@@ -125,6 +132,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     // Verify real proof structure (not mocked zeros)
     const { proof, context } = withdrawOp.rawData;
+
     expect(proof.proof).toBeDefined();
     expect(proof.publicSignals).toBeDefined();
     expect(proof.publicSignals.length).toBeGreaterThan(0);
@@ -141,6 +149,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     // Create mock asp
     const mockAspService = createMockAspService();
+
     mockAspService.addLabels([0n, 1n, 2n]);
 
     // Create mock relayer
@@ -167,17 +176,20 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     );
 
     const txReceipt = await sendTxAndWait(alice, shieldTx);
+
     expect(txReceipt).toBeTruthy();
     expect(txReceipt!.status).toEqual(1);
     await pool.mine(1);
 
     // 2. Verify deposit balance
     const balanceAfterDeposit = await protocol.balance([nativeAsset]);
-    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    const { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
+
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
       "0x" + ENTRYPOINT_ADDRESS.toString(16),
@@ -194,6 +206,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     // 4.
     const receipt = await sendTxAndWait(alice, withdrawOp.txData);
+
     await pool.mine(1);
     expect(receipt).toBeTruthy();
     expect(receipt!.status).toEqual(1);
@@ -206,6 +219,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
     // Create mock asp
     const mockAspService = createMockAspService();
+
     mockAspService.addLabels([0n, 1n, 2n]);
 
     // Create mock relayer
@@ -232,17 +246,20 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     );
 
     const txReceipt = await sendTxAndWait(alice, shieldTx);
+
     expect(txReceipt).toBeTruthy();
     expect(txReceipt!.status).toEqual(1);
     await pool.mine(1);
 
     // 2. Verify deposit balance
     const balanceAfterDeposit = await protocol.balance([nativeAsset]);
-    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    const { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
+
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
       "0x" + ENTRYPOINT_ADDRESS.toString(16),
@@ -275,6 +292,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
       // 4.
       const receipt = await sendTxAndWait(alice, withdrawOp.txData);
+
       await pool.mine(1);
       expect(receipt).toBeTruthy();
       expect(receipt!.status).toEqual(1);
@@ -285,6 +303,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     // shielded balance should be 0
     const balanceAfterWithdraws = await protocol.balance([nativeAsset]);
     const { approved: finalApproved } = unwrapBalance(balanceAfterWithdraws, nativeAsset);
+
     expect(finalApproved?.amount).toBe(0n);
 
   }); // Extended timeout for real proof generation

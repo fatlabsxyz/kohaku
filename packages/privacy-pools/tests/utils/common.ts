@@ -35,16 +35,20 @@ export function loadInitialState(): InitialState {
   try {
     if (!existsSync(statePath)) {
       console.warn(`[loadInitialState] State file not found: ${statePath}`);
+
       return {};
     }
 
     const rawState = readFileSync(statePath, 'utf-8');
     const state = JSON.parse(rawState) as InitialState;
+
     Object.entries(state).forEach(([key, val]) => console.log("Last synced block:", key, Number(val.sync.lastSyncedBlock)));
     console.log(`[loadInitialState] Loaded state file succesfully from ${statePath}`);
+
     return state;
   } catch (error) {
     console.warn(`[loadInitialState] Failed to load state from ${statePath}:`, error);
+
     return {};
   }
 }
@@ -69,7 +73,8 @@ export function unwrapBalance(
   preDepositBalance: PPv1AssetBalance[],
   nativeAsset: ERC20AssetId
 ): { pending?: PPv1AssetBalancePending; approved?: PPv1AssetBalanceApproved; } {
-  let pending = preDepositBalance.find(b => (b.asset.contract === nativeAsset.contract) && b.tag && b.tag === "pending") as PPv1AssetBalancePending | undefined;
+  const pending = preDepositBalance.find(b => (b.asset.contract === nativeAsset.contract) && b.tag && b.tag === "pending") as PPv1AssetBalancePending | undefined;
   const approved = preDepositBalance.find(b => (b.asset.contract === nativeAsset.contract) && b.tag === undefined);
+
   return { pending, approved };
 }

@@ -33,6 +33,7 @@ export const createPPv1Plugin = (<
     typeof broadcasterUrl === "string"
       ? { default: broadcasterUrl }
       : broadcasterUrl;
+
   return new PrivacyPoolsV1Protocol(host, {
     ...params,
     relayersList,

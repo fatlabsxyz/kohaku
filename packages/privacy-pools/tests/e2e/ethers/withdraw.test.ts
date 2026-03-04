@@ -1,19 +1,19 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import getPort from "get-port";
 import { AccountId } from '@kohaku-eth/plugins';
+import getPort from "get-port";
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { getEnv, MAINNET_ENTRYPOINT, InitialState, ERC20Asset, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, getEnv, InitialState, MAINNET_ENTRYPOINT, unwrapBalance } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { mockProverFactory } from '../../utils/mock-prover';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTx, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
+import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
 
 const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 
@@ -38,12 +38,14 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     });
 
     const _protocol = getProtocolWithState();
+
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
     await anvil.start();
 
     const bob = await setupWallet(anvil.pool(1), TEST_ACCOUNTS.bob.privateKey);
+
     vettingFees = await assetVettingFee(bob, ENTRYPOINT_ADDRESS, nativeAsset);
 
   }, 300000);
@@ -61,6 +63,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
     // Create mock asp
     const mockAspService = createMockAspService();
+
     mockAspService.addLabels([0n, 1n, 2n]);
 
     // Create mock relayer
@@ -87,6 +90,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     );
 
     const receipt = await sendTxAndWait(alice, shieldTx);
+
     expect(receipt).toBeTruthy();
     expect(receipt!.status).toEqual(1);
 
@@ -94,11 +98,13 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
     // 2. Verify deposit balance
     const balanceAfterDeposit = await protocol.balance([nativeAsset]);
-    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    const { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
-    const [note, ..._] = await protocol.notes([nativeAsset]);
+    const [note] = await protocol.notes([nativeAsset]);
+
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
       "0x" + ENTRYPOINT_ADDRESS.toString(16),
@@ -107,7 +113,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     );
 
     const balanceAfterDepositApproved = await protocol.balance([nativeAsset]);
-    let { approved } = unwrapBalance(balanceAfterDepositApproved, nativeAsset);
+
+    const { approved } = unwrapBalance(balanceAfterDepositApproved, nativeAsset);
+
     expect(approved?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal
@@ -133,6 +141,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
     // Create mock asp
     const mockAspService = createMockAspService();
+
     mockAspService.addLabels([0n, 1n, 2n]);
 
     // Create two mock relayers with different fees
@@ -145,6 +154,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
         if (body.relayerUrl.includes('expensive')) {
           return expensiveRelayer.getQuote(body);
         }
+
         return cheapRelayer.getQuote(body);
       },
       relay: cheapRelayer.relay,
@@ -174,17 +184,20 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     );
 
     const receipt = await sendTxAndWait(alice, shieldTx);
+
     expect(receipt).toBeTruthy();
     expect(receipt!.status).toEqual(1);
     await pool.mine(1);
 
     // 2. Verify deposit balance (triggers sync)
     const balanceAfterDeposit = await protocol.balance([nativeAsset]);
-    let { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+    const { pending } = unwrapBalance(balanceAfterDeposit, nativeAsset);
+
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
     const [note, ..._] = await protocol.notes([nativeAsset]);
+
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
       "0x" + ENTRYPOINT_ADDRESS.toString(16),
@@ -193,7 +206,8 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     );
 
     const balanceAfterDepositApproved = await protocol.balance([nativeAsset]);
-    let { approved } = unwrapBalance(balanceAfterDepositApproved, nativeAsset);
+    const { approved } = unwrapBalance(balanceAfterDepositApproved, nativeAsset);
+
     expect(approved?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 3. Prepare withdrawal - should select cheap relayer
@@ -214,6 +228,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
     // Create mock asp
     const mockAspService = createMockAspService();
+
     mockAspService.addLabels([0n, 1n, 2n]);
 
     const mockRelayerClient = createMockRelayerClient();
@@ -236,6 +251,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
     const balances = await protocol.balance([nativeAsset]);
     const { approved } = unwrapBalance(balances, nativeAsset);
+
     expect((approved?.amount ?? 0n) < WITHDRAW_AMOUNT).toBeTruthy();
 
     await expect(

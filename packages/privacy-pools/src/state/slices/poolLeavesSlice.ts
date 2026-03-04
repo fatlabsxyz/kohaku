@@ -35,6 +35,7 @@ export const poolLeavesSlice = createSlice({
       );
 
       const desiredPool = allPools.get(poolAddress) || new Map();
+
       allPools.set(poolAddress, desiredPool);
       
       leaves.forEach((leaf) => {
