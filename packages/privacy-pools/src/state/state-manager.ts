@@ -2,6 +2,7 @@ import { Prover } from "@fatsolutions/privacy-pools-core-circuits";
 import { ChainId, Storage } from "@kohaku-eth/plugins";
 
 import { Store, unwrapResult } from "@reduxjs/toolkit";
+import { relayDataAbi } from "../data/abis/entrypoint.abi";
 import { Address } from "../interfaces/types.interface";
 import {
   IDepositOperationParams,
@@ -16,7 +17,7 @@ import {
   StateWithdrawalPayload,
 } from "../plugin/interfaces/protocol-params.interface";
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
-import { addressToHex } from "../utils";
+import { addressToHex, decodeRelayData } from "../utils";
 import { calculateContext } from "../utils/proof.util";
 import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
@@ -356,8 +357,8 @@ export const storeStateManager = (
           context,
           scope: poolInfo.scope,
           // raw RelayData:= { address recipient; address feeRecipient; uint256 relayFeeBPS;  }
-          relayDataAbi: {},
-          relayDataObject: {}, // TODO: decode(relayDataAbi, withdrawal.data)
+          relayDataAbi: JSON.stringify(relayDataAbi),
+          relayDataObject: decodeRelayData(withdrawal.data),
           withdrawalObject: withdrawal,
         },
         proofResult: withdrawProofResult,

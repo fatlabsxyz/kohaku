@@ -9,6 +9,12 @@ export interface IRelayFeesRequest extends IBaseRelayerRequest {
   assetAddress: Address;
 }
 
+export interface IRelayData {
+  readonly recipient: string;
+  readonly feeRecipient: string;
+  readonly relayFeeBps: bigint;
+}
+
 export interface IRelayerFeeResponse {
   feeBPS: string;
   feeReceiverAddress: string;
@@ -115,8 +121,8 @@ export interface IRelayRequest extends IBaseRelayerRequest {
 }
 
 export interface IRelayRequestBody extends Omit<IRelayRequest, 'scope' | 'chainId' | 'relayerUrl'> {
-    scope: string;
-    chainId: string;
+  scope: string;
+  chainId: string;
 }
 
 interface IBaseRelayResponse {

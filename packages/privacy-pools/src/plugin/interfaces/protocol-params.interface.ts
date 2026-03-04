@@ -6,7 +6,7 @@ import { ISecretManager, SecretManagerParams } from "../../account/keys";
 import { IAspService } from "../../data/asp.service";
 import { IDepositWithBalance } from "../../data/interfaces/events.interface";
 import { Address } from "../../interfaces/types.interface";
-import { IQuoteResponse, IRelayerClient, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
+import { IQuoteResponse, IRelayData, IRelayerClient, WithdrawalPayload } from '../../relayer/interfaces/relayer-client.interface';
 import { RootState } from "../../state";
 import { SpecificAssetBalanceFn } from "../../state/selectors/balance.selector";
 import { StoreFactoryParams } from "../../state/state-manager";
@@ -15,7 +15,7 @@ import { WithdrawProveOutput } from "../../state/thunks/withdrawThunk";
 export interface PPv1PrivateOperation extends PrivateOperation {
   rawData: {
     context: bigint,
-    relayData: {},
+    relayData: IRelayData,
     proof: WithdrawProveOutput;
     withdrawalPayload: WithdrawalPayload;
     chainId: bigint;
@@ -50,7 +50,7 @@ export interface PrivacyPoolsV1ProtocolParams {
   ipfsUrl?: string;
 }
 
-interface IBaseOperationParams {}
+interface IBaseOperationParams { }
 
 export interface IDepositOperationParams extends IBaseOperationParams {
   asset: Address;
@@ -93,8 +93,8 @@ export type StateWithdrawalPayload = {
   withdrawalInfo: {
     context: bigint;
     scope: bigint;
-    relayDataAbi: {};
-    relayDataObject: {};
+    relayDataAbi: string;
+    relayDataObject: IRelayData;
     withdrawalObject: WithdrawalPayload;
   };
   proofResult: WithdrawProveOutput,
