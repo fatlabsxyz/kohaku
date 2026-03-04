@@ -34,7 +34,7 @@ export interface PPv1MnemonicCretendial extends PPv1BaseCredential {
 
 export type PPv1Credentials = PPv1NativeCredential | PPv1MnemonicCretendial;
 
-type PPv1InsanceFactory<Credential extends PPv1Credentials> = PluginInstance<
+type PPv1InstanceFactory<Credential extends PPv1Credentials> = PluginInstance<
     PPv1Address,
     {
         credential: Credential,
@@ -51,11 +51,11 @@ type PPv1InsanceFactory<Credential extends PPv1Credentials> = PluginInstance<
         extras: {
             notes(assets: ERC20AssetId[], includeSpent?: boolean): Promise<INote[]>;
             ragequit(labels: INote['label'][]): Promise<PPv1PublicOperation>
-        }
+        },
         publicOp: PPv1PublicOperation,
         privateOp: PPv1PrivateOperation,
     }
 >;
 
-export type PPv1Instance = PPv1InsanceFactory<PPv1NativeCredential>;
-export type PPv1LegacyInstance = PPv1InsanceFactory<PPv1MnemonicCretendial>;
+export type PPv1Instance = PPv1InstanceFactory<PPv1NativeCredential>;
+export type PPv1LegacyInstance = PPv1InstanceFactory<PPv1MnemonicCretendial>;
