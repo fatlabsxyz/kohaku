@@ -1,11 +1,11 @@
 import { poseidon } from "maci-crypto/build/ts/hashing";
-import { CommitmentProveOutput, INote } from "./plugin/interfaces/protocol-params.interface";
+import { decodeAbiParameters, encodeFunctionData, getAddress } from "viem";
+import { entrypointAbi, relayDataAbi } from "./data/abis/entrypoint.abi";
+import { poolAbi } from "./data/abis/pool.abi";
 import { Address } from "./interfaces/types.interface";
-import { encodeFunctionData, getAddress } from "viem";
-import { entrypointAbi } from "./data/abis/entrypoint.abi";
+import { CommitmentProveOutput, INote } from "./plugin/interfaces/protocol-params.interface";
 import { WithdrawalPayload } from "./relayer/interfaces/relayer-client.interface";
 import { WithdrawProveOutput } from "./state/thunks/withdrawThunk";
-import { poolAbi } from "./data/abis/pool.abi";
 
 /**
  * Given a note, computes it commitment
@@ -105,4 +105,9 @@ export function encodeRagequitPayload(proveOutput: CommitmentProveOutput) {
     args: [{ pubSignals, pA, pB, pC }]
   });
 
+}
+
+export function decodeRelayData(encodedData: `0x${string}`) {
+  const [relayData] = decodeAbiParameters([relayDataAbi], encodedData);
+  return relayData;
 }
