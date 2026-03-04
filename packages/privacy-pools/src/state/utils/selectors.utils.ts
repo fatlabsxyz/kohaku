@@ -5,6 +5,7 @@ import { RootState } from "../store";
 import { deserialize } from "./serialize.utils";
 
 export const selectEntityMap = <
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const SelectorType extends (state: RootState) => [any, any][],
   const TransformFn extends (
     tuple: ReturnType<SelectorType>[number],

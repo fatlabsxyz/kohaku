@@ -54,7 +54,7 @@ export const withdrawThunk = createAsyncThunk<
     );
 
     // 3. Get change note with its secrets
-    const { note: changeNote, secrets: changeSecrets } = params.getNextNote(
+    const { secrets: changeSecrets } = params.getNextNote(
       existingNote,
       params.amount,
       chainId,

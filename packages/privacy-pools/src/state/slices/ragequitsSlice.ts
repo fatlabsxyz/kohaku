@@ -34,4 +34,4 @@ export const ragequitsSlice = createSlice({
 });
 
 export const { registerRagequits } = ragequitsSlice.actions;
-export default ragequitsSlice.reducer;
+export const ragequitsReducer = ragequitsSlice.reducer;

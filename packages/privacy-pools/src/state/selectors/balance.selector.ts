@@ -121,7 +121,7 @@ export const createDepositsToSpendSelector = ({
   return createSelector(
     [
       myDepositsBalanceSelector,
-      (_state: any, assetAddress: bigint, amount: bigint) => ({ assetAddress, amount }),
+      (_state: RootState, assetAddress: bigint, amount: bigint) => ({ assetAddress, amount }),
     ],
     (depositsMap, { assetAddress, amount }): IDepositWithBalance[] => {
       // Filter deposits by asset address and positive balance
@@ -196,12 +196,12 @@ export type IBalanceType = 'approved' | 'unapproved' | 'both';
 export type SpecificAssetBalanceSelectorFn = <
   const Adresses extends Address | Address[] = Address[],
   const BalanceType extends IBalanceType = 'both'
->(state: RootState, assetAddress?: Adresses, balanceType?: BalanceType) => Adresses extends any[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>;
+>(state: RootState, assetAddress?: Adresses, balanceType?: BalanceType) => Adresses extends unknown[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>;
 
 export type SpecificAssetBalanceFn<isAsync extends boolean = false> = <
   const Adresses extends Address | Address[] = Address[],
   const BalanceType extends IBalanceType = 'both',
-  ReturnType = Adresses extends any[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>,
+  ReturnType = Adresses extends unknown[] ? Map<Address, BalanceOutput<BalanceType>> : BalanceOutput<BalanceType>,
 >(assetAddress?: Adresses, balanceType?: BalanceType) => isAsync extends true ? Promise<ReturnType> : ReturnType;
 
 export const createSpecificAssetBalanceSelector = (
@@ -211,7 +211,8 @@ export const createSpecificAssetBalanceSelector = (
     [
       allAssetsBalanceSelector,
       (_state: RootState, assetAddresses: Address[] | Address = []) => assetAddresses,
-      (_: RootState, assetAddresses: Address[] | Address = [], balanceType: IBalanceType = 'both') => balanceType
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      (_: RootState, _assetAddresses: Address[] | Address = [], balanceType: IBalanceType = 'both') => balanceType
     ],
     (assetsBalanceMap, assetAddress, balanceType) => {
       if (assetAddress instanceof Array) {

@@ -27,4 +27,4 @@ export const updateRootEventsSlice = createSlice({
 });
 
 export const { registerLastUpdateRootEvent } = updateRootEventsSlice.actions;
-export default updateRootEventsSlice.reducer;
+export const updateRootEventsReducer = updateRootEventsSlice.reducer;

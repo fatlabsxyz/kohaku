@@ -97,6 +97,7 @@ describe("Creates the dump state payload", () => {
     const state = initialState[oxbow];
 
     for (const [address, leaves] of state.poolsLeaves.poolLeavesTuples) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const sortedLeaves = leaves.map(([index, leaf]) => leaf).sort((a, b) => Number(a.index) - Number(b.index));
       const indexes = sortedLeaves.map(leaf => Number(leaf.index));
       const commitments = sortedLeaves.map(leaf => BigInt(leaf.commitment));

@@ -17,7 +17,7 @@ import {
   IRootUpdatedEvent,
 } from "./events.interface";
 
-type IEventsMap = Record<string, ParseAbiItem<any>>;
+type IEventsMap = Record<string, ParseAbiItem<string>>;
 
 export interface IGetEventsParams<T> {
   events: T | T[];
@@ -40,13 +40,13 @@ export interface IPoolEvents {
   LeafInserted: ILeafInsertedEvent;
 }
 
-type IGroupedEvents<NamesTable extends Record<string, any>> = {
+type IGroupedEvents<NamesTable extends Record<string, unknown>> = {
   [key in keyof NamesTable]: NamesTable[key][];
 };
 
 export type GetEventsFn<
   EventsMap extends IEventsMap,
-  ParsedEvents extends { [key in keyof EventsMap]: any },
+  ParsedEvents extends { [key in keyof EventsMap]: unknown },
 > = <const T extends keyof ParsedEvents = never>(
   params: IGetEventsParams<T>,
 ) => Promise<

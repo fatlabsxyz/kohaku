@@ -29,4 +29,4 @@ export const entrypointInfoSlice = createSlice({
 });
 
 export const { setEntrypointInfo } = entrypointInfoSlice.actions;
-export default entrypointInfoSlice.reducer;
+export const entrypointInfoReducer = entrypointInfoSlice.reducer;

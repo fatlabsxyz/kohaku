@@ -21,7 +21,7 @@ export const createGetNoteSelector = ({
     [
       myDepositsBalanceSelector,
       myWithdrawalsSelector,
-      (_state: unknown, assetAddress: Address, _minAmount: bigint) => assetAddress,
+      (_state: unknown, assetAddress: Address) => assetAddress,
       (_state: unknown, _assetAddress: Address, minAmount: bigint) => minAmount,
     ],
     (depositsMap, withdrawalsMap, assetAddress, minAmount): INote | undefined => {
@@ -36,6 +36,7 @@ export const createGetNoteSelector = ({
       // Sort by balance ascending to get smallest sufficient
       eligibleDeposits.sort((a, b) => Number(a.balance - b.balance));
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { commitment, ...bestDeposit } = eligibleDeposits[0]!;
 
       // Get withdrawal count for this deposit

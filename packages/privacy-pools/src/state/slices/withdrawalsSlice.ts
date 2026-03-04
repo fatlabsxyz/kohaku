@@ -34,4 +34,4 @@ export const withdrawalsSlice = createSlice({
 });
 
 export const { registerWithdrawals } = withdrawalsSlice.actions;
-export default withdrawalsSlice.reducer;
+export const withdrawalsReducer = withdrawalsSlice.reducer;

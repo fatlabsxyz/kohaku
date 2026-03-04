@@ -34,4 +34,4 @@ export const depositsSlice = createSlice({
 });
 
 export const { registerDeposits } = depositsSlice.actions;
-export default depositsSlice.reducer;
+export const depositsReducer = depositsSlice.reducer;

@@ -58,6 +58,7 @@ export const poolEventsSelector = createSelector(
     // Filter deposits by pool address
     const filteredDeposits = new Map(
       Array.from(deposits).filter(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ([_, deposit]) => deposit.pool === poolAddress,
       ),
     );
@@ -65,6 +66,7 @@ export const poolEventsSelector = createSelector(
     // Filter withdrawals by pool address
     const filteredWithdrawals = new Map(
       Array.from(withdrawals).filter(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ([_, withdrawal]) => withdrawal.pool === poolAddress,
       ),
     );
@@ -72,6 +74,7 @@ export const poolEventsSelector = createSelector(
     // Filter ragequits by pool address
     const filteredRagequits = new Map(
       Array.from(ragequits).filter(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ([_, ragequit]) => ragequit.pool === poolAddress,
       ),
     );
@@ -106,6 +109,7 @@ export const poolFromAssetSelector = createSelector(
   [poolsSelector, (state: RootState, assetAddress: Address) => assetAddress],
   (pools, assetAddress: Address): IPool | undefined => {
     const addressPoolTuple = Array.from(pools).find(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ([_, p]) => p.asset === assetAddress,
     );
 
@@ -113,6 +117,7 @@ export const poolFromAssetSelector = createSelector(
       return undefined;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, poolInfo] = addressPoolTuple;
 
     return poolInfo;

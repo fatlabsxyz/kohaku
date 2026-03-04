@@ -6,20 +6,21 @@ import {
   ReducersMapObject
 } from "@reduxjs/toolkit";
 
-import aspReducer from "./slices/aspSlice";
-import assetsReducer from "./slices/assetsSlice";
-import depositsReducer from "./slices/depositsSlice";
-import entrypointDepositsReducer from "./slices/entrypointDepositsSlice";
-import poolInfoReducer, {
+import { aspReducer } from "./slices/aspSlice";
+import { assetsReducer } from "./slices/assetsSlice";
+import { depositsReducer } from "./slices/depositsSlice";
+import { entrypointDepositsReducer } from "./slices/entrypointDepositsSlice";
+import {
+  entrypointInfoReducer,
   EntrypointInfoState,
   setEntrypointInfo,
 } from "./slices/entrypointInfoSlice";
-import poolsLeavesReducer from "./slices/poolLeavesSlice";
-import poolsReducer from "./slices/poolsSlice";
-import ragequitsReducer from "./slices/ragequitsSlice";
-import syncReducer from "./slices/syncSlice";
-import updateRootEventsReducer from "./slices/updateRootEventsSlice";
-import withdrawalsReducer from "./slices/withdrawalsSlice";
+import { poolsLeavesReducer } from "./slices/poolLeavesSlice";
+import { poolsReducer } from "./slices/poolsSlice";
+import { ragequitsReducer } from "./slices/ragequitsSlice";
+import { syncReducer } from "./slices/syncSlice";
+import { updateRootEventsReducer } from "./slices/updateRootEventsSlice";
+import { withdrawalsReducer } from "./slices/withdrawalsSlice";
 
 const reducers = {
   deposits: depositsReducer,
@@ -29,11 +30,11 @@ const reducers = {
   assets: assetsReducer,
   pools: poolsReducer,
   poolsLeaves: poolsLeavesReducer,
-  entrypointInfo: poolInfoReducer,
+  entrypointInfo: entrypointInfoReducer,
   asp: aspReducer,
   updateRootEvents: updateRootEventsReducer,
   sync: syncReducer,
-} as const;
+ } as const;
 
 export type RootState = ReturnType<ReturnType<typeof combineReducers<typeof reducers>>>;
 

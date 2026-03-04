@@ -34,4 +34,4 @@ export const entrypointDepositsSlice = createSlice({
 });
 
 export const { registerEntrypointDeposits } = entrypointDepositsSlice.actions;
-export default entrypointDepositsSlice.reducer;
+export const entrypointDepositsReducer = entrypointDepositsSlice.reducer;

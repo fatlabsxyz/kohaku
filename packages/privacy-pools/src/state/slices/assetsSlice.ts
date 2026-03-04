@@ -34,4 +34,4 @@ export const assetsSlice = createSlice({
 });
 
 export const { registerAssets } = assetsSlice.actions;
-export default assetsSlice.reducer;
+export const assetsReducer = assetsSlice.reducer;

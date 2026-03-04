@@ -34,4 +34,4 @@ export const poolsSlice = createSlice({
 });
 
 export const { registerPools } = poolsSlice.actions;
-export default poolsSlice.reducer;
+export const poolsReducer = poolsSlice.reducer;

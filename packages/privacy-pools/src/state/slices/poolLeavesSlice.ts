@@ -53,4 +53,4 @@ export const poolLeavesSlice = createSlice({
 });
 
 export const { registerPoolLeaves } = poolLeavesSlice.actions;
-export default poolLeavesSlice.reducer;
+export const poolsLeavesReducer = poolLeavesSlice.reducer;

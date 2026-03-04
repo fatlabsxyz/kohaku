@@ -30,6 +30,7 @@ export const serialize = <const T>(data: T): Serializable<T> => {
 };
 
 export const deserialize = <
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Data extends Serializable<any>,
   const Dictionary extends DeserializeDictionary<Data> | undefined = undefined,
 >(
@@ -44,6 +45,7 @@ export const deserialize = <
 
       if (data instanceof Array) {
         if (data.length === 2) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const stringsData = (strings as [any, any]) || [];
 
           return [

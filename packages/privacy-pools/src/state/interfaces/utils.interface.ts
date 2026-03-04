@@ -54,6 +54,7 @@ type Stringize<T> = T extends undefined
     : never;
 
 export type DeserializeWithDictionary<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Des extends Serializable<any>,
   Dict extends DeserializeDictionary<Des> | undefined,
 > = Des extends [Serializable<infer Key>, Serializable<infer Value>]
@@ -66,6 +67,7 @@ export type DeserializeWithDictionary<
         DeserializeWithDictionary<Key, undefined>,
         DeserializeWithDictionary<Value, undefined>,
       ]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   : Des extends Serializable<any>[]
     ? DeserializeWithDictionary<Des[number], Dict>[]
     : Des extends string ? Stringize<Dict> : {

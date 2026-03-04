@@ -22,11 +22,9 @@ import { BaseSelectorParams } from "./interfaces/selectors.interface";
 import { createMyUnsyncedAssetsSelector } from "./selectors/assets.selector";
 import {
   createAllAssetsBalanceSelector,
-  createMyApprovedAssetBalanceSelector,
   createMyAssetsBalanceSelector,
   createMyDepositsBalanceSelector,
   createMyDepositsWithAssetSelector,
-  createMyUnapprovedAssetBalanceSelector,
   createSpecificAssetBalanceSelector,
   IBalanceType,
   SpecificAssetBalanceFn,
@@ -101,11 +99,6 @@ const initializeSelectors = <const T extends Store>({
   const myAssetsBalanceSelector = createMyAssetsBalanceSelector({
     myDepositsBalanceSelector,
   });
-  const myApprovedAssetBalanceSelector = createMyApprovedAssetBalanceSelector(
-    myAssetsBalanceSelector,
-  );
-  const myUnapprovedAssetBalanceSelector =
-    createMyUnapprovedAssetBalanceSelector(myAssetsBalanceSelector);
 
   // Note selectors for withdrawals
   const getNoteSelector = createGetNoteSelector({

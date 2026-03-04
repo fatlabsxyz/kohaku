@@ -74,6 +74,7 @@ export const createMyEntrypointDepositsSelector = (
     (myDeposits, entrypointDepositsMap): Map<Precommitment, IEntrypointDepositEvent> => {
       const entrypointDepositByPrecommitment = Array.from(myDeposits)
         .map(([precommitment, { commitment }]) => [precommitment, entrypointDepositsMap.get(commitment)] as const)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         .filter(([_, e]) => e !== undefined);
 
       return new Map(entrypointDepositByPrecommitment as [Precommitment, IEntrypointDepositEvent][])
@@ -116,7 +117,7 @@ export const createGetNextDepositPayloadSelector = ({
   return createSelector(
     [
       getNextDepositSecretsSelector,
-      (_state: RootState, asset: Address, _amount: bigint) => asset,
+      (_state: RootState, asset: Address) => asset,
       (_state: RootState, _asset: Address, amount: bigint) => amount,
       entrypointInfoSelector,
     ],

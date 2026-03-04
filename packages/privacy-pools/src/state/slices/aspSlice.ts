@@ -28,5 +28,6 @@ export const aspSlice = createSlice({
   },
 });
 
+export const aspReducer = aspSlice.reducer;
+
 export const { registerAspTree } = aspSlice.actions;
-export default aspSlice.reducer;

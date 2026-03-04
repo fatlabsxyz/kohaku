@@ -59,6 +59,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     expect(approved?.amount).toBe(0n);
     expect(pending?.amount).toBe(0n);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _i in Array(3).fill(null)) {
       // 2. Prepare and execute deposit
       const { txns: [tx] } = await protocol.prepareShield(

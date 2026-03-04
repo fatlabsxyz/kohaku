@@ -67,13 +67,13 @@ export class EthClient {
         Abi extends typeof abis[Contract],
         FunctionName extends ContractFunctionName<Abi>,
         Args extends EncodeFunctionDataParameters<Abi, FunctionName>['args'],
-        ArgsArray extends Args extends undefined ? [] : Args extends ReadonlyArray<any> ? Args : []
+        ArgsArray extends Args extends undefined ? [] : Args extends ReadonlyArray<unknown> ? Args : []
     >(
         contractAddress: Address,
         contractName: Contract,
         functionName: FunctionName,
         ...args: ArgsArray
-    ): Promise<DecodeFunctionResultReturnType<Abi, FunctionName, any>> {
+    ): Promise<DecodeFunctionResultReturnType<Abi, FunctionName>> {
         const abi = abis[contractName];
         const data = encodeFunctionData({
             abi,

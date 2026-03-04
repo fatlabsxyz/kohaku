@@ -68,6 +68,7 @@ export const createMockRelayerClient = (options: MockRelayerOptions = {}): IRela
       };
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async relay(body: IRelayRequest): Promise<ISuccessfullRelayResponse> {
       if (shouldFail) {
         throw new Error('Mock relay failed');

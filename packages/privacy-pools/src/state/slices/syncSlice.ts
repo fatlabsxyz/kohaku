@@ -26,4 +26,4 @@ export const syncSlice = createSlice({
 });
 
 export const { setLastSyncedBlock } = syncSlice.actions;
-export default syncSlice.reducer;
+export const syncReducer = syncSlice.reducer;
