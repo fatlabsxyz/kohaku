@@ -1,4 +1,4 @@
-import { Abi } from "viem";
+import { Abi, AbiParameter } from "viem";
 
 export const entrypointDepositErc20Abi = [
   {
@@ -147,3 +147,26 @@ export const entrypointAbi = [
     stateMutability: "view",
   },
 ] as const satisfies Abi;
+
+export const relayDataAbi = {
+  name: "RelayData",
+  type: "tuple",
+  internalType: "struct IEntrypoint.RelayData",
+  components: [
+    {
+      name: "recipient",
+      type: "address",
+      internalType: "address"
+    },
+    {
+      name: "feeRecipient",
+      type: "address",
+      internalType: "address"
+    },
+    {
+      name: "relayFeeBps",
+      type: "uint256",
+      internalType: "uint256"
+    },
+  ]
+} as const;
