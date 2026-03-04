@@ -100,7 +100,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
-    const [note, ..._] = await protocol.notes([nativeAsset]);
+    const [note] = await protocol.notes([nativeAsset]);
 
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
@@ -187,7 +187,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
-    const [note, ..._] = await protocol.notes([nativeAsset]);
+    const [note] = await protocol.notes([nativeAsset]);
 
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
@@ -257,7 +257,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
-    const [note, ..._] = await protocol.notes([nativeAsset]);
+    const [note] = await protocol.notes([nativeAsset]);
 
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,

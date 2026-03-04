@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ethers } from '@kohaku-eth/provider/ethers';
 import getPort from "get-port";
 
 import { E_ADDRESS } from '../../../src/config/constants';
@@ -40,7 +39,6 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
   it('[ragequit] executes successful deposit on forked mainnet and ragequit several times', { timeout: 120_000 }, async () => {
     const pool = anvil.pool(31);
-    const provider = ethers(await pool.getProvider());
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
     const bob = await setupWallet(pool, TEST_ACCOUNTS.bob.privateKey);
 

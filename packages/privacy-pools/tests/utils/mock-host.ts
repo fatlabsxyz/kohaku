@@ -2,6 +2,7 @@ import { HDNodeWallet, Mnemonic } from 'ethers';
 import { viem } from '@kohaku-eth/provider/viem';
 import { Host, Keystore, Storage as PluginStorage } from '@kohaku-eth/plugins';
 import { createPublicClient, http } from 'viem';
+import { EthereumProvider } from '@kohaku-eth/provider';
 
 export const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 
@@ -32,7 +33,7 @@ const createMockStorage = (): PluginStorage => {
 };
 
 
-const createEthProvider = (rpcUrl = 'http://127.0.0.1:8545'): EthProvider => {
+const createEthProvider = (rpcUrl = 'http://127.0.0.1:8545'): EthereumProvider => {
   const publicClient = createPublicClient({ transport: http(rpcUrl),  cacheTime: 0 });
 
   return viem(publicClient);

@@ -196,7 +196,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     expect(pending?.amount).toBe(deductVettingFees(DEPOSIT_AMOUNT, vettingFees));
 
     // 2.b Approve deposits
-    const [note, ..._] = await protocol.notes([nativeAsset]);
+    const [note] = await protocol.notes([nativeAsset]);
 
     mockAspService.addLabel(note.label);
     await pushNewAspRoot(pool.rpcUrl,
