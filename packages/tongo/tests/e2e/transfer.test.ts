@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ethers } from 'ethers';
 import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
 
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
@@ -36,15 +35,16 @@ describe('tongo EVM Transfer E2E', () => {
   });
 
   beforeEach(async () => {
-    const pool = anvil.pool(1);
+    const pool = anvil.pool(10);
     const provider = createProvider(pool.rpcUrl);
     const { ethProvider } = createMockHost(provider);
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
+
     rate = await tongoAccount.rate();
   });
 
   it('[prepareTransfer] returns correctly shaped transaction', async () => {
-    const pool = anvil.pool(10);
+    const pool = anvil.pool(11);
     const provider = createProvider(pool.rpcUrl);
     const { host, ethProvider } = createMockHost(provider);
 
@@ -82,10 +82,9 @@ describe('tongo EVM Transfer E2E', () => {
 
 
   it('[prepareTransfer] executes successful transfer on forked Sepolia', async () => {
-    const pool = anvil.pool(11);
+    const pool = anvil.pool(12);
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
-    const alice = new ethers.NonceManager(aliceWallet);
     const { host, ethProvider } = createMockHost(provider);
 
     const account1 = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
@@ -104,10 +103,11 @@ describe('tongo EVM Transfer E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, shieldTxns[0]);
-    await sendTx(alice, shieldTxns[1]);
+    await sendTx(aliceWallet, shieldTxns[0]);
+    await sendTx(aliceWallet, shieldTxns[1]);
 
     const stateAfterFund = await account1.state();
+
     expect(stateAfterFund.balance).toBe(FUND_AMOUNT);
 
     // --- Transfer to account 2 ---
@@ -120,7 +120,7 @@ describe('tongo EVM Transfer E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, txns[0]);
+    await sendTx(aliceWallet, txns[0]);
 
     const stateAfterTransfer = await account1.state();
     expect(stateAfterTransfer.balance).toBe(0n);
@@ -128,7 +128,7 @@ describe('tongo EVM Transfer E2E', () => {
 
 
   it('[prepareTransfer] includes rollover when account has pending balance', async () => {
-    const pool = anvil.pool(12);
+    const pool = anvil.pool(13);
     const provider = createProvider(pool.rpcUrl);
     const { host, ethProvider } = createMockHost(provider);
 
@@ -170,7 +170,7 @@ describe('tongo EVM Transfer E2E', () => {
 
 
   it('[prepareTransfer] throws when there is not sufficient balance', async () => {
-    const pool = anvil.pool(13);
+    const pool = anvil.pool(14);
     const provider = createProvider(pool.rpcUrl);
     const { host, ethProvider } = createMockHost(provider);
 

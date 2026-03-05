@@ -40,18 +40,18 @@ describe('tongo EVM Unshield E2E', () => {
   });
 
   beforeEach(async () => {
-    const pool = anvil.pool(1);
+    const pool = anvil.pool(5);
     const provider = createProvider(pool.rpcUrl);
     const { ethProvider } = createMockHost(provider);
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
+
     rate = await tongoAccount.rate();
   });
 
   it('[prepareUnshield] returns correctly shaped transactions', async () => {
-    const pool = anvil.pool(20);
+    const pool = anvil.pool(6);
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
-    const alice = new ethers.NonceManager(aliceWallet);
     const { host } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
@@ -68,8 +68,8 @@ describe('tongo EVM Unshield E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, shieldTxns[0]);
-    await sendTx(alice, shieldTxns[1]);
+    await sendTx(aliceWallet, shieldTxns[0]);
+    await sendTx(aliceWallet, shieldTxns[1]);
 
     const aliceAccountId = new Eip155AccountId(aliceWallet.address as `0x${string}`);
     const { txns } = await plugin.prepareUnshield(
@@ -90,10 +90,9 @@ describe('tongo EVM Unshield E2E', () => {
 
 
   it('[prepareUnshield] executes successful ERC20 unshield on forked Sepolia', async () => {
-    const pool = anvil.pool(21);
+    const pool = anvil.pool(7);
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
-    const alice = new ethers.NonceManager(aliceWallet);
     const { host, ethProvider } = createMockHost(provider);
     const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
 
@@ -113,8 +112,8 @@ describe('tongo EVM Unshield E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, shieldTxns[0]);
-    await sendTx(alice, shieldTxns[1]);
+    await sendTx(aliceWallet, shieldTxns[0]);
+    await sendTx(aliceWallet, shieldTxns[1]);
 
     const stateAfterFund = await tongoAccount.state();
 
@@ -130,7 +129,7 @@ describe('tongo EVM Unshield E2E', () => {
       aliceAccountId,
     );
 
-    const receipt = await sendTx(alice, txns[0]);
+    const receipt = await sendTx(aliceWallet, txns[0]);
 
     expect(await usdc.balanceOf(aliceWallet.address)).toBe(usdcBeforeUnshield + FUND_AMOUNT * rate);
 
@@ -147,7 +146,7 @@ describe('tongo EVM Unshield E2E', () => {
 
 
   it('[prepareUnshield] includes rollover when account has pending balance from transfer', async () => {
-    const pool = anvil.pool(23);
+    const pool = anvil.pool(8);
     const provider = createProvider(pool.rpcUrl);
     const { host } = createMockHost(provider);
 
@@ -188,7 +187,7 @@ describe('tongo EVM Unshield E2E', () => {
 
 
   it('[prepareUnshield] throws when there is not sufficient balance', async () => {
-    const pool = anvil.pool(22);
+    const pool = anvil.pool(9);
     const provider = createProvider(pool.rpcUrl);
     const { host } = createMockHost(provider);
 

@@ -1,4 +1,4 @@
-import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet, zeroPadValue, NonceManager } from 'ethers';
+import { AbiCoder, Contract, getAddress, JsonRpcProvider, keccak256, SigningKey, toBeHex, Wallet, zeroPadValue } from 'ethers';
 
 import { type AnvilPool } from './anvil';
 import type { Host } from '@kohaku-eth/plugins';
@@ -18,6 +18,7 @@ export function createMockHost(provider: JsonRpcProvider, overrides?: Partial<Ho
   };
   const keystore = { deriveAt: (_path: string) => '0x1' as `0x${string}` };
   const host = { ethProvider, keystore, ...overrides } as unknown as Host;
+  
   return { host, ethProvider };
 }
 
@@ -67,6 +68,7 @@ export async function mintERC20(
     AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [recipient, balanceSlot])
   );
   const value = zeroPadValue(toBeHex(amount), 32);
+
   await pool.setStorageAt(tokenAddress, slot, value);
 }
 
@@ -82,7 +84,7 @@ export async function approveERC20(
   await (await token.approve(spender, amount)).wait();
 }
 
-export async function sendTx(signer: Wallet | NonceManager, { to, data, value }: { to: string; data: string; value: bigint; }) {
+export async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
   const response = await signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
 
   return response.wait();

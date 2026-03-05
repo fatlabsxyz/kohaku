@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ethers } from 'ethers';
 import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
 import getPort from "get-port";
@@ -25,6 +25,7 @@ const ERC20_ABI = [
 
 describe('tongo EVM Fund E2E', () => {
   let anvil: AnvilInstance;
+  let rate = 0n;
 
   beforeAll(async () => {
     anvil = defineAnvil({
@@ -40,11 +41,19 @@ describe('tongo EVM Fund E2E', () => {
     await anvil.stop();
   });
 
-  it('[fund] executes successful ERC20 fund on forked Sepolia', async () => {
+  beforeEach(async () => {
     const pool = anvil.pool(1);
     const provider = createProvider(pool.rpcUrl);
+    const { ethProvider } = createMockHost(provider);
+    const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
+
+    rate = await tongoAccount.rate();
+  });
+
+  it('[fund] executes successful ERC20 fund on forked Sepolia', async () => {
+    const pool = anvil.pool(2);
+    const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
-    const alice = new ethers.NonceManager(aliceWallet);
     const { host, ethProvider } = createMockHost(provider);
     const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
 
@@ -60,7 +69,6 @@ describe('tongo EVM Fund E2E', () => {
 
     expect(initialState.balance).toBe(0n);
 
-    const rate = await tongoAccount.rate();
     const initialTongoUsdc = await usdc.balanceOf(TONGO_CONTRACT_ADDRESS);
 
     await mintERC20(pool, USDC_ADDRESS, aliceWallet.address, FUND_AMOUNT * rate);
@@ -72,8 +80,8 @@ describe('tongo EVM Fund E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, txns[0]);
-    const receipt = await sendTx(alice, txns[1]);
+    await sendTx(aliceWallet, txns[0]);
+    const receipt = await sendTx(aliceWallet, txns[1]);
 
     expect(await usdc.balanceOf(aliceWallet.address)).toBe(initialUserUsdc - FUND_AMOUNT * rate);
     expect(await usdc.balanceOf(TONGO_CONTRACT_ADDRESS)).toBe(initialTongoUsdc + FUND_AMOUNT * rate);
@@ -121,10 +129,9 @@ describe('tongo EVM Fund E2E', () => {
 
 
   it('[fund] accumulates multiple deposits correctly', async () => {
-    const pool = anvil.pool(2);
+    const pool = anvil.pool(4);
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
-    const alice = new ethers.NonceManager(aliceWallet);
     const { host, ethProvider } = createMockHost(provider);
 
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
@@ -137,8 +144,6 @@ describe('tongo EVM Fund E2E', () => {
     const A = 100_000_000n;
     const B = 200_000_000n;
 
-    const rate = await tongoAccount.rate();
-
     await mintERC20(pool, USDC_ADDRESS, aliceWallet.address, (A + B) * rate);
 
     // --- Deposit A ---
@@ -147,8 +152,8 @@ describe('tongo EVM Fund E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, txnsA[0]);
-    await sendTx(alice, txnsA[1]);
+    await sendTx(aliceWallet, txnsA[0]);
+    await sendTx(aliceWallet, txnsA[1]);
 
     // --- Deposit B ---
     const { txns: txnsB } = await plugin.prepareShield(
@@ -156,8 +161,8 @@ describe('tongo EVM Fund E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, txnsB[0]);
-    await sendTx(alice, txnsB[1]);
+    await sendTx(aliceWallet, txnsB[0]);
+    await sendTx(aliceWallet, txnsB[1]);
 
     const finalState = await tongoAccount.state();
     

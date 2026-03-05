@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ethers } from 'ethers';
 import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
 import getPort from "get-port";
 
@@ -36,15 +35,16 @@ describe('tongo EVM Balance E2E', () => {
   });
 
   beforeEach(async () => {
-    const pool = anvil.pool(1);
+    const pool = anvil.pool(15);
     const provider = createProvider(pool.rpcUrl);
     const { ethProvider } = createMockHost(provider);
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
+
     rate = await tongoAccount.rate();
   });
 
   it('[balance] returns zero for a fresh account', async () => {
-    const pool = anvil.pool(10);
+    const pool = anvil.pool(16);
     const provider = createProvider(pool.rpcUrl);
     const { host } = createMockHost(provider);
 
@@ -62,10 +62,9 @@ describe('tongo EVM Balance E2E', () => {
   });
 
   it('[balance] returns correct balance after shielding', async () => {
-    const pool = anvil.pool(11);
+    const pool = anvil.pool(17);
     const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
-    const alice = new ethers.NonceManager(aliceWallet);
     const { host } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
@@ -82,8 +81,8 @@ describe('tongo EVM Balance E2E', () => {
       new Eip155AccountId(aliceWallet.address as `0x${string}`)
     );
 
-    await sendTx(alice, shieldTxns[0]);
-    await sendTx(alice, shieldTxns[1]);
+    await sendTx(aliceWallet, shieldTxns[0]);
+    await sendTx(aliceWallet, shieldTxns[1]);
 
     const result = await plugin.balance([usdcAssetId]);
 
@@ -93,7 +92,7 @@ describe('tongo EVM Balance E2E', () => {
   });
 
   it('[balance] sums balance and pending in the returned amount', async () => {
-    const pool = anvil.pool(12);
+    const pool = anvil.pool(18);
     const provider = createProvider(pool.rpcUrl);
     const { host } = createMockHost(provider);
 
@@ -118,7 +117,7 @@ describe('tongo EVM Balance E2E', () => {
   });
 
   it('[balance] returns empty array for unconfigured asset', async () => {
-    const pool = anvil.pool(13);
+    const pool = anvil.pool(19);
     const provider = createProvider(pool.rpcUrl);
     const { host } = createMockHost(provider);
 
@@ -134,7 +133,7 @@ describe('tongo EVM Balance E2E', () => {
   });
 
   it('[balance] returns all configured assets when called with undefined', async () => {
-    const pool = anvil.pool(14);
+    const pool = anvil.pool(20);
     const provider = createProvider(pool.rpcUrl);
     const { host } = createMockHost(provider);
 
