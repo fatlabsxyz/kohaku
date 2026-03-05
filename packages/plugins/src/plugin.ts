@@ -95,7 +95,7 @@ export abstract class Plugin<
     /**
      * Same as `prepareTransferMulti` but for a single asset.
      */
-    prepareTransfer(asset: TAssetAmount, to: AccountId): Promise<TPrivateOperation> {
+    prepareTransfer(asset: TAssetAmount, to: AccountId, from?: AccountId): Promise<TPrivateOperation> {
         throw new TransferNotSupportedError();
     }
 
@@ -103,6 +103,7 @@ export abstract class Plugin<
      * Prepares a transfer operation for the specified assets.
      * @param assets The assets to be transferred.
      * @param to The account to which the assets will be transferred.
+     * @param from The address from which the assets will be transferred.
      *
      * @throws {TransferNotSupportedError} If the plugin does not support transferring assets.
      * @throws {UnsupportedAssetError} If any of the specified assets are not supported by the plugin.
@@ -110,7 +111,7 @@ export abstract class Plugin<
      * @throws {InsufficientBalanceError} If there is insufficient balance for any of the specified assets.
      * @throws {Error} If the transfer operation could not be prepared.
      */
-    prepareTransferMulti(assets: Array<TAssetAmount>, to: AccountId): Promise<TPrivateOperation> {
+    prepareTransferMulti(assets: Array<TAssetAmount>, to: AccountId, from?: AccountId): Promise<TPrivateOperation> {
         throw new TransferNotSupportedError();
     }
 
