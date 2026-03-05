@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ethers } from 'ethers';
 import { Account as TongoAccount } from '@fatsolutions/tongo-evm';
+import getPort from "get-port";
 
 import { defineAnvil, type AnvilInstance } from '../utils/anvil';
 import { getEnv } from '../utils/common';
-import { setupWallet, mintERC20, sendTx } from '../utils/test-helpers';
+import { setupWallet, mintERC20, sendTx, createProvider, createMockHost } from '../utils/test-helpers';
 import { TongoPlugin } from '../../src/tongo';
 import { Erc20Id, Eip155AccountId } from '@kohaku-eth/plugins';
-import type { Host } from '@kohaku-eth/plugins';
 
 const SEPOLIA_FORK_URL = getEnv('SEPOLIA_RPC_URL', 'https://no-fallback');
 
@@ -24,7 +24,7 @@ describe('tongo EVM Balance E2E', () => {
   beforeAll(async () => {
     anvil = defineAnvil({
       forkUrl: SEPOLIA_FORK_URL,
-      port: 8563,
+      port: await getPort(),
       chainId: 11155111,
     });
 
@@ -37,23 +37,16 @@ describe('tongo EVM Balance E2E', () => {
 
   beforeEach(async () => {
     const pool = anvil.pool(1);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
+    const provider = createProvider(pool.rpcUrl);
+    const { ethProvider } = createMockHost(provider);
     const tongoAccount = new TongoAccount(1n, TONGO_CONTRACT_ADDRESS, ethProvider);
     rate = await tongoAccount.rate();
   });
 
   it('[balance] returns zero for a fresh account', async () => {
     const pool = anvil.pool(10);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const host = { ethProvider } as unknown as Host;
+    const provider = createProvider(pool.rpcUrl);
+    const { host } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -70,14 +63,10 @@ describe('tongo EVM Balance E2E', () => {
 
   it('[balance] returns correct balance after shielding', async () => {
     const pool = anvil.pool(11);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
+    const provider = createProvider(pool.rpcUrl);
     const aliceWallet = await setupWallet(pool, process.env.TEST_PRIVATE_KEY!);
     const alice = new ethers.NonceManager(aliceWallet);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const host = { ethProvider } as unknown as Host;
+    const { host } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -105,12 +94,8 @@ describe('tongo EVM Balance E2E', () => {
 
   it('[balance] sums balance and pending in the returned amount', async () => {
     const pool = anvil.pool(12);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const host = { ethProvider } as unknown as Host;
+    const provider = createProvider(pool.rpcUrl);
+    const { host } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {
@@ -134,12 +119,8 @@ describe('tongo EVM Balance E2E', () => {
 
   it('[balance] returns empty array for unconfigured asset', async () => {
     const pool = anvil.pool(13);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const host = { ethProvider } as unknown as Host;
+    const provider = createProvider(pool.rpcUrl);
+    const { host } = createMockHost(provider);
 
     const plugin = new TongoPlugin(host, {
       chain: 11155111,
@@ -154,12 +135,8 @@ describe('tongo EVM Balance E2E', () => {
 
   it('[balance] returns all configured assets when called with undefined', async () => {
     const pool = anvil.pool(14);
-    const provider = new ethers.JsonRpcProvider(pool.rpcUrl);
-    const ethProvider = {
-      request: ({ method, params }: { method: string; params?: unknown[] | Record<string, unknown> }) =>
-        provider.send(method, Array.isArray(params) ? params : []),
-    };
-    const host = { ethProvider } as unknown as Host;
+    const provider = createProvider(pool.rpcUrl);
+    const { host } = createMockHost(provider);
 
     const usdcAssetId = new Erc20Id(USDC_ADDRESS);
     const plugin = new TongoPlugin(host, {

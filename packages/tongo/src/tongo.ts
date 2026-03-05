@@ -53,16 +53,13 @@ export class TongoPlugin extends Plugin<AssetAmount, ShieldPreparation, PrivateO
     async balance(assets: Array<AssetId> | undefined): Promise<Array<AssetAmount>> {
         const derivedKey = this.keystoreManager.deriveKey();
 
-        const balances: Promise<AssetAmount>[] = [];
-
-        this.deploys.forEach(async (tongoContract, assetId) => {
-            if (assets === undefined || assets.includes(assetId)) {
+        const balances = [...this.deploys.entries()]
+            .filter(([assetId]) => assets === undefined || assets.includes(assetId))
+            .map(async ([assetId, tongoContract]) => {
                 const tongoAccount = this.deriveAccountFromKey(tongoContract, derivedKey);
                 const amount = await this._balance(tongoAccount);
-
-                balances.push(new Promise((resolve) => { resolve({ asset: assetId, amount }); }));
-            }
-        });
+                return { asset: assetId, amount };
+            });
 
         return Promise.all(balances);
     }
