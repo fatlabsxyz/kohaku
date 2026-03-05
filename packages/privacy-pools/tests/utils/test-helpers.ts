@@ -204,10 +204,6 @@ export const getProtocolWithState = ({
   entrypoint: MAINNET_ENTRYPOINT,
 });
 
-export const getProtocol = (host = createMockHost()) => new PrivacyPoolsV1Protocol(host, {
-  entrypoint: MAINNET_ENTRYPOINT,
-});
-
 export async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {
   return signer.sendTransaction({ to, data, value, gasLimit: 6000000n });
 }

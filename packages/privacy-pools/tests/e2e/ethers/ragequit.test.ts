@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import getPort from "get-port";
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
@@ -14,6 +13,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
+  const MAINNET_FORK_BLOCK = getEnv('MAINNET_FORK_BLOCK', '24528387');
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
   // E_ADDRESS represents native ETH in Privacy Pools
   const nativeAsset = ERC20Asset(E_ADDRESS);
@@ -21,15 +21,18 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
   beforeAll(async () => {
 
-    anvil = defineAnvil({
+    anvil = await defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: await getPort(),
+      forkBlockNumber: Number(MAINNET_FORK_BLOCK),
       chainId: 1,
     });
 
     await anvil.start();
 
-    const _protocol = getProtocolWithState();
+    const pool = anvil.pool(1);
+    const _protocol = getProtocolWithState({
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl })
+    });
 
     await _protocol.sync();
     latestState = _protocol.dumpState();
@@ -49,7 +52,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     // Create host with pool-specific RPC URL
     const protocol = getProtocolWithState({
-      host: createMockHost(undefined, pool.rpcUrl),
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl }),
       initialState: latestState
     });
 

@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { ethers } from '@kohaku-eth/provider/ethers';
-import getPort from "get-port";
 
 import { E_ADDRESS } from '../../../src/config/constants';
 import { MAINNET_CONFIG } from '../../../src/config/index';
@@ -16,6 +15,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
+  const MAINNET_FORK_BLOCK = getEnv('MAINNET_FORK_BLOCK', '24528387');
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
 
   // E_ADDRESS represents native ETH in Privacy Pools
@@ -29,15 +29,18 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
   beforeAll(async () => {
 
-    anvil = defineAnvil({
+    anvil = await defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: await getPort(),
+      forkBlockNumber: Number(MAINNET_FORK_BLOCK),
       chainId: 1,
     });
 
     await anvil.start();
 
-    const _protocol = getProtocolWithState();
+    const pool = anvil.pool(1);
+    const _protocol = getProtocolWithState({
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl })
+    });
 
     await _protocol.sync();
     latestState = _protocol.dumpState();
@@ -52,8 +55,13 @@ describe('PrivacyPools v1 E2E Flow', () => {
   });
 
   it('[prepareShield] generates valid native ETH deposit transaction', async () => {
-    const protocol = getProtocolWithState({ initialState: latestState });
 
+    const pool = anvil.pool(2);
+    const protocol = getProtocolWithState({
+      initialState: latestState,
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl }),
+      initialState: latestState
+    });
 
     const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: 1000000000000000000n } // 1 ETH
@@ -68,12 +76,12 @@ describe('PrivacyPools v1 E2E Flow', () => {
   });
 
   it('[prepareShield] executes successful deposit on forked mainnet', { timeout: 600_000 }, async () => {
-    const pool = anvil.pool(1);
+    const pool = anvil.pool(3);
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
     // Create host with pool-specific RPC URL
     const protocol = getProtocolWithState({
-      host: createMockHost(undefined, pool.rpcUrl),
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl }),
       initialState: latestState
     });
 
@@ -110,7 +118,11 @@ describe('PrivacyPools v1 E2E Flow', () => {
   });
 
   it('[prepareShield] generates valid ERC20 deposit transaction', { timeout: 60_000 }, async () => {
-    const protocol = getProtocolWithState({ initialState: latestState });
+    const pool = anvil.pool(4);
+    const protocol = getProtocolWithState({
+      initialState: latestState,
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl }),
+    });
 
 
     const { txns } = await protocol.prepareShield(
@@ -126,13 +138,13 @@ describe('PrivacyPools v1 E2E Flow', () => {
   });
 
   it('[prepareShield] executes successful ERC20 deposit on forked mainnet', { timeout: 60_000 }, async () => {
-    const pool = anvil.pool(2);
+    const pool = anvil.pool(5);
     const provider = ethers(await pool.getProvider());
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
     // Create host with pool-specific RPC URL
     const protocol = getProtocolWithState({
-      host: createMockHost(undefined, pool.rpcUrl),
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl }),
       initialState: latestState
     });
 
@@ -185,15 +197,14 @@ describe('PrivacyPools v1 E2E Flow', () => {
   });
 
   it('[prepareShield] accumulates multiple deposits correctly', { timeout: 60_000 }, async () => {
-    const pool = anvil.pool(3);
-    // const pool = anvil.raw();
+    const pool = anvil.pool(6);
 
     // Fund with enough ETH for multiple deposits
     const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
 
     // Create host with pool-specific RPC URL
     const protocol = getProtocolWithState({
-      host: createMockHost(undefined, pool.rpcUrl),
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl }),
       initialState: latestState
     });
 

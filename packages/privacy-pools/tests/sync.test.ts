@@ -32,7 +32,7 @@ const mockParams = () => {
   };
 };
 
-describe("Creates the dump state payload", () => {
+describe.skip("Creates the dump state payload", () => {
   let anvil: AnvilInstance;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');

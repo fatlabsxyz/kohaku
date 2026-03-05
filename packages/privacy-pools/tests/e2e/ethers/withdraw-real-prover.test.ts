@@ -1,6 +1,5 @@
 import { Prover } from '@fatsolutions/privacy-pools-core-circuits';
 import { AccountId } from '@kohaku-eth/plugins';
-import getPort from "get-port";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { E_ADDRESS } from '../../../src/config/constants';
@@ -21,6 +20,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let latestState: InitialState;
 
   const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
+  const MAINNET_FORK_BLOCK = getEnv('MAINNET_FORK_BLOCK', '24528387');
   const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
   const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
 
@@ -29,20 +29,23 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
 
   beforeAll(async () => {
 
-    anvil = defineAnvil({
+    anvil = await defineAnvil({
       forkUrl: MAINNET_FORK_URL,
-      port: await getPort(),
+      forkBlockNumber: Number(MAINNET_FORK_BLOCK),
       chainId: 1,
     });
 
-    const _protocol = getProtocolWithState();
+    await anvil.start();
+
+    const pool = anvil.pool(1);
+    const _protocol = getProtocolWithState({
+      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl })
+    });
 
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
-    await anvil.start();
-
-    vettingFees = await assetVettingFee(await anvil.pool(1).getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
+    vettingFees = await assetVettingFee(await pool.getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
 
   }, 300000);
 
@@ -65,7 +68,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
-    const host = createMockHost(undefined, pool.rpcUrl);
+    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
       entrypoint: MAINNET_ENTRYPOINT,
@@ -152,7 +155,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
-    const host = createMockHost(undefined, pool.rpcUrl);
+    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
       entrypoint: MAINNET_ENTRYPOINT,
@@ -222,7 +225,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
-    const host = createMockHost(undefined, pool.rpcUrl);
+    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
       entrypoint: MAINNET_ENTRYPOINT,
