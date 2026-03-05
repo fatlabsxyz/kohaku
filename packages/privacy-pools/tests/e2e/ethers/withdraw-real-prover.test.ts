@@ -2,27 +2,32 @@ import { Prover } from '@fatsolutions/privacy-pools-core-circuits';
 import { AccountId } from '@kohaku-eth/plugins';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { E_ADDRESS } from '../../../src/config/constants';
-import { MAINNET_CONFIG } from '../../../src/config/index';
+import { E_ADDRESS } from '../../../src/config';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
+import { chainConfigSetup } from '../../constants';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { ERC20Asset, getEnv, InitialState, MAINNET_ENTRYPOINT, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, InitialState, unwrapBalance } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { assetVettingFee, deductVettingFees, getProtocolWithState, pushNewAspRoot, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
 
-const POSTMAN_ADDRESS_HEX = "0x1f4Fe25Cf802a0605229e0Dc497aAf653E86E187";
 
 describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
-  const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_FORK_BLOCK = getEnv('MAINNET_FORK_BLOCK', '24528387');
-  const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
-  const POSTMAN_ADDRESS = BigInt(POSTMAN_ADDRESS_HEX);
+  const chainId = 1;
+  const {
+    entrypoint,
+    rpcUrl,
+    forkBlockNumber,
+    postman,
+  } = chainConfigSetup[chainId];
+
+  const ENTRYPOINT_ADDRESS = entrypoint.entrypointAddress;
+  const POSTMAN_ADDRESS = BigInt(postman);
 
   const nativeAsset = ERC20Asset(E_ADDRESS);
   let vettingFees = 0n;
@@ -30,9 +35,9 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   beforeAll(async () => {
 
     anvil = await defineAnvil({
-      forkUrl: MAINNET_FORK_URL,
-      forkBlockNumber: Number(MAINNET_FORK_BLOCK),
-      chainId: 1,
+      forkUrl: rpcUrl,
+      forkBlockNumber: Number(forkBlockNumber),
+      chainId,
     });
 
     await anvil.start();
@@ -71,7 +76,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: MAINNET_ENTRYPOINT,
+      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -158,7 +163,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: MAINNET_ENTRYPOINT,
+      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -228,7 +233,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: MAINNET_ENTRYPOINT,
+      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },

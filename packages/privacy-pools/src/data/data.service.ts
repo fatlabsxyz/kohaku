@@ -34,7 +34,7 @@ const txLogToRpcLog = ({
   blockTimestamp: '0x0',
   logIndex: `0x${index}` as const,
   removed: false,
-})
+});
 
 export interface DataServiceParams {
   provider: EthereumProvider;
@@ -149,9 +149,13 @@ export class DataService implements IDataService {
   }
 
   async getChainId() {
+
     const chainIdHex = await this.ethClient.request({
       method: "eth_chainId",
       params: [],
+    }).catch(e => {
+      console.log(e);
+      throw e;
     }) as string;
 
     return BigInt(chainIdHex);

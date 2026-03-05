@@ -6,6 +6,8 @@ import { type AnvilPool } from './anvil';
 import { InitialState, loadInitialState, MAINNET_ENTRYPOINT } from './common';
 import { createMockHost } from './mock-host';
 
+import { IRawPoolDepositEvent } from '../../src/data/interfaces/events.interface';
+import { IEntrypoint } from '../../src/plugin/interfaces/protocol-params.interface';
 /**
  * Fund an account with ETH using anvil pool's setBalance
  */
@@ -193,15 +195,17 @@ export async function getPoolStateRoot(pool: AnvilPool, poolAddress: bigint) {
 }
 
 interface SimplifiedProtocolParams {
+  entrypoint: IEntrypoint,
   host: Host,
-  initialState: InitialState;
+  initialState?: InitialState;
 }
 export const getProtocolWithState = ({
-  host = createMockHost(),
+  entrypoint,
+  host,
   initialState = loadInitialState()
-}: Partial<SimplifiedProtocolParams> = {}) => new PrivacyPoolsV1Protocol(host, {
+}: SimplifiedProtocolParams) => new PrivacyPoolsV1Protocol(host, {
   initialState,
-  entrypoint: MAINNET_ENTRYPOINT,
+  entrypoint,
 });
 
 export async function sendTx(signer: Wallet, { to, data, value }: { to: string; data: string; value: bigint; }) {

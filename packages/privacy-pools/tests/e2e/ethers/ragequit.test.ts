@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { E_ADDRESS } from '../../../src/config/constants';
-import { MAINNET_CONFIG } from '../../../src/config/index';
+import { E_ADDRESS } from '../../../src/config';
+import { chainConfigSetup } from '../../constants';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { ERC20Asset, getEnv, InitialState, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, InitialState, unwrapBalance } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { assetVettingFee, deductVettingFees, getProtocolWithState, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
@@ -12,9 +12,14 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
-  const MAINNET_FORK_URL = getEnv('MAINNET_RPC_URL', 'https://no-fallback');
-  const MAINNET_FORK_BLOCK = getEnv('MAINNET_FORK_BLOCK', '24528387');
-  const ENTRYPOINT_ADDRESS = BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS);
+  const chainId = 1;
+  const {
+    entrypoint,
+    rpcUrl,
+    forkBlockNumber,
+  } = chainConfigSetup[chainId];
+
+  const ENTRYPOINT_ADDRESS = entrypoint.entrypointAddress;
   // E_ADDRESS represents native ETH in Privacy Pools
   const nativeAsset = ERC20Asset(E_ADDRESS);
   let vettingFees: bigint;
@@ -22,9 +27,9 @@ describe('PrivacyPools v1 E2E Flow', () => {
   beforeAll(async () => {
 
     anvil = await defineAnvil({
-      forkUrl: MAINNET_FORK_URL,
-      forkBlockNumber: Number(MAINNET_FORK_BLOCK),
-      chainId: 1,
+      forkUrl: rpcUrl,
+      forkBlockNumber: Number(forkBlockNumber),
+      chainId,
     });
 
     await anvil.start();

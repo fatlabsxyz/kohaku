@@ -1,16 +1,18 @@
 import { type ERC20AssetId } from '@kohaku-eth/plugins';
-import { readFileSync, existsSync } from "node:fs";
-import { MAINNET_CONFIG, PPv1AssetBalance } from "../../src";
-import type { RootState } from "../../src/state/store";
+import { existsSync, readFileSync } from "node:fs";
 import { getAddress } from 'viem';
+import { PPv1AssetBalance } from "../../src";
+import type { RootState } from "../../src/state/store";
 
 // Helper to get environment variable with fallback
-export function getEnv(key: string, fallback: string): string {
+export function getEnv(key: string, fallback?: string): string {
   if (typeof process.env[key] === 'string' && process.env[key]) {
     return process.env[key] as string;
+  } else if (fallback) {
+    return fallback;
   }
 
-  return fallback;
+  throw new Error(`Env var ${key} is required and no fallback was provided`);
 }
 
 export type InitialState = Record<string, RootState>;
@@ -27,6 +29,7 @@ const PPV1_E2E_STATE_PATH_ENV = 'PPV1_E2E_STATE_PATH';
  */
 export function loadInitialState(): InitialState {
   const statePath = process.env[PPV1_E2E_STATE_PATH_ENV];
+  // const statePath = path.resolve("state.json");
 
   if (!statePath) {
     return {};
@@ -52,11 +55,6 @@ export function loadInitialState(): InitialState {
     return {};
   }
 }
-
-export const MAINNET_ENTRYPOINT = {
-  address: BigInt(MAINNET_CONFIG.ENTRYPOINT_ADDRESS),
-  deploymentBlock: 22153713n,
-};
 
 export function ERC20Asset(address: string): ERC20AssetId {
   return {

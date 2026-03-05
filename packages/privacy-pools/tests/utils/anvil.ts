@@ -3,12 +3,10 @@ import { anvil, type AnvilParameters } from 'prool/instances';
 import { JsonRpcProvider } from 'ethers';
 import getPort from 'get-port';
 
-export const ANVIL_PORT = 8545;
-
 type DefineAnvilParameters = {
   forkUrl: string;
-  forkBlockNumber?: number;
-  chainId?: number;
+  forkBlockNumber?: string | number;
+  chainId: number;
 };
 
 export interface AnvilPool {
@@ -65,7 +63,7 @@ export async function defineAnvil(params: DefineAnvilParameters): Promise<AnvilI
   const {
     forkUrl,
     forkBlockNumber,
-    chainId = 1,
+    chainId
   } = params;
 
   const port = await getPort();
