@@ -153,9 +153,6 @@ export class DataService implements IDataService {
     const chainIdHex = await this.ethClient.request({
       method: "eth_chainId",
       params: [],
-    }).catch(e => {
-      console.log(e);
-      throw e;
     }) as string;
 
     return BigInt(chainIdHex);
