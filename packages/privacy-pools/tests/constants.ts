@@ -4,7 +4,7 @@ import { getEnv } from "./utils/common";
 export const chainConfigSetup = {
   1: {
     rpcUrl: getEnv('SEPOLIA_RPC_URL'),
-    forkBlockNumber: getEnv('SEPOLIA_FORK_BLOCK', '24528387'),
+    forkBlockNumber: getEnv('PPV1_SEPOLIA_FORK_BLOCK', '24528387'),
     erc20Address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',  // USDC
     erc20WhaleAddress: '0x55FE002aefF02f77364de339a1292923A15844B8',
     entrypoint: {
@@ -15,7 +15,7 @@ export const chainConfigSetup = {
   },
   11155111: {
     rpcUrl: getEnv('SEPOLIA_RPC_URL'),
-    forkBlockNumber: getEnv('SEPOLIA_FORK_BLOCK', '8742157'),
+    forkBlockNumber: getEnv('PPV1_SEPOLIA_FORK_BLOCK', '8742157'),
     erc20Address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0',  // USDT
     erc20WhaleAddress: '0xc94b1BEe63A3e101FE5F71C80F912b4F4b055925',
     entrypoint: {
