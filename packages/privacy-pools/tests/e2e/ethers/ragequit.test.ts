@@ -6,23 +6,24 @@ import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
 import { ERC20Asset, InitialState, unwrapBalance } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
-import { assetVettingFee, deductVettingFees, getProtocolWithState, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
+import { deductVettingFees, getAssetConfig, getProtocolWithState, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
 
 describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
-  const chainId = 1;
+  const chainId = 11155111;
   const {
     entrypoint,
     rpcUrl,
     forkBlockNumber,
   } = chainConfigSetup[chainId];
 
-  const ENTRYPOINT_ADDRESS = entrypoint.entrypointAddress;
+  const ENTRYPOINT_ADDRESS = entrypoint.address;
   // E_ADDRESS represents native ETH in Privacy Pools
   const nativeAsset = ERC20Asset(E_ADDRESS);
   let vettingFees: bigint;
+  let poolAddress: string;
 
   beforeAll(async () => {
 
@@ -35,14 +36,19 @@ describe('PrivacyPools v1 E2E Flow', () => {
     await anvil.start();
 
     const pool = anvil.pool(1);
-    const _protocol = getProtocolWithState({
-      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl })
+    const { protocol: _protocol } = getProtocolWithState({
+      entrypoint,
+      host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
-    vettingFees = await assetVettingFee(await anvil.pool(1).getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
+    ({ vettingFeeBPS: vettingFees, pool: poolAddress } = await getAssetConfig({
+      provider: await anvil.pool(1).getProvider(),
+      entrypointAddress: ENTRYPOINT_ADDRESS,
+      asset: nativeAsset
+    }));
 
   }, 300_000);
 
@@ -56,8 +62,9 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const bob = await setupWallet(pool, TEST_ACCOUNTS.bob.privateKey);
 
     // Create host with pool-specific RPC URL
-    const protocol = getProtocolWithState({
-      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl }),
+    const { protocol } = getProtocolWithState({
+      entrypoint,
+      host: createMockHost({ rpcUrl: pool.rpcUrl }),
       initialState: latestState
     });
 
@@ -103,7 +110,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
 
     ragequitTxs.txns.map(({ to, data }) => {
       // mainnet ethereum pool
-      expect(to.toLowerCase()).toEqual("0xF241d57C6DebAe225c0F2e6eA1529373C9A9C9fB".toLowerCase());
+      expect(to.toLowerCase()).toEqual(poolAddress.toLowerCase());
       expect(data).toBeDefined();
       expect(data.startsWith("0x")).toBeTruthy();
     });

@@ -84,12 +84,16 @@ export async function defineAnvil(params: DefineAnvilParameters): Promise<AnvilI
       };
 
       const instance = anvil(anvilOptions);
-
-      stopFn = await createServer({
+      const server = createServer({
         limit: 100,
         instance,
         port,
-      }).start();
+      });
+      // server.on("message", (m) => console.log("INSTANCE", m));
+      // server.on("stdout", (m) => console.log("INSTANCE", m));
+      // server.on("request", (server) => console.log("INSTANCE", server.));
+
+      stopFn = await server.start();
     },
 
     async stop() {

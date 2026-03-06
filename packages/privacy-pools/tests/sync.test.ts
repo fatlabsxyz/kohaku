@@ -38,6 +38,7 @@ describe("Creates the dump state payload", () => {
   let anvil: AnvilInstance;
 
   const mockAspService = createMockAspService();
+
   mockAspService.addLabels([0n, 1n, 2n]);
 
   const chainId = 11155111;
@@ -65,7 +66,7 @@ describe("Creates the dump state payload", () => {
       12: anvil.pool(12),
     };
 
-    await Promise.all(Object.entries(pools).map(([_i, p]) => {
+    await Promise.all(Object.values(pools).map((p) => {
       // Create mock asp
       return pushNewAspRoot(
         p.rpcUrl,
@@ -104,17 +105,14 @@ describe("Creates the dump state payload", () => {
 
   });
 
-  it.skip("syncs [progressively]", { timeout: 0 }, async () => {
+  it("syncs [progressively]", { timeout: 0 }, async () => {
     const pool = pools[11];
 
     const { params } = mockParams();
     const host = createMockHost({ rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: {
-        address: entrypoint.entrypointAddress,
-        deploymentBlock: entrypoint.deploymentBlock
-      },
+      entrypoint,
       initialState: loadInitialState(),
       ...params
     });
@@ -123,17 +121,18 @@ describe("Creates the dump state payload", () => {
 
     const state = protocol.dumpState();
 
-    fs.writeFileSync("./state.updated.json", JSON.stringify(state));
+    fs.writeFileSync(`./state.${chainId}.updated.json`, JSON.stringify(state));
 
   });
 
-  it("no missing state leaves", { timeout: 0 }, async () => {
+  it.skip("no missing state leaves", { timeout: 0 }, async () => {
     const pool = pools[12];
     const initialState = loadInitialState();
 
     for (const protocol in initialState) {
       console.log(protocol);
       const state = initialState[protocol];
+
       for (const [address, leaves] of state.poolsLeaves.poolLeavesTuples) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const sortedLeaves = leaves.map(([index, leaf]) => leaf).sort((a, b) => Number(a.index) - Number(b.index));

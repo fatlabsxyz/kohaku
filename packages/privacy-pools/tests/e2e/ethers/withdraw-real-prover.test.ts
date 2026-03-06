@@ -18,7 +18,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
-  const chainId = 1;
+  const chainId = 11155111;
   const {
     entrypoint,
     rpcUrl,
@@ -26,7 +26,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     postman,
   } = chainConfigSetup[chainId];
 
-  const ENTRYPOINT_ADDRESS = entrypoint.entrypointAddress;
+  const ENTRYPOINT_ADDRESS = entrypoint.address;
   const POSTMAN_ADDRESS = BigInt(postman);
 
   const nativeAsset = ERC20Asset(E_ADDRESS);
@@ -43,14 +43,19 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     await anvil.start();
 
     const pool = anvil.pool(1);
-    const _protocol = getProtocolWithState({
-      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl })
+    const { protocol: _protocol } = getProtocolWithState({
+      entrypoint,
+      host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
-    vettingFees = await assetVettingFee(await pool.getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
+    vettingFees = await assetVettingFee({
+      provider: await pool.getProvider(),
+      entrypointAddress: ENTRYPOINT_ADDRESS,
+      asset: nativeAsset
+    });
 
   }, 300000);
 
@@ -73,10 +78,10 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
-    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
+    const host = createMockHost({ rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
+      entrypoint,
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -160,10 +165,10 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
-    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
+    const host = createMockHost({ rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
+      entrypoint,
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -230,10 +235,10 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
-    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
+    const host = createMockHost({ rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
+      entrypoint,
       initialState: latestState,
       proverFactory: () => Prover(), // Use real prover
       relayersList: { 'mock-relayer': 'http://mock.relayer' },

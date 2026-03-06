@@ -19,7 +19,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
-  const chainId = 1;
+  const chainId = 11155111;
   const {
     entrypoint,
     rpcUrl,
@@ -27,7 +27,7 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     postman,
   } = chainConfigSetup[chainId];
 
-  const ENTRYPOINT_ADDRESS = entrypoint.entrypointAddress;
+  const ENTRYPOINT_ADDRESS = entrypoint.address;
   const POSTMAN_ADDRESS = BigInt(postman);
 
   const nativeAsset = ERC20Asset(E_ADDRESS);
@@ -44,14 +44,19 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     await anvil.start();
 
     const pool = anvil.pool(1);
-    const _protocol = getProtocolWithState({
-      host: createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl })
+    const { protocol: _protocol } = getProtocolWithState({
+      entrypoint,
+      host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 
     await _protocol.sync();
     latestState = _protocol.dumpState();
 
-    vettingFees = await assetVettingFee(await pool.getProvider(), ENTRYPOINT_ADDRESS, nativeAsset);
+    vettingFees = await assetVettingFee({
+      provider: await pool.getProvider(),
+      entrypointAddress: ENTRYPOINT_ADDRESS,
+      asset: nativeAsset
+    });
 
   }, 300000);
 
@@ -74,10 +79,10 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     // Create mock relayer
     const mockRelayerClient = createMockRelayerClient({ feeBPS: '100' });
 
-    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
+    const host = createMockHost({ rpcUrl: pool.rpcUrl });
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
+      entrypoint,
       initialState: latestState,
       proverFactory: mockProverFactory,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
@@ -166,9 +171,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
       getFees: cheapRelayer.getFees,
     };
 
-    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
+    const host = createMockHost({ rpcUrl: pool.rpcUrl });
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
+      entrypoint,
       relayersList: {
         'expensive-relayer': 'http://expensive.relayer',
         'cheap-relayer': 'http://cheap.relayer',
@@ -238,9 +243,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
 
     const mockRelayerClient = createMockRelayerClient();
 
-    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
+    const host = createMockHost({ rpcUrl: pool.rpcUrl });
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
+      entrypoint,
       initialState: latestState,
       relayersList: { 'mock-relayer': 'http://mock.relayer' },
       relayerClientFactory: () => mockRelayerClient,
@@ -275,9 +280,9 @@ describe('PrivacyPools v1 Unshield E2E', () => {
     // Create a failing relayer
     const failingRelayer = createMockRelayerClient({ shouldFail: true });
 
-    const host = createMockHost({ mnemonic: undefined, rpcUrl: pool.rpcUrl });
+    const host = createMockHost({ rpcUrl: pool.rpcUrl });
     const protocol = new PrivacyPoolsV1Protocol(host, {
-      entrypoint: { address: entrypoint.entrypointAddress, deploymentBlock: entrypoint.deploymentBlock },
+      entrypoint,
       initialState: latestState,
       relayersList: { 'failing-relayer': 'http://failing.relayer' },
       relayerClientFactory: () => failingRelayer,
