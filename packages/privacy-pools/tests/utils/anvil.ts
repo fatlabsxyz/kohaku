@@ -89,9 +89,6 @@ export async function defineAnvil(params: DefineAnvilParameters): Promise<AnvilI
         instance,
         port,
       });
-      // server.on("message", (m) => console.log("INSTANCE", m));
-      // server.on("stdout", (m) => console.log("INSTANCE", m));
-      // server.on("request", (server) => console.log("INSTANCE", server.));
 
       stopFn = await server.start();
     },
