@@ -5,7 +5,6 @@ import * as path from "node:path";
 import { getAddress } from 'viem';
 import { PPv1AssetBalance } from "../../src";
 import type { RootState } from "../../src/state/store";
-import { gunzipFile } from './gunzip';
 
 // Helper to get environment variable with fallback
 export function getEnv(key: string, fallback?: string): string {
