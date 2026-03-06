@@ -9,7 +9,7 @@ import {
 
 import { TxData } from "packages/provider/dist/index.js";
 import { ISecretManager, SecretManager } from "../account/keys";
-import { AspService } from "../data/asp.service";
+import { IPFSAspService } from "../data/ipfsAsp.service.js";
 import { DataService } from "../data/data.service";
 import { IRelayerClient } from "../relayer/interfaces/relayer-client.interface";
 import { RelayerClient } from "../relayer/relayer-client";
@@ -56,7 +56,7 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
       entrypoint,
       relayersList = {},
       ipfsUrl,
-      aspServiceFactory = () => new AspService({ network: host.network, ipfsUrl }),
+      aspServiceFactory = () => new IPFSAspService({ network: host.network, ipfsUrl }),
       relayerClientFactory = () => new RelayerClient({ network: host.network }),
       proverFactory = Prover,
     }: RequireOnly<PrivacyPoolsV1ProtocolParams, "entrypoint">,

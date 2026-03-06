@@ -2,7 +2,7 @@ export * from './v1';
 export * from './v2';
 // Main factory
 export { PrivacyPoolsV1Protocol } from './plugin/base';
-export { AspService } from './data/asp.service';
+export { IPFSAspService as AspService } from './data/ipfsAsp.service.js';
 export { SecretManager } from './account/keys';
 
 // Types
