@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { E_ADDRESS } from '../../../src/config';
 import { chainConfigSetup } from '../../constants';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { ERC20Asset, InitialState, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, InitialState, loadInitialState, unwrapBalance } from '../../utils/common';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { deductVettingFees, getAssetConfig, getProtocolWithState, sendTxAndWait, setupWallet } from '../../utils/test-helpers';
@@ -38,6 +38,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const pool = anvil.pool(1);
     const { protocol: _protocol } = getProtocolWithState({
       entrypoint,
+      initialState: await loadInitialState(),
       host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 

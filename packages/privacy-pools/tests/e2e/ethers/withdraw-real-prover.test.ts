@@ -6,7 +6,7 @@ import { E_ADDRESS } from '../../../src/config';
 import { PrivacyPoolsV1Protocol } from '../../../src/index';
 import { chainConfigSetup } from '../../constants';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { ERC20Asset, InitialState, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, InitialState, loadInitialState, unwrapBalance } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { createMockRelayerClient } from '../../utils/mock-relayer';
@@ -45,6 +45,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const pool = anvil.pool(1);
     const { protocol: _protocol } = getProtocolWithState({
       entrypoint,
+      initialState: await loadInitialState(),
       host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 

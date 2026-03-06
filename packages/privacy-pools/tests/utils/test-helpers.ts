@@ -4,7 +4,7 @@ import { AbiCoder, CallExceptionError, Contract, ContractTransactionResponse, ge
 import { PrivacyPoolsV1Protocol } from '../../src';
 import { IEntrypoint } from '../../src/plugin/interfaces/protocol-params.interface';
 import { type AnvilPool } from './anvil';
-import { InitialState, loadInitialState } from './common';
+import { InitialState } from './common';
 import { createMockAspService, IMockAspService } from './mock-asp-service';
 /**
  * Fund an account with ETH using anvil pool's setBalance
@@ -218,7 +218,7 @@ interface SimplifiedProtocolParams {
 export const getProtocolWithState = ({
   entrypoint,
   host,
-  initialState = loadInitialState(),
+  initialState,
   aspServiceFactory = createMockAspService,
 }: SimplifiedProtocolParams) => {
   const aspService = aspServiceFactory();

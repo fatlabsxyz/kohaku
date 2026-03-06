@@ -5,7 +5,7 @@ import { E_ADDRESS } from '../../../src/config';
 import { addressToHex } from '../../../src/utils';
 import { chainConfigSetup } from '../../constants';
 import { defineAnvil, type AnvilInstance } from '../../utils/anvil';
-import { ERC20Asset, InitialState, unwrapBalance } from '../../utils/common';
+import { ERC20Asset, InitialState, loadInitialState, unwrapBalance } from '../../utils/common';
 import { createMockAspService } from '../../utils/mock-asp-service';
 import { createMockHost } from '../../utils/mock-host';
 import { TEST_ACCOUNTS } from '../../utils/test-accounts';
@@ -52,6 +52,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const pool = anvil.pool(1);
     const { protocol: _protocol } = getProtocolWithState({
       entrypoint,
+      initialState: await loadInitialState(),
       host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 

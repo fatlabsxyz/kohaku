@@ -1,8 +1,11 @@
 import { type ERC20AssetId } from '@kohaku-eth/plugins';
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import * as path from "node:path";
 import { getAddress } from 'viem';
 import { PPv1AssetBalance } from "../../src";
 import type { RootState } from "../../src/state/store";
+import { gunzipFile } from './gunzip';
 
 // Helper to get environment variable with fallback
 export function getEnv(key: string, fallback?: string): string {
@@ -27,9 +30,12 @@ const PPV1_E2E_STATE_PATH_ENV = 'PPV1_E2E_STATE_PATH';
  *          or an empty object if the env var is not set or the file
  *          cannot be loaded/parsed.
  */
-export function loadInitialState(): InitialState {
-  const statePath = process.env[PPV1_E2E_STATE_PATH_ENV];
-  // const statePath = path.resolve("state.json");
+export async function loadInitialState(): Promise<InitialState> {
+  const default_state = path.resolve(path.join(__dirname, "..", "state.11155111.json"));
+  const statePath = getEnv(
+    PPV1_E2E_STATE_PATH_ENV,
+    default_state
+  );
 
   if (!statePath) {
     return {};
@@ -42,7 +48,7 @@ export function loadInitialState(): InitialState {
       return {};
     }
 
-    const rawState = readFileSync(statePath, 'utf-8');
+    const rawState = await readFile(statePath, 'utf-8');
     const state = JSON.parse(rawState) as InitialState;
 
     Object.entries(state).forEach(([key, val]) => console.log("Last synced block:", key, Number(val.sync.lastSyncedBlock)));

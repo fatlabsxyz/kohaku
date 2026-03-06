@@ -113,7 +113,7 @@ describe("Creates the dump state payload", () => {
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
       entrypoint,
-      initialState: loadInitialState(),
+      initialState: await loadInitialState(),
       ...params
     });
 
@@ -127,7 +127,7 @@ describe("Creates the dump state payload", () => {
 
   it.skip("no missing state leaves", { timeout: 0 }, async () => {
     const pool = pools[12];
-    const initialState = loadInitialState();
+    const initialState = await loadInitialState();
 
     for (const protocol in initialState) {
       console.log(protocol);
