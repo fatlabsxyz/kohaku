@@ -105,7 +105,7 @@ describe("Creates the dump state payload", () => {
 
   });
 
-  it("syncs [progressively]", { timeout: 0 }, async () => {
+  it.skip("syncs [progressively]", { timeout: 0 }, async () => {
     const pool = pools[11];
 
     const { params } = mockParams();
@@ -125,7 +125,7 @@ describe("Creates the dump state payload", () => {
 
   });
 
-  it.skip("no missing state leaves", { timeout: 0 }, async () => {
+  it("no missing state leaves", { timeout: 0 }, async () => {
     const pool = pools[12];
     const initialState = await loadInitialState();
 
