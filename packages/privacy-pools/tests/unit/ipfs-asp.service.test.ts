@@ -22,7 +22,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const result = await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -38,7 +38,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
       });
 
       await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -56,7 +56,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
         ipfsUrl: customUrl,
       });
 
@@ -73,7 +73,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const result = await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -81,6 +81,7 @@ describe('IPFSAspService', () => {
       // Verify each level contains bigints
       for (let i = 0; i < result.length; i++) {
         expect(result[i]).toEqual(MOCK_TREE[i].map(BigInt));
+
         // Verify they are actually bigints
         for (const value of result[i]) {
           expect(typeof value).toBe('bigint');
@@ -100,7 +101,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const result = await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -113,7 +114,7 @@ describe('IPFSAspService', () => {
       const mockFetch = createFailingFetch(new Error('IPFS gateway unavailable'));
 
       const service = new IPFSAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       await expect(
@@ -129,7 +130,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const result = await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -143,7 +144,7 @@ describe('IPFSAspService', () => {
       updateRootEvents: {
         lastUpdateRootEvent: lastUpdateRootEvent,
       },
-    } as any);
+    } as unknown as RootState);
 
     it('extracts CID from lastUpdateRootEvent in state', async () => {
       const trackedFetch = createTrackedMockFetch({
@@ -153,7 +154,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
       });
 
       const state = createMockState({
@@ -175,7 +176,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const state = createMockState(null);
@@ -193,7 +194,7 @@ describe('IPFSAspService', () => {
       });
 
       const service = new IPFSAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const state = createMockState({

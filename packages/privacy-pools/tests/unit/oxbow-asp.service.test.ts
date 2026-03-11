@@ -23,7 +23,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const result = await service.getAspTreeOxBow({
@@ -41,6 +41,7 @@ describe('OxBowAspService', () => {
 
       // Verify root is computed correctly
       const expectedRoot = computeMerkleTreeRoot(MOCK_LEAVES.map(BigInt));
+
       expect(result[1][0]).toBe(expectedRoot);
     });
 
@@ -52,7 +53,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
       });
 
       await service.getAspTreeOxBow({
@@ -72,7 +73,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
       });
 
       await service.getAspTreeOxBow({
@@ -82,6 +83,7 @@ describe('OxBowAspService', () => {
 
       expect(trackedFetch.calls).toHaveLength(1);
       const headers = trackedFetch.calls[0].init?.headers as Record<string, string>;
+
       expect(headers['X-Pool-Scope']).toBe(TEST_SCOPE.toString(10));
     });
 
@@ -94,7 +96,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
         aspUrl: customUrl,
       });
 
@@ -110,7 +112,7 @@ describe('OxBowAspService', () => {
       const mockFetch = createFailingFetch(new Error('Network error'));
 
       const service = new OxBowAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       await expect(
@@ -129,7 +131,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       await expect(
@@ -148,7 +150,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       await expect(
@@ -167,7 +169,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       await expect(
@@ -180,6 +182,7 @@ describe('OxBowAspService', () => {
   });
 
   describe('getAspTree', () => {
+
     const createMockState = (chainId: number, pools: Array<[string, { scope: string }]> = []): Partial<RootState> => ({
       entrypointInfo: {
         chainId,
@@ -189,7 +192,7 @@ describe('OxBowAspService', () => {
       pools: {
         poolsTuples: pools,
       },
-    } as any);
+    } as unknown as RootState);
 
     it('extracts chainId and scope from state', async () => {
       const trackedFetch = createTrackedMockFetch({
@@ -199,7 +202,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
       });
 
       const state = createMockState(Number(TEST_CHAIN_ID), [
@@ -211,6 +214,7 @@ describe('OxBowAspService', () => {
       expect(trackedFetch.calls).toHaveLength(1);
       expect(trackedFetch.calls[0].url).toContain(`${Number(TEST_CHAIN_ID)}/public/mt-leaves`);
       const headers = trackedFetch.calls[0].init?.headers as Record<string, string>;
+
       expect(headers['X-Pool-Scope']).toBe(TEST_SCOPE.toString(10));
     });
 
@@ -222,7 +226,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: mockFetch } as any,
+        network: { fetch: mockFetch },
       });
 
       const state = createMockState(Number(TEST_CHAIN_ID), []);
@@ -240,7 +244,7 @@ describe('OxBowAspService', () => {
       });
 
       const service = new OxBowAspService({
-        network: { fetch: trackedFetch.fetch } as any,
+        network: { fetch: trackedFetch.fetch },
       });
 
       const firstScope = '12345';
@@ -253,6 +257,7 @@ describe('OxBowAspService', () => {
       await service.getAspTree(state as RootState);
 
       const headers = trackedFetch.calls[0].init?.headers as Record<string, string>;
+
       expect(headers['X-Pool-Scope']).toBe(firstScope);
     });
   });

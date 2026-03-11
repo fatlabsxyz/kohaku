@@ -17,7 +17,7 @@ describe('ASP Services Integration', () => {
   describe('OxBowAspService', () => {
     it('fetches merkle tree from 0xbow API', { timeout: 30000 }, async () => {
       const service = new OxBowAspService({
-        network: { fetch } as any,
+        network: { fetch },
         aspUrl: TEST_ASP_URL
       });
 
@@ -35,7 +35,7 @@ describe('ASP Services Integration', () => {
 
     it('returns valid merkle tree structure', { timeout: 30000 }, async () => {
       const service = new OxBowAspService({
-        network: { fetch } as any,
+        network: { fetch },
         aspUrl: TEST_ASP_URL
       });
 
@@ -61,7 +61,7 @@ describe('ASP Services Integration', () => {
       const SNARK_SCALAR_FIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 
       const service = new OxBowAspService({
-        network: { fetch } as any,
+        network: { fetch },
         aspUrl: TEST_ASP_URL
       });
 
@@ -81,7 +81,7 @@ describe('ASP Services Integration', () => {
   describe('IPFSAspService', () => {
     it('fetches merkle tree from IPFS gateway', { timeout: 30000 }, async () => {
       const service = new IPFSAspService({
-        network: { fetch } as any,
+        network: { fetch },
       });
 
       const result = await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -93,7 +93,7 @@ describe('ASP Services Integration', () => {
 
     it('returns valid bigint[][] structure', { timeout: 30000 }, async () => {
       const service = new IPFSAspService({
-        network: { fetch } as any,
+        network: { fetch },
       });
 
       const result = await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -101,6 +101,7 @@ describe('ASP Services Integration', () => {
       // Each level should be an array of bigints
       for (const level of result) {
         expect(Array.isArray(level)).toBe(true);
+
         for (const value of level) {
           expect(typeof value).toBe('bigint');
           expect(value >= 0n).toBe(true);
@@ -110,7 +111,7 @@ describe('ASP Services Integration', () => {
 
     it('tree has expected merkle tree structure (each level halves)', { timeout: 30000 }, async () => {
       const service = new IPFSAspService({
-        network: { fetch } as any,
+        network: { fetch },
       });
 
       const result = await service.getAspTreeIPFS({ ipfsCID: TEST_IPFS_CID });
@@ -125,6 +126,7 @@ describe('ASP Services Integration', () => {
       for (let i = 1; i < result.length; i++) {
         const prevLen = result[i - 1].length;
         const currLen = result[i].length;
+
         // Current level should have at most as many elements as previous
         expect(currLen).toBeLessThanOrEqual(prevLen);
       }

@@ -8,6 +8,7 @@ const SNARK_SCALAR_FIELD = BigInt('218882428718392752222464057452572750885483644
 
 export function computeMerkleTreeRoot(leaves: bigint[]) {
   const tree = new LeanIMT<bigint>((a, b) => poseidon([a, b]));
+
   tree.insertMany(leaves);
 
   return tree.root

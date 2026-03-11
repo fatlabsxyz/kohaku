@@ -13,6 +13,7 @@ export interface MockFetchOptions {
 export function createMockFetch(options: MockFetchOptions): typeof fetch {
   const { responses, defaultError } = options;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return async (input: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.toString();
 
@@ -51,9 +52,11 @@ export function createTrackedMockFetch(options: MockFetchOptions): TrackedMockFe
 
   const fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.toString();
+
     calls.push({ url, init });
 
     const baseFetch = createMockFetch(options);
+
     return baseFetch(input, init);
   };
 
