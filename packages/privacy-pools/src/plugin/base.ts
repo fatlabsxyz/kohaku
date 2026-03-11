@@ -91,18 +91,25 @@ export class PrivacyPoolsV1Protocol implements PPv1Instance {
    */
   async balance(assets: ERC20AssetId[] = []): Promise<PPv1AssetBalance[]> {
     await this.stateManager.sync();
-    const parsedAssets = assets.map(({ contract }) => BigInt(contract));
+    const parsedDesiredAssets = assets.map(({ contract }) => BigInt(contract));
 
     const balances = await this.stateManager.getBalances(
-      assets.length > 0 ? parsedAssets : undefined,
+      assets.length > 0 ? parsedDesiredAssets : undefined,
       "both",
     );
+    
+    const actuallySelectedAssets = assets.length > 0 ? assets.map((a) => a.contract) : [...balances.keys()].map((a) => addressToHex(a))
 
-    return assets.map((asset, index) => {
-      const { approved, unapproved } = balances.get(parsedAssets[index]!) || {
+    return actuallySelectedAssets.map((assetAddress, index) => {
+      const { approved, unapproved } = balances.get(BigInt(actuallySelectedAssets[index]!)) || {
         approved: 0n,
         unapproved: 0n
       };
+
+      const asset: ERC20AssetId = {
+        contract: assetAddress,
+        __type: 'erc20'
+      }; 
 
       return [{
         asset,
