@@ -2,6 +2,7 @@ import { Broadcaster } from "@kohaku-eth/plugins/broadcaster";
 import { AssetAmount, ERC20AssetId, PluginInstance } from "@kohaku-eth/plugins";
 import { IEntrypoint, INote, PPv1PrivateOperation, PPv1PublicOperation } from '../plugin/interfaces/protocol-params.interface.js';
 import { Address } from 'ox/Address';
+import { IAspService } from "../data/asp.interface.js";
 
 export type PPv1BroadcasterParameters = {
     broadcasterUrl: string | Record<string, string>;
@@ -10,6 +11,7 @@ export type PPv1Broadcaster = Broadcaster<PPv1BroadcasterParameters, PPv1Private
 export interface PPv1PluginParameters extends PPv1BroadcasterParameters, PPv1BaseCredential {
     entrypoint: IEntrypoint;
     ipfsUrl?: string;
+    aspServiceFactory?: () => IAspService
 };
 export interface PPv1PluginWithMnemonicParameters extends PPv1PluginParameters {
     mnemonic: string;
