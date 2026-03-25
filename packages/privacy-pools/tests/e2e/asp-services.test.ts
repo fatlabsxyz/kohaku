@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, inject } from 'vitest';
 import { OxBowAspService } from '../../src/data/0xbowAsp.service';
 import { IPFSAspService } from '../../src/data/ipfsAsp.service';
 
@@ -9,7 +9,7 @@ import { IPFSAspService } from '../../src/data/ipfsAsp.service';
  */
 describe('ASP Services Integration', () => {
   // Test data (Sepolia)
-  const TEST_CHAIN_ID = 11155111n;
+  const TEST_CHAIN_ID = inject('chainId');
   const TEST_ASP_URL = "https://dw.0xbow.io";
   const TEST_SCOPE = 9423591183392302543658559874370404687995075471172962430042059179876435583731n;
   const TEST_IPFS_CID = 'bafybeihrecrgyfkzyzli2oxnpfos5z2fgjt7zs52cbjyppigu64hva4z3i';

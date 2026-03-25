@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 
 import { PrivacyPoolsV1Protocol } from '../src/index';
 import { addressToHex } from "../src/utils";
@@ -41,7 +41,7 @@ describe("Creates the dump state payload", () => {
 
   mockAspService.addLabels([0n, 1n, 2n]);
 
-  const chainId = 11155111;
+  const chainId = inject('chainId');
   const {
     entrypoint,
     rpcUrl,
@@ -113,7 +113,7 @@ describe("Creates the dump state payload", () => {
 
     const protocol = new PrivacyPoolsV1Protocol(host, {
       entrypoint,
-      initialState: await loadInitialState(),
+      initialState: await loadInitialState(chainId),
       ...params
     });
 
@@ -127,7 +127,7 @@ describe("Creates the dump state payload", () => {
 
   it("no missing state leaves", { timeout: 0 }, async () => {
     const pool = pools[12];
-    const initialState = await loadInitialState();
+    const initialState = await loadInitialState(chainId);
 
     for (const protocol in initialState) {
       console.log(protocol);

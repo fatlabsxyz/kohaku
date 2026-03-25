@@ -18,7 +18,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
-  const chainId = 11155111;
+  const chainId = inject('chainId');
   const {
     entrypoint,
     forkBlockNumber,
@@ -45,7 +45,7 @@ describe('PrivacyPools v1 Unshield E2E (Real Prover)', () => {
     const pool = anvil.pool(1);
     const { protocol: _protocol } = getProtocolWithState({
       entrypoint,
-      initialState: await loadInitialState(),
+      initialState: await loadInitialState(chainId),
       host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 

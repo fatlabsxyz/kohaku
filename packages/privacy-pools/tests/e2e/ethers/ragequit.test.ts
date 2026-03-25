@@ -12,7 +12,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
   let anvil: AnvilInstance;
   let latestState: InitialState;
 
-  const chainId = 11155111;
+  const chainId = inject('chainId');
   const {
     entrypoint,
     forkBlockNumber,
@@ -38,7 +38,7 @@ describe('PrivacyPools v1 E2E Flow', () => {
     const pool = anvil.pool(1);
     const { protocol: _protocol } = getProtocolWithState({
       entrypoint,
-      initialState: await loadInitialState(),
+      initialState: await loadInitialState(chainId),
       host: createMockHost({ rpcUrl: pool.rpcUrl })
     });
 
