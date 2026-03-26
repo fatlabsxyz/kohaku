@@ -12,7 +12,7 @@ import { createMockAspService } from './utils/mock-asp-service';
 import { createMockHost } from './utils/mock-host';
 import { mockProverFactory } from './utils/mock-prover';
 import { createMockRelayerClient } from './utils/mock-relayer';
-import { getPoolStateRoot, pushNewAspRoot } from './utils/test-helpers';
+import { getPoolStateRoot, MOCK_IPFS_CID, pushNewAspRoot } from './utils/test-helpers';
 
 const mockParams = () => {
   // Create mock asp
@@ -74,7 +74,7 @@ describe("Creates the dump state payload", () => {
         postman,
         {
           _root: mockAspService.getRoot(),
-          _ipfsCID: "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+          _ipfsCID: MOCK_IPFS_CID
         }
       );
     }));
@@ -105,7 +105,7 @@ describe("Creates the dump state payload", () => {
 
   });
 
-  it.skip("syncs [progressively]", { timeout: 0 }, async () => {
+  it("syncs [progressively]", { timeout: 0 }, async () => {
     const pool = pools[11];
 
     const { params } = mockParams();
