@@ -1,8 +1,14 @@
-autoInstallPeers: false
 packages:
-  - "packages/provider"
-  - "packages/railgun"
-  - "packages/privacy-pools"
-  - "packages/plugins"
-  - "examples/pq-account"
-  - "docs"
+  - packages/provider
+  - packages/railgun
+  - packages/privacy-pools
+  - packages/plugins
+  - packages/tornado-cash
+  - examples/pq-account
+  - docs
+
+autoInstallPeers: false
+
+onlyBuiltDependencies:
+  - blake-hash
+  - esbuild
