@@ -8,7 +8,7 @@ import { createBroadcaster } from "./waku-adapter";
 import { SignerPool } from "./signer-pool";
 
 export async function loadRailgunProvider(host: Host): Promise<RailgunPlugin> {
-    const savedState = host.storage.get(STATE_KEY);
+    const savedState = await host.storage.get(STATE_KEY);
 
     if (!savedState) {
         throw new Error("No saved state found for Railgun plugin");

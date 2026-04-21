@@ -314,7 +314,7 @@ export class RailgunPlugin implements RGInstance, RGBroadcaster {
             version: '0.1.0',
         };
 
-        this.storage.set(STATE_KEY, JSON.stringify(state));
+        await this.storage.set(STATE_KEY, JSON.stringify(state));
     }
 };
 
