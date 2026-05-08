@@ -24,6 +24,7 @@ import { getWithdrawableDepositsSelector } from "./selectors/withdrawals.selecto
 import { PublicRootState, storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
+import { paymasterWithdrawThunk } from "./thunks/paymasterWithdrawThunk";
 import { getDepositPayloadThunk } from "./thunks/getDepositPayloadThunk";
 import { IDataService } from "../data/interfaces/data.service.interface";
 import { DEFAULT_MAINNET_FEE_CONFIG, DEFAULT_OTHER_FEE_CONFIG, IRelayerFeeConfig, setRelayerFeeConfig } from "./slices/relayersSlice";
@@ -212,13 +213,26 @@ export const storeStateManager = async ({
         ),
       );
     },
-    getWithdrawalPayloads: async ({
-      asset,
-      amount,
-      recipient,
-      preferredRelayersEns
-    }: IWithdrawapOperationParams): Promise<IWithdrawalPayload[]> => {
+    getWithdrawalPayloads: async (params: IWithdrawapOperationParams): Promise<IWithdrawalPayload[]> => {
       const store = await getChainStore(await getChainInfo());
+      const { asset, amount, recipient } = params;
+
+      if (params.mode === 'paymaster') {
+        return unwrapResult(
+          await store.dispatch(
+            paymasterWithdrawThunk({
+              proverFactory,
+              recipient,
+              getWithdrawableDeposits: store.selectors.getWithdrawableDeposits,
+              dataService,
+              assetAddress: asset,
+              amount,
+              paymasterConfig: params.paymasterConfig,
+              secretManager,
+            }),
+          ),
+        );
+      }
 
       return unwrapResult(
         await store.dispatch(
@@ -230,10 +244,11 @@ export const storeStateManager = async ({
             dataService,
             assetAddress: asset,
             amount,
-            preferredRelayersEns: preferredRelayersEns ? new Set(preferredRelayersEns) : undefined
+            preferredRelayersEns: params.preferredRelayersEns ? new Set(params.preferredRelayersEns) : undefined
           }),
         ),
       );
+
     },
     dumpState: () => getAllStores(),
   };

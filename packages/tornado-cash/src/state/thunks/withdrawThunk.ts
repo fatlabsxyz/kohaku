@@ -113,6 +113,7 @@ export const withdrawThunk = createAsyncThunk<
       const proof = unwrapResult(withdrawResultAction);
 
       return {
+        mode: 'relayer' as const,
         proof,
         poolAddress: deposit.pool,
         relayerUrl,

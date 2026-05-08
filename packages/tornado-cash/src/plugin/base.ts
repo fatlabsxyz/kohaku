@@ -137,7 +137,7 @@ export class TornadoCashProtocol implements TCInstance {
   async prepareUnshield(
     assets: AssetAmount,
     to: AccountId,
-    { preferredRelayersEns }: TCPrepareUnshieldOptions = {}
+    options?: TCPrepareUnshieldOptions,
   ): Promise<TCPrivateOperation> {
     const { asset, amount } = assets;
     const parsedAsset = BigInt(asset.contract);
@@ -145,12 +145,27 @@ export class TornadoCashProtocol implements TCInstance {
 
     await stateManager.sync();
 
-    const withdrawals = await stateManager.getWithdrawalPayloads({
+    const baseParams = {
       asset: parsedAsset === E_ADDRESS_BIGINT ? 0n : parsedAsset,
       amount,
       recipient: BigInt(to),
-      preferredRelayersEns
-    });
+    };
+
+    let withdrawals: Awaited<ReturnType<IStateManager['getWithdrawalPayloads']>>;
+
+    if (options && options.mode === 'paymaster') {
+      withdrawals = await stateManager.getWithdrawalPayloads({
+        ...baseParams,
+        mode: 'paymaster',
+        paymasterConfig: options.paymasterConfig,
+      });
+    } else {
+      withdrawals = await stateManager.getWithdrawalPayloads({
+        ...baseParams,
+        mode: 'relayer',
+        preferredRelayersEns: options?.preferredRelayersEns,
+      });
+    }
 
     return {
       __type: 'privateOperation',

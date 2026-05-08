@@ -12,5 +12,6 @@ autoInstallPeers: false
 onlyBuiltDependencies:
   - blake-hash
   - esbuild
+  - keccak
 patchedDependencies:
   snarkjs@0.1.20: patches/snarkjs@0.1.20.patch

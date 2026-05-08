@@ -38,6 +38,7 @@ type DeriveSecretsParams = BaseDeriveSecretParams & {
 
 export interface ISecretManager {
   getDepositSecrets: (params: DeriveDepositSecretParams) => Promise<Secret>;
+  deriveEphemeralSigner: (index: number) => Promise<`0x${string}`>;
 }
 
 export interface SecretManagerParams {
@@ -95,8 +96,15 @@ export async function SecretManager({
     return { nullifier, salt, commitment, nullifierHash };
   };
 
+  const deriveEphemeralSigner = async (index: number) => {
+    const path = `${TORNADO_CASH_PATH}/${accountIndex}'/2'/${index}'`;
+
+    return Promise.resolve(keystore.deriveAt(path));
+  };
+
   return {
     getDepositSecrets: (params) => deriveSecrets(params),
+    deriveEphemeralSigner,
   };
 }
 

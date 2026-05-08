@@ -1,6 +1,6 @@
 import { Broadcaster } from "@kohaku-eth/plugins/broadcaster";
 import { AssetAmount, ERC20AssetId, PluginInstance } from "@kohaku-eth/plugins";
-import { TCPrivateOperation, TCPublicOperation, PrivacyPoolsV1ProtocolParams, ITornadoArtifacts, TCProtocolConfig } from '../plugin/interfaces/protocol-params.interface.js';
+import { IPaymasterConfig, TCPrivateOperation, TCPublicOperation, PrivacyPoolsV1ProtocolParams, ITornadoArtifacts, TCProtocolConfig } from '../plugin/interfaces/protocol-params.interface.js';
 import { Address } from 'ox/Address';
 import { IRelayerClient, ITornadoWithdrawResponse } from "../relayer/interfaces/relayer-client.interface.js";
 import { DepositStrategy } from '../state/thunks/getDepositPayloadThunk.js';
@@ -27,9 +27,9 @@ export type TCAddress = Address;
 export type TCAssetAmount<Tag extends string | undefined = undefined> = AssetAmount<ERC20AssetId, bigint, Tag>;
 export type TCAssetBalance = TCAssetAmount;
 
-export interface TCPrepareUnshieldOptions {
-    preferredRelayersEns?: string[];
-}
+export type TCPrepareUnshieldOptions =
+    | { mode: 'relayer'; preferredRelayersEns?: string[] }
+    | { mode: 'paymaster'; paymasterConfig: IPaymasterConfig };
 
 export interface TCPrepareShieldOptions {
     strategy: DepositStrategy;
