@@ -1,9 +1,11 @@
 import { BundlerClient, GasConfig, TornadoBuilder } from 'privacy-paymaster';
 import { type Hash } from 'viem';
+import { generatePrivateKey } from 'viem/accounts';
 
-import { IPaymasterWithdrawalPayload } from '../plugin/interfaces/protocol-params.interface';
+import { IPaymasterWithdrawalPayload, SignedDelegation } from '../plugin/interfaces/protocol-params.interface';
 import { EthereumProvider } from '@kohaku-eth/provider';
 import { reasonableGasUnits } from './fee';
+import { signDelegationAuthorization } from './utils';
 
 export interface PaymasterBroadcastResult {
   userOpHash: Hash;
@@ -43,14 +45,19 @@ export class PaymasterBroadcaster {
       paymasterAddress,
       entryPointAddress,
       bundlerUrl,
-      senderAddress,
-      authorization
+      accountAddress,
     } = withdrawal;
     const [root, nullifierHash, recipient, _paymasterAddress, feeHex, _refund] = proofArgs;
 
     if (BigInt(paymasterAddress) !== BigInt(_paymasterAddress)) {
       throw new Error(`relayer must be paymaster when using the 4337 paymaster flow: ${paymasterAddress} != ${_paymasterAddress}`);
     }
+
+    // Use pre-computed delegation (deterministic) or generate a random one
+    const delegation = withdrawal.delegation
+      ?? await this.generateRandomDelegation(accountAddress);
+
+    const { senderAddress, authorization } = delegation;
 
     const bundlerClient = new BundlerClient(bundlerUrl, entryPointAddress);
     const { standard: { maxFeePerGas, maxPriorityFeePerGas } } = await bundlerClient.getUserOperationGasPrice();
@@ -87,5 +94,19 @@ export class PaymasterBroadcaster {
     await bundlerClient.waitForUserOperationReceipt(userOpHash);
 
     return { userOpHash };
+  }
+
+  private async generateRandomDelegation(
+    accountAddress: `0x${string}`,
+  ): Promise<SignedDelegation> {
+    const privateKey = generatePrivateKey();
+    const chainId = Number(await this.provider.getChainId());
+
+    return signDelegationAuthorization({
+      privateKey,
+      accountAddress,
+      chainId,
+      nonce: 0,
+    });
   }
 }

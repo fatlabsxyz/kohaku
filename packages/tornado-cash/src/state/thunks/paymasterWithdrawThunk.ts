@@ -1,13 +1,12 @@
 import { createAsyncThunk, unwrapResult } from "@reduxjs/toolkit";
-import { privateKeyToAccount } from 'viem/accounts';
 
 import { ISecretManager } from "../../account/keys";
 import { IDataService } from "../../data/interfaces/data.service.interface";
 import { IIndexedDepositWithSecrets } from "../../data/interfaces/events.interface";
 import { Address } from "../../interfaces/types.interface";
 import { computeMinimumViableFee, reasonableGasUnits } from "../../paymaster/fee";
-import { setupBundlerClient } from "../../paymaster/utils";
-import { IPaymasterConfig, IWithdrawalPayload } from "../../plugin/interfaces/protocol-params.interface";
+import { setupBundlerClient, signDelegationAuthorization } from "../../paymaster/utils";
+import { IPaymasterConfig, IWithdrawalPayload, SignedDelegation } from "../../plugin/interfaces/protocol-params.interface";
 import { poolFromAssetSelector } from "../selectors/pools.selector";
 import { RootState } from "../store";
 import { verifyRootsThunk } from "./verifyRootsThunk";
@@ -58,7 +57,6 @@ export const paymasterWithdrawThunk = createAsyncThunk<
 
   const fee = computeMinimumViableFee(reasonableGasUnits, maxFeePerGas);
 
-
   // The relayer address in the proof is the paymaster — it receives the fee
   const relayerAddress = BigInt(paymasterConfig.paymasterAddress) as Address;
 
@@ -73,17 +71,20 @@ export const paymasterWithdrawThunk = createAsyncThunk<
 
   const proofOutputs = unwrapResult(withdrawResultAction);
 
-  // Derive ephemeral signer for EIP-7702 authorization
-  // XXX: this should be unique per withdrawal in this state it DOXes you. We should move the EOA derivation to the paymaster maybe?
-  const ephemeralPk = await secretManager.deriveEphemeralSigner(0);
-  const ephemeralAccount = privateKeyToAccount(ephemeralPk);
+  // Compute delegation only for deterministic mode — random is deferred to broadcast
+  let delegation: SignedDelegation | undefined;
 
-  // Sign EIP-7702 authorization delegating the ephemeral EOA to the tornado account implementation
-  const authorization = await ephemeralAccount.signAuthorization({
-    contractAddress: paymasterConfig.accountAddress,
-    chainId: Number(await dataService.getChainId()),
-    nonce: await dataService.getAccountNonce(BigInt(ephemeralAccount.address)),
-  });
+  if (paymasterConfig.delegation?.mode === 'deterministic') {
+    const ephemeralPk = await secretManager.deriveEphemeralSigner(0);
+    const chainId = Number(await dataService.getChainId());
+
+    delegation = await signDelegationAuthorization({
+      privateKey: ephemeralPk,
+      accountAddress: paymasterConfig.accountAddress,
+      chainId,
+      nonce: 0,
+    });
+  }
 
   return proofOutputs.map((proof) => ({
     mode: 'paymaster' as const,
@@ -92,7 +93,7 @@ export const paymasterWithdrawThunk = createAsyncThunk<
     paymasterAddress: paymasterConfig.paymasterAddress,
     entryPointAddress: paymasterConfig.entryPointAddress,
     bundlerUrl: paymasterConfig.bundlerUrl,
-    senderAddress: ephemeralAccount.address,
-    authorization,
+    accountAddress: paymasterConfig.accountAddress,
+    delegation,
   })) satisfies IWithdrawalPayload[];
 });

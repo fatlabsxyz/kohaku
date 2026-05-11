@@ -14,11 +14,21 @@ import { DepositStrategy } from '../../state/thunks/getDepositPayloadThunk';
 import { PublicRootState } from '../../state/store';
 import { IRelayerFeeConfig } from '../../state/slices/relayersSlice';
 
+export type DelegationConfig =
+  | { mode: 'deterministic'; path?: string }
+  | { mode: 'random' };
+
 export interface IPaymasterConfig {
   paymasterAddress: `0x${string}`;
   accountAddress: `0x${string}`;
   bundlerUrl: string;
   entryPointAddress: `0x${string}`;
+  delegation?: DelegationConfig;
+}
+
+export interface SignedDelegation {
+  senderAddress: `0x${string}`;
+  authorization: SignedAuthorization;
 }
 
 export interface IRelayerWithdrawalPayload {
@@ -35,8 +45,8 @@ export interface IPaymasterWithdrawalPayload {
   paymasterAddress: `0x${string}`;
   entryPointAddress: `0x${string}`;
   bundlerUrl: string;
-  senderAddress: `0x${string}`;
-  authorization: SignedAuthorization;
+  accountAddress: `0x${string}`;
+  delegation?: SignedDelegation;
 }
 
 export type IWithdrawalPayload = IRelayerWithdrawalPayload | IPaymasterWithdrawalPayload;
