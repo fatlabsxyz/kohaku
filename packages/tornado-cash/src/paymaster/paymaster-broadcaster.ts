@@ -1,4 +1,4 @@
-import { BundlerClient, TornadoBuilder } from 'privacy-paymaster';
+import { BundlerClient, GasConfig, TornadoBuilder } from 'privacy-paymaster';
 import { type Hash } from 'viem';
 
 import { IPaymasterWithdrawalPayload } from '../plugin/interfaces/protocol-params.interface';
@@ -54,10 +54,23 @@ export class PaymasterBroadcaster {
 
     const bundlerClient = new BundlerClient(bundlerUrl, entryPointAddress);
     const { standard: { maxFeePerGas, maxPriorityFeePerGas } } = await bundlerClient.getUserOperationGasPrice();
+    const gasMode: "manual" | "auto" = "manual";
+
+    let gas: GasConfig;
+    if (gasMode === "manual") {
+      gas = {
+        type: 'manual',
+        ...reasonableGasUnits,
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+      };
+    } else {
+      gas = { type: 'auto' };
+    }
 
     const op = await new TornadoBuilder(senderAddress)
       .withPaymaster(paymasterAddress)
-      .withAuthorization(authorization as any) // viem version mismatch
+      .withAuthorization(authorization)
       .withWithdraw(
         proofHex,
         root,
@@ -66,14 +79,8 @@ export class PaymasterBroadcaster {
         _paymasterAddress as `0x${string}`,
         BigInt(feeHex),
       )
-      // .withGas({ type: 'auto' })
-      .withGas({
-        type: 'manual',
-        ...reasonableGasUnits,
-        maxFeePerGas,
-        maxPriorityFeePerGas,
-      })
-      .build(this.provider, bundlerClient); // viem version mismatch
+      .withGas(gas)
+      .build(this.provider, bundlerClient);
 
     const userOpHash = await bundlerClient.sendUserOperation(op);
 
