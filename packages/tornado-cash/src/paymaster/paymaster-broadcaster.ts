@@ -48,17 +48,10 @@ export class PaymasterBroadcaster {
     } = withdrawal;
     const [root, nullifierHash, recipient, _paymasterAddress, feeHex, _refund] = proofArgs;
 
-    console.log("WITH AUTHORIZATION", authorization);
-
     if (BigInt(paymasterAddress) !== BigInt(_paymasterAddress)) {
       throw new Error(`relayer must be paymaster when using the 4337 paymaster flow: ${paymasterAddress} != ${_paymasterAddress}`);
     }
 
-    // const { publicClient, bundlerClient } = await setupClients({
-    //   bundlerUrl,
-    //   entryPointAddress,
-    //   provider: this.provider
-    // });
     const bundlerClient = new BundlerClient(bundlerUrl, entryPointAddress);
     const { standard: { maxFeePerGas, maxPriorityFeePerGas } } = await bundlerClient.getUserOperationGasPrice();
 
