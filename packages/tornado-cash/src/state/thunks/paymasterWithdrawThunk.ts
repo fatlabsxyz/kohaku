@@ -71,22 +71,30 @@ export const paymasterWithdrawThunk = createAsyncThunk<
 
   const proofOutputs = unwrapResult(withdrawResultAction);
 
-  // Compute delegation only for deterministic mode — random is deferred to broadcast
-  let delegation: SignedDelegation | undefined;
+  // Compute delegation only for deterministic mode — random is deferred to broadcast.
+  // Each deposit gets its own signer derived from its deposit index.
+  let delegations: (SignedDelegation | undefined)[];
 
   if (paymasterConfig.delegation?.mode === 'deterministic') {
-    const ephemeralPk = await secretManager.deriveEphemeralSigner(0);
     const chainId = Number(await dataService.getChainId());
 
-    delegation = await signDelegationAuthorization({
-      privateKey: ephemeralPk,
-      accountAddress: paymasterConfig.accountAddress,
-      chainId,
-      nonce: 0,
-    });
+    delegations = await Promise.all(
+      deposits.map(async (deposit) => {
+        const ephemeralPk = await secretManager.deriveEphemeralSigner(deposit.index);
+
+        return signDelegationAuthorization({
+          privateKey: ephemeralPk,
+          accountAddress: paymasterConfig.accountAddress,
+          chainId,
+          nonce: 0,
+        });
+      }),
+    );
+  } else {
+    delegations = deposits.map(() => undefined);
   }
 
-  return proofOutputs.map((proof) => ({
+  return proofOutputs.map((proof, i) => ({
     mode: 'paymaster' as const,
     proof,
     poolAddress: poolInfo.address,
@@ -94,6 +102,6 @@ export const paymasterWithdrawThunk = createAsyncThunk<
     entryPointAddress: paymasterConfig.entryPointAddress,
     bundlerUrl: paymasterConfig.bundlerUrl,
     accountAddress: paymasterConfig.accountAddress,
-    delegation,
+    delegation: delegations[i],
   })) satisfies IWithdrawalPayload[];
 });
