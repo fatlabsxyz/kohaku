@@ -67,9 +67,7 @@
   "dependencies": {
     "@kohaku-eth/plugins": "workspace:*",
     "@kohaku-eth/provider": "workspace:*",
-    "@noble/hashes": "2.0.1",
     "@reduxjs/toolkit": "^2.11.2",
-    "@zk-kit/baby-jubjub": "^1.0.3",
     "buffer": "^6.0.3",
     "circomlibjs": "0.1.2",
     "comlink": "^4.4.2",
