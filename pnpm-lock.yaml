@@ -360,6 +360,12 @@ importers:
       '@kohaku-eth/provider':
         specifier: workspace:*
         version: link:../provider
+      '@noble/curves':
+        specifier: ^2.2.0
+        version: 2.2.0
+      '@noble/hashes':
+        specifier: ^2.2.0
+        version: 2.2.0
       '@reduxjs/toolkit':
         specifier: ^2.11.2
         version: 2.11.2(react@19.2.5)
@@ -9320,8 +9326,8 @@ snapshots:
   '@libp2p/crypto@5.1.14':
     dependencies:
       '@libp2p/interface': 3.1.1
-      '@noble/curves': 2.0.1
-      '@noble/hashes': 2.0.1
+      '@noble/curves': 2.2.0
+      '@noble/hashes': 2.2.0
       multiformats: 13.4.2
       protons-runtime: 6.0.1
       uint8arraylist: 2.4.8
@@ -10633,7 +10639,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
