@@ -40,7 +40,7 @@ type DeriveSecretsParams = BaseDeriveSecretParams & {
 
 export interface ISecretManager {
   getDepositSecrets: (params: DeriveDepositSecretParams) => Promise<Secret>;
-  deriveEphemeralSigner: (index: number) => Promise<`0x${string}`>;
+  deriveEphemeralSigner: (params: DeriveDepositSecretParams) => Promise<`0x${string}`>;
 }
 
 export interface SecretManagerParams {
@@ -103,14 +103,16 @@ export async function SecretManager({
     preimage.set(numberToBytesLE(salt, 31), 31);
 
     const commitment = pedersenHash(preimage);   // 496 bits == 62 bytes
-    const nullifierHash = pedersenHash(nullifierBytes);  // 248
+    const nullifierHash = pedersenHash(nullifierBytes);  // 248 == 31 bytes
 
     return { nullifier, salt, commitment, nullifierHash };
   };
 
-  const deriveEphemeralSigner = async (index: number) => {
-    const path = tcPath({ accountIndex, secretType: "signer", depositIndex: index });
-    return Promise.resolve(keystore.deriveAt(path));
+  const deriveEphemeralSigner = async ({ chainId, poolAddress, depositIndex }: DeriveDepositSecretParams) => {
+    const path = tcPath({ accountIndex, secretType: "signer", depositIndex });
+    const raw = await Promise.resolve(keystore.deriveAt(path));
+    const coalesced = coalesceSecret({ secret: raw, chainId, poolAddress });
+    return `0x${coalesced.toString(16).padStart(64, '0')}` as `0x${string}`;
   };
 
   return {
