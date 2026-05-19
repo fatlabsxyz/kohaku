@@ -16,7 +16,7 @@ const relayersHostnames = new Set<keyof MockRelayerOptions['fees']>(['cheap', 'e
 
 export const createMockRelayerClient = (options: Partial<MockRelayerOptions> = {}) => {
   const {
-    chainId = 1,
+    chainId,
     fees = {
       cheap: 0.03,
       expensive: 0.04
@@ -38,7 +38,7 @@ export const createMockRelayerClient = (options: Partial<MockRelayerOptions> = {
       if (!relayersHostnames.has(hostname)) {
         throw new Error('Invalid hostname, must be either \'cheap\' or \'expensive\'');
       }
-  
+
       return {
         currentQueue: 0,
         ethPrices: {},

@@ -26,7 +26,7 @@ describe("Creates the dump state payload", () => {
   const {
     rpcUrl,
     forkBlockNumber,
-    ...protocolConfig
+    protocolConfig
   } = getChainConfigSetup(chainId);
 
   let pools: Record<string, AnvilPool>;
@@ -52,7 +52,7 @@ describe("Creates the dump state payload", () => {
     await anvil.stop();
   });
 
-  it.skip("syncs [from 0]", { timeout: 0 }, async () => {
+  it.only("syncs [from 0]", { timeout: 0 }, async () => {
     const pool = pools[10];
 
     const { params } = mockParams();
@@ -65,7 +65,7 @@ describe("Creates the dump state payload", () => {
 
     await protocol.sync();
 
-    const state = protocol.dumpState();
+    const state = await protocol.dumpState();
 
     fs.writeFileSync(`./state.${chainId}.new.json`, JSON.stringify(state));
 

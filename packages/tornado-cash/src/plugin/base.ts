@@ -14,8 +14,10 @@ import {
   TCAssetAmount,
   TCAssetBalance,
   TCInstance,
+  TCPaymasterUnshieldOptions,
   TCPrepareShieldOptions,
   TCPrepareUnshieldOptions,
+  TCRelayerUnshieldOptions,
 } from "../v1/interfaces.js";
 import {
   IStateManager,
@@ -137,8 +139,18 @@ export class TornadoCashProtocol implements TCInstance {
   async prepareUnshield(
     assets: AssetAmount,
     to: AccountId,
+    options?: TCRelayerUnshieldOptions,
+  ): Promise<TCPrivateOperation<'relayer'>>
+  async prepareUnshield(
+    assets: AssetAmount,
+    to: AccountId,
+    options?: TCPaymasterUnshieldOptions,
+  ): Promise<TCPrivateOperation<'paymaster'>>
+  async prepareUnshield(
+    assets: AssetAmount,
+    to: AccountId,
     options?: TCPrepareUnshieldOptions,
-  ): Promise<TCPrivateOperation> {
+  ): Promise<TCPrivateOperation<'paymaster' | 'relayer'>> {
     const { asset, amount } = assets;
     const parsedAsset = BigInt(asset.contract);
     const stateManager = await this.stateManager;
@@ -170,7 +182,7 @@ export class TornadoCashProtocol implements TCInstance {
     return {
       __type: 'privateOperation',
       withdrawals
-    }as TCPrivateOperation;
+    } as TCPrivateOperation;
   }
 
   async sync() {

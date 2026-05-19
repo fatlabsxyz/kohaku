@@ -1,0 +1,138 @@
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+
+import { AccountId } from '@kohaku-eth/plugins';
+import { deployPaymaster } from 'privacy-paymaster/deploy-paymaster';
+import { startServers } from 'privacy-paymaster/bundler-server';
+import { Wallet } from 'ethers';
+import { parseEther, type Hex } from 'viem';
+
+import { E_ADDRESS } from '../../../src/config';
+import { AnvilPool, defineAnvil, type AnvilInstance } from '../../utils/anvil';
+import { ERC20Asset, loadInitialState } from '../../utils/common';
+import { createMockHost } from '../../utils/mock-host';
+import { TEST_ACCOUNTS } from '../../utils/test-accounts';
+import { getProtocolWithState, sendMultipleTxsAndWait, setupWallet } from '../../utils/test-helpers';
+import { getChainConfigSetup } from '../../constants';
+import { TCBroadcaster, TornadoCashProtocol } from '@kohaku-eth/tornado-cash';
+
+const DEPLOYER_PK = '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6' as Hex;
+const EXECUTOR_PK = '0x4a3a02862ddcb260ed52d40ef03f8e3d78fa3d174b0ef333afdf1ffb4a648cd5' as Hex;
+const UTILITY_PK  = '0xdd4b2564c83ff7de602c39ffda1146055dc1814b07c083d7971722384f1f01a6' as Hex;
+const HUNDRED_ETH = `0x${parseEther('100').toString(16)}`;
+
+describe('TornadoCash Paymaster Unshield E2E', () => {
+  let anvil: AnvilInstance;
+  let pool: AnvilPool;
+  let protocol: TornadoCashProtocol;
+  let broadcaster: TCBroadcaster;
+  let paymasterAddress: `0x${string}`;
+  let tornadoAccountAddress: `0x${string}`;
+  let bundlerRpcUrl: string;
+  let stopBundler: () => Promise<void>;
+
+  const chainId = inject('chainId');
+  const { forkBlockNumber, rpcUrl, paymasterConfig } = getChainConfigSetup(chainId);
+  const { entryPointAddress, deployEnv } = paymasterConfig;
+
+  beforeAll(async () => {
+    anvil = await defineAnvil({
+      forkUrl: rpcUrl,
+      forkBlockNumber: Number(forkBlockNumber),
+      chainId,
+    });
+    await anvil.start();
+
+    pool = anvil.raw();
+
+    // Fund deployer and bundler accounts on the fork
+    await pool.setBalance(new Wallet(DEPLOYER_PK).address, HUNDRED_ETH);
+    await pool.setBalance(new Wallet(EXECUTOR_PK).address, HUNDRED_ETH);
+    await pool.setBalance(new Wallet(UTILITY_PK).address, HUNDRED_ETH);
+
+    // Deploy PrivacyPaymaster + TornadoAccount onto this fork
+    ({ paymasterAddress, tornadoAccountAddress } = await deployPaymaster({
+      forkUrl: pool.rpcUrl,
+      privateKey: DEPLOYER_PK,
+      deployEnv,
+    }));
+
+    // Start alto bundler connected to this fork
+    ({ bundlerRpcUrl, stop: stopBundler } = await startServers({
+      execRpcUrl: pool.rpcUrl,
+      entrypoint: entryPointAddress,
+      executorPrivateKey: EXECUTOR_PK,
+      utilityPrivateKey: UTILITY_PK,
+      port: 8546
+    }));
+
+    ({ protocol, broadcaster } = await getProtocolWithState({
+      chainId,
+      initialState: () => loadInitialState(chainId),
+      host: createMockHost({ rpcUrl: pool.rpcUrl }),
+      rpcUrl: pool.rpcUrl,
+    }));
+    await protocol.sync();
+  }, 300_000);
+
+  afterAll(async () => {
+    await stopBundler();
+    await anvil.stop();
+  });
+
+  it('[prepareUnshield] withdrawal succeeds with paymaster', { timeout: 180_000 }, async () => {
+    const alice = await setupWallet(pool, TEST_ACCOUNTS.alice.privateKey);
+
+    const nativeAsset = ERC20Asset(E_ADDRESS);
+    // IMPORTANT:
+    // By default the paymaster deployed is for the 1ETH pool so we want to only deposit in that pool
+    // Use int eth values
+    const DEPOSIT_AMOUNT = parseEther('3');
+    const WITHDRAW_AMOUNT = parseEther('2');
+
+    // 1. Deposit
+    const { txns } = await protocol.prepareShield({ asset: nativeAsset, amount: DEPOSIT_AMOUNT });
+    const receipts = await sendMultipleTxsAndWait(alice, txns);
+  
+    for (const receipt of receipts) {
+      expect(receipt).toBeTruthy();
+      expect(receipt!.status).toEqual(1);
+    }
+    await pool.mine(1);
+
+    // 2. Verify deposit balance
+    const [{ amount }] = await protocol.balance([nativeAsset]);
+
+    expect(amount).toBe(DEPOSIT_AMOUNT);
+
+    // 3. Prepare paymaster withdrawal
+    const unshieldOp = await protocol.prepareUnshield(
+      { asset: nativeAsset, amount: WITHDRAW_AMOUNT },
+      alice.address as AccountId,
+      {
+        mode: 'paymaster',
+        paymasterConfig: {
+          paymasterAddress,
+          accountAddress: tornadoAccountAddress,
+          bundlerUrl: bundlerRpcUrl,
+          entryPointAddress,
+          delegation: { mode: 'deterministic' },
+        },
+      },
+    );
+
+    const preWithdrawalBalance = await pool.getBalance(alice.address);
+
+    // 4. Broadcast — TornadoCashBroadcaster routes paymaster withdrawals to PaymasterBroadcaster
+    await broadcaster.broadcast(unshieldOp);
+    await pool.mine(1);
+
+    // 5. Assert
+    const [{ amount: postTCBalance }] = await protocol.balance([nativeAsset]);
+    const postWithdrawalBalance = await pool.getBalance(alice.address);
+    const paymasterBalance = await pool.getBalance(paymasterAddress);
+
+    expect(postTCBalance).toBe(DEPOSIT_AMOUNT - WITHDRAW_AMOUNT);
+    expect(postWithdrawalBalance).toBeGreaterThan(preWithdrawalBalance);
+    expect(paymasterBalance).toBeGreaterThan(0n);
+  });
+});

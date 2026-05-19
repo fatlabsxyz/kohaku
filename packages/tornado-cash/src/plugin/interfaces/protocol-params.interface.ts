@@ -51,8 +51,8 @@ export interface IPaymasterWithdrawalPayload {
 
 export type IWithdrawalPayload = IRelayerWithdrawalPayload | IPaymasterWithdrawalPayload;
 
-export interface TCPrivateOperation extends PrivateOperation {
-  withdrawals: IWithdrawalPayload[];
+export interface TCPrivateOperation<Mode extends IWithdrawalPayload['mode'] = 'relayer' | 'paymaster'> extends PrivateOperation {
+  withdrawals: (IWithdrawalPayload & {mode: Mode})[];
 }
 
 export interface TCPublicOperation extends PublicOperation {

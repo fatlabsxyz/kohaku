@@ -71,7 +71,7 @@ describe('TornadoCash Unshield E2E', () => {
   beforeEach(async () => {
     pool = anvil.pool(++poolIndex);
     relayerWallet = await setupWallet(pool, TEST_ACCOUNTS.charlie.privateKey)
-    relayerClient = createMockRelayerClient({signer: relayerWallet});
+    relayerClient = createMockRelayerClient({ signer: relayerWallet, chainId });
     ({ protocol, broadcaster } = await getProtocolWithState({
       chainId,
       initialState: () => initialStatePayload,
@@ -93,14 +93,13 @@ describe('TornadoCash Unshield E2E', () => {
     const DEPOSIT_AMOUNT = 1000000000000000000n; // 1 ETH
 
     // 1. Deposit first
-    const { txns: [shieldTx] } = await protocol.prepareShield(
+    const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    const receipt = await sendTxAndWait(alice, shieldTx);
+    const receipts = await sendMultipleTxsAndWait(alice, txns);
 
-    expect(receipt).toBeTruthy();
-    expect(receipt!.status).toEqual(1);
+    expect(receipts.reduce((n, receipt) => n + (receipt?.status ? 1 : 0), 0)).toBe(receipts.length);
 
     await pool.mine(1);
 
@@ -130,14 +129,14 @@ describe('TornadoCash Unshield E2E', () => {
     const WITHDRAW_AMOUNT = DEPOSIT_AMOUNT;
 
     // 1. Deposit
-    const { txns: [shieldTx] } = await protocol.prepareShield(
+    const { txns } = await protocol.prepareShield(
       { asset: nativeAsset, amount: DEPOSIT_AMOUNT }
     );
 
-    const receipt = await sendTxAndWait(alice, shieldTx);
+    const receipts = await sendMultipleTxsAndWait(alice, txns);
 
-    expect(receipt).toBeTruthy();
-    expect(receipt!.status).toEqual(1);
+    expect(receipts.reduce((n, receipt) => n + (receipt?.status ? 1 : 0), 0)).toBe(receipts.length);
+
     await pool.mine(1);
 
     // 2. Verify deposit balance (triggers sync)
@@ -256,7 +255,6 @@ describe('TornadoCash Unshield E2E', () => {
 
     expect(postWithdrawTCBalance).toBe(DEPOSIT_AMOUNT - WITHDRAW_AMOUNT);
     expect(postWithdrawBalance).toBeGreaterThan(preWithdrawalBalance);
-    
   });
 
 

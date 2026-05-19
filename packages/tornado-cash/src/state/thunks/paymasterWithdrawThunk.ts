@@ -7,7 +7,6 @@ import { Address } from "../../interfaces/types.interface";
 import { computeMinimumViableFee, reasonableGasUnits } from "../../paymaster/fee";
 import { setupBundlerClient, signDelegationAuthorization } from "../../paymaster/utils";
 import { IPaymasterConfig, IWithdrawalPayload, SignedDelegation } from "../../plugin/interfaces/protocol-params.interface";
-import { poolFromAssetSelector } from "../selectors/pools.selector";
 import { RootState } from "../store";
 import { verifyRootsThunk } from "./verifyRootsThunk";
 import { WithdrawalProofsThunkParams, withdrawalsProofThunk } from "./withdrawalsProofThunk";
@@ -36,14 +35,12 @@ export const paymasterWithdrawThunk = createAsyncThunk<
 }, { getState, dispatch }) => {
   const state = getState();
   const deposits = getWithdrawableDeposits(assetAddress, amount);
-  const poolInfo = poolFromAssetSelector(state, assetAddress);
-
-  if (!poolInfo) throw new Error(`No pool found for asset ${assetAddress}`);
+  const poolsToWithdrawFrom = [...new Set(deposits.map((d) => d.pool))];
 
   unwrapResult(
     await dispatch(verifyRootsThunk({
       dataService,
-      onlyThesePools: [poolInfo.address]
+      onlyThesePools: poolsToWithdrawFrom
     }))
   );
 
@@ -60,16 +57,22 @@ export const paymasterWithdrawThunk = createAsyncThunk<
   // The relayer address in the proof is the paymaster — it receives the fee
   const relayerAddress = BigInt(paymasterConfig.paymasterAddress) as Address;
 
-  const withdrawResultAction = await dispatch(
-    withdrawalsProofThunk({
-      ...rest,
-      deposits,
-      relayerAddress,
-      fee,
-    }),
-  );
+  const proofOutputs = await Promise.all(deposits.map(async (deposit) => {
+    const withdrawResultAction = await dispatch(
+      withdrawalsProofThunk({
+        ...rest,
+        deposit,
+        relayerAddress,
+        fee,
+      }),
+    );
+  
+    return {
+      ...unwrapResult(withdrawResultAction),
+      poolAddress: deposit.pool
+    };
+  }))
 
-  const proofOutputs = unwrapResult(withdrawResultAction);
 
   // Compute delegation only for deterministic mode — random is deferred to broadcast.
   // Each deposit gets its own signer derived from its deposit index.
@@ -94,10 +97,10 @@ export const paymasterWithdrawThunk = createAsyncThunk<
     delegations = deposits.map(() => undefined);
   }
 
-  return proofOutputs.map((proof, i) => ({
+  return proofOutputs.map(({ poolAddress, ...proof }, i) => ({
     mode: 'paymaster' as const,
     proof,
-    poolAddress: poolInfo.address,
+    poolAddress,
     paymasterAddress: paymasterConfig.paymasterAddress,
     entryPointAddress: paymasterConfig.entryPointAddress,
     bundlerUrl: paymasterConfig.bundlerUrl,
