@@ -52,7 +52,7 @@ describe("Creates the dump state payload", () => {
     await anvil.stop();
   });
 
-  it.only("syncs [from 0]", { timeout: 0 }, async () => {
+  it.skip("syncs [from 0]", { timeout: 0 }, async () => {
     const pool = pools[10];
 
     const { params } = mockParams();

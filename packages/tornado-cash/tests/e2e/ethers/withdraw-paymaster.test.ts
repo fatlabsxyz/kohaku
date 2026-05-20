@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 
 import { AccountId } from '@kohaku-eth/plugins';
-import { deployPaymaster } from 'privacy-paymaster/deploy-paymaster';
 import { startServers } from 'privacy-paymaster/bundler-server';
+// import { deployPaymaster } from 'privacy-paymaster/deploy-paymaster';
 import { Wallet } from 'ethers';
 import { parseEther, type Hex } from 'viem';
 
@@ -25,14 +25,12 @@ describe('TornadoCash Paymaster Unshield E2E', () => {
   let pool: AnvilPool;
   let protocol: TornadoCashProtocol;
   let broadcaster: TCBroadcaster;
-  let paymasterAddress: `0x${string}`;
-  let tornadoAccountAddress: `0x${string}`;
   let bundlerRpcUrl: string;
   let stopBundler: () => Promise<void>;
-
+  
   const chainId = inject('chainId');
   const { forkBlockNumber, rpcUrl, paymasterConfig } = getChainConfigSetup(chainId);
-  const { entryPointAddress, deployEnv } = paymasterConfig;
+  const { entryPointAddress, paymasterAddress, tornadoAccountAddress } = paymasterConfig;
 
   beforeAll(async () => {
     anvil = await defineAnvil({
@@ -50,11 +48,11 @@ describe('TornadoCash Paymaster Unshield E2E', () => {
     await pool.setBalance(new Wallet(UTILITY_PK).address, HUNDRED_ETH);
 
     // Deploy PrivacyPaymaster + TornadoAccount onto this fork
-    ({ paymasterAddress, tornadoAccountAddress } = await deployPaymaster({
-      forkUrl: pool.rpcUrl,
-      privateKey: DEPLOYER_PK,
-      deployEnv,
-    }));
+    // ({ paymasterAddress, tornadoAccountAddress } = await deployPaymaster({
+    //   forkUrl: pool.rpcUrl,
+    //   privateKey: DEPLOYER_PK,
+    //   deployEnv,
+    // }));
 
     // Start alto bundler connected to this fork
     ({ bundlerRpcUrl, stop: stopBundler } = await startServers({
@@ -85,9 +83,9 @@ describe('TornadoCash Paymaster Unshield E2E', () => {
     const nativeAsset = ERC20Asset(E_ADDRESS);
     // IMPORTANT:
     // By default the paymaster deployed is for the 1ETH pool so we want to only deposit in that pool
-    // Use int eth values
-    const DEPOSIT_AMOUNT = parseEther('3');
-    const WITHDRAW_AMOUNT = parseEther('2');
+    // If using Sepolia existing paymasters they work with the 0.1ETH pool
+    const DEPOSIT_AMOUNT = parseEther('0.1');
+    const WITHDRAW_AMOUNT = parseEther('0.1');
 
     // 1. Deposit
     const { txns } = await protocol.prepareShield({ asset: nativeAsset, amount: DEPOSIT_AMOUNT });
