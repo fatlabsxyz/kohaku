@@ -64,6 +64,7 @@ export class PaymasterBroadcaster {
     const gasMode: "manual" | "auto" = "manual";
 
     let gas: GasConfig;
+
     if (gasMode === "manual") {
       gas = {
         type: 'manual',

@@ -2,7 +2,6 @@ import { createAsyncThunk, unwrapResult } from "@reduxjs/toolkit";
 
 import { ISecretManager } from "../../account/keys";
 import { IDataService } from "../../data/interfaces/data.service.interface";
-import { IIndexedDepositWithSecrets } from "../../data/interfaces/events.interface";
 import { Address } from "../../interfaces/types.interface";
 import { computeMinimumViableFee, reasonableGasUnits } from "../../paymaster/fee";
 import { setupBundlerClient, signDelegationAuthorization } from "../../paymaster/utils";
@@ -10,9 +9,9 @@ import { IPaymasterConfig, IWithdrawalPayload, SignedDelegation } from "../../pl
 import { RootState } from "../store";
 import { verifyRootsThunk } from "./verifyRootsThunk";
 import { WithdrawalProofsThunkParams, withdrawalsProofThunk } from "./withdrawalsProofThunk";
+import { getWithdrawableDepositsSelector } from "../selectors/withdrawals.selector";
 
 export interface PaymasterWithdrawThunkParams extends Omit<WithdrawalProofsThunkParams, 'deposit' | 'fee' | 'relayerAddress'> {
-  getWithdrawableDeposits: (asset: Address, amount?: bigint) => IIndexedDepositWithSecrets[];
   dataService: IDataService;
   assetAddress: bigint;
   amount?: bigint;
@@ -25,7 +24,6 @@ export const paymasterWithdrawThunk = createAsyncThunk<
   PaymasterWithdrawThunkParams,
   { state: RootState; }
 >('withdraw/executePaymasterWithdrawals', async ({
-  getWithdrawableDeposits,
   dataService,
   assetAddress,
   amount,
@@ -34,7 +32,7 @@ export const paymasterWithdrawThunk = createAsyncThunk<
   ...rest
 }, { getState, dispatch }) => {
   const state = getState();
-  const deposits = getWithdrawableDeposits(assetAddress, amount);
+  const deposits = getWithdrawableDepositsSelector(state, assetAddress, amount);
   const poolsToWithdrawFrom = [...new Set(deposits.map((d) => d.pool))];
 
   unwrapResult(

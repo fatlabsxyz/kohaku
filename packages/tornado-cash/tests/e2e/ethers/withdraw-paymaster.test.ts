@@ -14,6 +14,8 @@ import { TEST_ACCOUNTS } from '../../utils/test-accounts';
 import { getProtocolWithState, sendMultipleTxsAndWait, setupWallet } from '../../utils/test-helpers';
 import { getChainConfigSetup } from '../../constants';
 import { TCBroadcaster, TornadoCashProtocol } from '@kohaku-eth/tornado-cash';
+import { Serializable } from '../../../src/state/interfaces/utils.interface';
+import { IPool } from '../../../src/data/interfaces/events.interface';
 
 const DEPLOYER_PK = '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6' as Hex;
 const EXECUTOR_PK = '0x4a3a02862ddcb260ed52d40ef03f8e3d78fa3d174b0ef333afdf1ffb4a648cd5' as Hex;
@@ -27,9 +29,10 @@ describe('TornadoCash Paymaster Unshield E2E', () => {
   let broadcaster: TCBroadcaster;
   let bundlerRpcUrl: string;
   let stopBundler: () => Promise<void>;
+  let erc20Pool: Serializable<IPool>;
   
   const chainId = inject('chainId');
-  const { forkBlockNumber, rpcUrl, paymasterConfig } = getChainConfigSetup(chainId);
+  const { forkBlockNumber, rpcUrl, paymasterConfig, erc20Address, erc20WhaleAddress } = getChainConfigSetup(chainId);
   const { entryPointAddress, paymasterAddress, tornadoAccountAddress } = paymasterConfig;
 
   beforeAll(async () => {
@@ -70,6 +73,12 @@ describe('TornadoCash Paymaster Unshield E2E', () => {
       rpcUrl: pool.rpcUrl,
     }));
     await protocol.sync();
+
+    const state = await protocol.dumpState();
+
+    const protocolPools = Object.values(state)[0].pools.poolsTuples.map(([_, pool]) => pool);
+
+    erc20Pool = protocolPools.find((p) => BigInt(p.asset) === BigInt(erc20Address))!;
   }, 300_000);
 
   afterAll(async () => {

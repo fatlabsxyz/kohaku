@@ -19,8 +19,6 @@ import {
   specificAssetsBalanceSelector,
   SpecificAssetBalanceFn,
 } from "./selectors/balance.selector";
-import { poolFromAssetSelector } from "./selectors/pools.selector";
-import { getWithdrawableDepositsSelector } from "./selectors/withdrawals.selector";
 import { PublicRootState, storeFactory } from "./store";
 import { syncThunk } from "./thunks/syncThunk";
 import { withdrawThunk } from "./thunks/withdrawThunk";
@@ -66,10 +64,6 @@ const initializeSelectors = <const T extends Store>(store: T) => ({
   selectors: {
     specificAssetsBalanceSelector: ((assets: Address[] | Address | undefined) =>
       Promise.resolve(specificAssetsBalanceSelector(store.getState(), assets as Address[]))) as unknown as SpecificAssetBalanceFn<true>,
-    getWithdrawableDeposits: (asset: Address, amount?: bigint) =>
-      getWithdrawableDepositsSelector(store.getState(), asset, amount),
-    poolFromAssetSelector: (assetAddress: Address) =>
-      poolFromAssetSelector(store.getState(), assetAddress),
   },
   getPublicState: () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -230,7 +224,6 @@ export const storeStateManager = async ({
             paymasterWithdrawThunk({
               proverFactory,
               recipient,
-              getWithdrawableDeposits: store.selectors.getWithdrawableDeposits,
               dataService,
               assetAddress: asset,
               amount,
@@ -246,7 +239,6 @@ export const storeStateManager = async ({
           withdrawThunk({
             proverFactory,
             recipient,
-            getWithdrawableDeposits: store.selectors.getWithdrawableDeposits,
             relayerClient,
             dataService,
             assetAddress: asset,

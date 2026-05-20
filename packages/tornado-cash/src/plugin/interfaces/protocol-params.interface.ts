@@ -87,11 +87,6 @@ export interface IDepositOperationParams extends IBaseOperationParams {
   strategy: DepositStrategy;
 }
 
-export interface IGetBalancesOperationParams extends IBaseOperationParams {
-  assets?: Address[];
-  balanceType?: 'approved' | 'unapproved';
-}
-
 interface IWithdrawBaseParams extends Omit<IDepositOperationParams, 'amount' | 'strategy'> {
   amount?: bigint;
   recipient: Address;
