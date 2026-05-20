@@ -1,5 +1,3 @@
-import { Address } from "../interfaces/types.interface";
-
 /**
  * Placeholder fee calculation for paymaster-sponsored withdrawals.
  * TODO: Estimate ~700k gas at current gas price from the bundler.
@@ -62,9 +60,4 @@ export function computeMinimumViableFee(reasonableGasUnits: UserOperationGasLimi
   console.log("multiply", 1.2);
 
   return multiply(requiredPrefund);
-}
-
-// TODO: implement with a real price oracle / uniswap quoter
-export async function quoteEthToToken(_amountInWei: bigint, _tokenAddress: Address): Promise<bigint> {
-  throw new Error('quoteEthToToken not implemented — requires price oracle');
 }

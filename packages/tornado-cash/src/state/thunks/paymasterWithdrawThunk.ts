@@ -3,7 +3,7 @@ import { createAsyncThunk, unwrapResult } from "@reduxjs/toolkit";
 import { ISecretManager } from "../../account/keys";
 import { IDataService } from "../../data/interfaces/data.service.interface";
 import { Address } from "../../interfaces/types.interface";
-import { computeMinimumViableFee, quoteEthToToken, reasonableGasUnits } from "../../paymaster/fee";
+import { computeMinimumViableFee, reasonableGasUnits } from "../../paymaster/fee";
 import { setupBundlerClient, signDelegationAuthorization } from "../../paymaster/utils";
 import { IPaymasterConfig, IWithdrawalPayload, SignedDelegation } from "../../plugin/interfaces/protocol-params.interface";
 import { poolsSelector } from "../selectors/slices.selectors";
@@ -57,7 +57,7 @@ export const paymasterWithdrawThunk = createAsyncThunk<
 
   const ethFee = computeMinimumViableFee(reasonableGasUnits, maxFeePerGas);
   const fee = poolInfo.isERC20
-    ? await quoteEthToToken(ethFee, poolInfo.asset)
+    ? await dataService.quoteEthToToken(ethFee, poolInfo.asset, poolInfo.uniswapPoolSwappingFee)
     : ethFee;
 
   // The relayer address in the proof is the paymaster — it receives the fee
