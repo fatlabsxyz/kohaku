@@ -3,7 +3,7 @@
 
 import { defineConfig } from 'tsup';
 
-const sourcemap: boolean | 'inline' = 'inline';
+const sourcemap: boolean | 'inline' = false;
 
 export default defineConfig([
   {

@@ -18,11 +18,7 @@ export const syncPoolsThunk = createAsyncThunk<void, SyncPoolsThunkParams, { sta
     const { instanceRegistry: { address: instanceRegistryAddress } } = instanceRegistryInfoSelector(state);
     const existingPools = poolsSelector(state);
 
-    const poolsAddressses = await dataService.getAllPoolsAddresses(instanceRegistryAddress).then(() => [
-      0x8C4A04d872a6C1BE37964A21ba3a138525dFF50bn,
-      0x8cc930096B4Df705A007c4A039BDFA1320Ed2508n,
-      0x6921fd1a97441dd603a997ed6ddf388658daf754n
-    ]);
+    const poolsAddressses = await dataService.getAllPoolsAddresses(instanceRegistryAddress);
     const unsyncedPools = poolsAddressses.filter((address) => !existingPools.has(address));
 
     const unsyncedPoolsData = await Promise.allSettled(

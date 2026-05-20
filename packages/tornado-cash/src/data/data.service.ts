@@ -132,46 +132,6 @@ export class DataService implements IDataService {
     registryAddress: Address,
     poolAddress: Address,
   ): Promise<IPoolConfig> {
-
-    if (poolAddress === 0x8C4A04d872a6C1BE37964A21ba3a138525dFF50bn) {
-      return {
-        denomination: 100000000000000000n,
-        poolAddress,
-        token: 0n,
-        isERC20: false,
-        state: 1,
-        uniswapPoolSwappingFee: 0,
-        protocolFeePercentage: 0.04,
-        rootHistorySize: 30
-      }
-    }
-
-    if (poolAddress === 0x8cc930096B4Df705A007c4A039BDFA1320Ed2508n) {
-      return {
-        denomination: 1000000000000000000n,
-        poolAddress,
-        token: 0n,
-        isERC20: false,
-        state: 1,
-        uniswapPoolSwappingFee: 0,
-        protocolFeePercentage: 0.04,
-        rootHistorySize: 30
-      }
-    }
-
-    if (poolAddress === 0x6921fd1a97441dd603a997ed6ddf388658daf754n) {
-      return {
-        denomination: 100000000000000000000n,
-        poolAddress,
-        token: 0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357n,
-        isERC20: false,
-        state: 1,
-        uniswapPoolSwappingFee: 0,
-        protocolFeePercentage: 0.04,
-        rootHistorySize: 30
-      }
-    }
-
     const [
       [isERC20, token, state, uniswapPoolSwappingFee, protocolFeePercentage],
       denomination,

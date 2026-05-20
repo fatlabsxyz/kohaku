@@ -30,6 +30,8 @@ import { IDataService } from "../data/interfaces/data.service.interface";
 import { DEFAULT_MAINNET_FEE_CONFIG, DEFAULT_OTHER_FEE_CONFIG, IRelayerFeeConfig, setRelayerFeeConfig } from "./slices/relayersSlice";
 import { ProtocolConfigState } from "./slices/protocolConfigSlice";
 
+const ETH_SEPOLIA_CHAIN_ID = 11155111n;
+
 export interface StoreFactoryParams {
   secretManagerFactory: () => Promise<ISecretManager>;
   dataService: IDataService;
@@ -117,7 +119,12 @@ const storeByChainAndEntrypoint = ({
         const snapshotInitialState = storedState || !resolveInitialState
           ? undefined
           : (await resolveInitialState())[storageKey];
-        const initialState: PublicRootState | undefined = storedState || snapshotInitialState;
+        let initialState: PublicRootState | undefined = storedState || snapshotInitialState;
+
+        if (!initialState && getChainStoreParams.chainId === ETH_SEPOLIA_CHAIN_ID) {
+          initialState = await import('./initial-states/state.11155111.minimal.json').then((a) => a["tornado-cash-state-11155111-447664927873626138772898946646079239273904189887"] as never);
+        }
+
         const store = storeFactory({
           protocolConfig,
           initialState,

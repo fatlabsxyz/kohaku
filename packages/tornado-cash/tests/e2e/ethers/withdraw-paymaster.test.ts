@@ -40,7 +40,7 @@ describe('TornadoCash Paymaster Unshield E2E', () => {
     });
     await anvil.start();
 
-    pool = anvil.raw();
+    pool = anvil.pool(1);
 
     // Fund deployer and bundler accounts on the fork
     await pool.setBalance(new Wallet(DEPLOYER_PK).address, HUNDRED_ETH);
