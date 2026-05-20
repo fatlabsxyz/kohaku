@@ -3,9 +3,10 @@ import { createAsyncThunk, unwrapResult } from "@reduxjs/toolkit";
 import { ISecretManager } from "../../account/keys";
 import { IDataService } from "../../data/interfaces/data.service.interface";
 import { Address } from "../../interfaces/types.interface";
-import { computeMinimumViableFee, reasonableGasUnits } from "../../paymaster/fee";
+import { computeMinimumViableFee, quoteEthToToken, reasonableGasUnits } from "../../paymaster/fee";
 import { setupBundlerClient, signDelegationAuthorization } from "../../paymaster/utils";
 import { IPaymasterConfig, IWithdrawalPayload, SignedDelegation } from "../../plugin/interfaces/protocol-params.interface";
+import { poolsSelector } from "../selectors/slices.selectors";
 import { RootState } from "../store";
 import { verifyRootsThunk } from "./verifyRootsThunk";
 import { WithdrawalProofsThunkParams, withdrawalsProofThunk } from "./withdrawalsProofThunk";
@@ -35,6 +36,10 @@ export const paymasterWithdrawThunk = createAsyncThunk<
   const deposits = getWithdrawableDepositsSelector(state, assetAddress, amount);
   const poolsToWithdrawFrom = [...new Set(deposits.map((d) => d.pool))];
 
+  const pools = poolsSelector(state);
+  const poolInfo = pools.get(deposits[0]!.pool);
+  if (!poolInfo) throw new Error(`No pool found for asset ${assetAddress}`);
+
   unwrapResult(
     await dispatch(verifyRootsThunk({
       dataService,
@@ -50,7 +55,10 @@ export const paymasterWithdrawThunk = createAsyncThunk<
 
   const { standard: { maxFeePerGas } } = await bundlerClient.getUserOperationGasPrice();
 
-  const fee = computeMinimumViableFee(reasonableGasUnits, maxFeePerGas);
+  const ethFee = computeMinimumViableFee(reasonableGasUnits, maxFeePerGas);
+  const fee = poolInfo.isERC20
+    ? await quoteEthToToken(ethFee, poolInfo.asset)
+    : ethFee;
 
   // The relayer address in the proof is the paymaster — it receives the fee
   const relayerAddress = BigInt(paymasterConfig.paymasterAddress) as Address;
