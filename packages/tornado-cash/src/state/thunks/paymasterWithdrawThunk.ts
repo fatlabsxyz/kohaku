@@ -55,7 +55,8 @@ export const paymasterWithdrawThunk = createAsyncThunk<
 
   const { standard: { maxFeePerGas } } = await bundlerClient.getUserOperationGasPrice();
 
-  const ethFee = computeMinimumViableFee(reasonableGasUnits, maxFeePerGas);
+  const gasUnits = reasonableGasUnits(poolInfo.isERC20);
+  const ethFee = computeMinimumViableFee(gasUnits, maxFeePerGas);
   const fee = poolInfo.isERC20
     ? await dataService.quoteEthToToken(ethFee, poolInfo.asset, poolInfo.uniswapPoolSwappingFee)
     : ethFee;
@@ -72,12 +73,12 @@ export const paymasterWithdrawThunk = createAsyncThunk<
         fee,
       }),
     );
-  
+
     return {
       ...unwrapResult(withdrawResultAction),
       poolAddress: deposit.pool
     };
-  }))
+  }));
 
 
   // Compute delegation only for deterministic mode — random is deferred to broadcast.
@@ -111,6 +112,7 @@ export const paymasterWithdrawThunk = createAsyncThunk<
     mode: 'paymaster' as const,
     proof,
     poolAddress,
+    isERC20: poolInfo.isERC20,
     paymasterAddress: paymasterConfig.paymasterAddress,
     entryPointAddress: paymasterConfig.entryPointAddress,
     bundlerUrl: paymasterConfig.bundlerUrl,
