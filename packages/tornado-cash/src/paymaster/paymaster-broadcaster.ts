@@ -1,9 +1,7 @@
 import { type Hash } from 'viem';
 
-import { EthereumProvider } from '@kohaku-eth/provider';
 import { createPaymasterBundlerClient, sendSerializedUserOperation } from './utils';
 import { IGenericPaymasterWithdrawalPayload, IPaymasterBroadcasterClient } from '../relayer/interfaces/paymaster-client.interface';
-import { IPaymasterConfig } from '../plugin/interfaces/protocol-params.interface';
 
 export interface PaymasterBroadcastResult {
   userOpHash: Hash;
