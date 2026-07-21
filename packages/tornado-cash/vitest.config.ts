@@ -37,17 +37,7 @@ export default defineConfig({
     environment: 'node',
     exclude: ['*'],
     alias: { '@kohaku-eth/tornado-cash': resolve(__dirname, 'dist/index.js') },
-    projects: [
-      {
-        extends: true,
-        test: {
-          name: 'unit',
-          include: ['tests/unit/**/*.test.ts'],
-          testTimeout: 5_000,
-        }
-      },
-      ...chainProjects,
-    ]
+    projects: chainProjects
   },
 });
 
