@@ -24,25 +24,22 @@ import {
 } from './keys';
 
 /** Signature-derived secrets for Privacy Pools v1 — an alternative to the
- * BIP-32 HD scheme in `./keys.ts`. A note's entire secret content lives in one
- * deterministic EIP-712 signature:
+ * BIP-32 HD scheme in `./keys.ts`. A note's secret content lives in one
+ * deterministic EIP-712 signature (domain binds chain/entrypoint):
  *
- *   σ         = sign(PrivacyPoolNote(depositIndex, secretIndex))   // under domain(chainId, entrypoint)
+ *   σ         = sign(PrivacyPoolNote(depositIndex, secretIndex))
  *   nullifier = trunc31(keccak256("nullifier" ‖ σ))
  *   salt      = trunc31(keccak256("salt"      ‖ σ))
  *
- * The EIP-712 domain carries the chain/entrypoint binding, so the
- * truncated 31-byte values (< BN254 field) become the field elements directly,
- * then feed the usual poseidon commitment pipeline. Determinism depends on the
- * signer being RFC-6979 (ECDSA); `KeystoreNoteSigner` satisfies this via
- * viem/@noble. Selected by injecting `SignatureSecretManager` at the
- * `secretManager` slot; notes are disjoint from the HD scheme, so the factory
- * choice is effectively the derivation version.
+ * The truncated 31-byte values (< BN254 field) become the field elements
+ * directly, then feed the usual poseidon commitment pipeline. Determinism needs
+ * an RFC-6979 signer (ECDSA); `KeystoreNoteSigner` satisfies this via viem/@noble.
+ * Selected by injecting `SignatureSecretManager` at the `secretManager` slot;
+ * notes are disjoint from the HD scheme, so the factory choice is the version.
  */
 
-/** The structured message a note signature is bound to. Both the deposit and
- * the secret (withdrawal) index are embedded — Privacy Pools supports partial
- * withdrawals, so a deposit spawns a lineage of notes. */
+/** The message a note signature is bound to. Deposit and secret (withdrawal)
+ * index are both embedded — a deposit spawns a lineage of partial-withdrawal notes. */
 export interface NoteMessage {
   chainId: bigint;
   entrypointAddress: bigint;
@@ -57,8 +54,7 @@ const SIGNATURE_SCHEME_PATH = "m/28784'/2'";
 const DOMAIN_SALT = keccak256(stringToHex('kohaku'));
 
 // chainId and entrypoint are intentionally NOT in the struct: the EIP-712 domain
-// separator already binds both (domain.chainId / verifyingContract), so the
-// signature is distinct per chain and per entrypoint through the domain alone.
+// separator already binds both (domain.chainId / verifyingContract).
 const NOTE_TYPES = {
   PrivacyPoolNote: [
     { name: 'depositIndex', type: 'uint64' },
@@ -67,8 +63,7 @@ const NOTE_TYPES = {
 } as const;
 
 /** The fully-formed EIP-712 envelope for a note. Built only by {@link NoteSigner}
- * so that the domain, types, and primary type are a single source of truth — a
- * signer cannot bind a note to a different typed-data standard. */
+ * so domain/types/primaryType are a single source of truth no signer can diverge from. */
 export interface NoteEnvelope {
   domain: TypedDataDomain;
   types: typeof NOTE_TYPES;
@@ -77,10 +72,6 @@ export interface NoteEnvelope {
     depositIndex: bigint;
     secretIndex: bigint;
   };
-}
-
-function signerRootPath(accountIndex: number): string {
-  return `${SIGNATURE_SCHEME_PATH}/${accountIndex}'`;
 }
 
 /** `trunc31(keccak256(tag ‖ σ))` as a field element. 31 bytes keeps the result below
@@ -94,8 +85,7 @@ function fieldFromSig(tag: string, sig: Hex): bigint {
 /** Base note signer: owns the EIP-712 envelope construction, so every concrete
  * signer binds notes to the *same* typed-data standard. The only pluggable seam
  * is {@link signEnvelope} — "sign this envelope with your account"; subclasses
- * choose the key/account, never the envelope. The signature is used verbatim:
- * it is a standard Ethereum EIP-712 signature (65 bytes `r ‖ s ‖ v`, v ∈ {27, 28}). */
+ * choose the key, never the envelope. σ is used verbatim (standard EIP-712, v ∈ {27, 28}). */
 export abstract class NoteSigner {
   async signNote(msg: NoteMessage): Promise<Hex> {
     return this.signEnvelope(this.buildEnvelope(msg));
@@ -138,7 +128,7 @@ export class KeystoreNoteSigner extends NoteSigner {
   }
 
   protected async signEnvelope(envelope: NoteEnvelope): Promise<Hex> {
-    const key = await this.keystore.deriveAt(signerRootPath(this.accountIndex));
+    const key = await this.keystore.deriveAt(`${SIGNATURE_SCHEME_PATH}/${this.accountIndex}'`);
 
     return privateKeyToAccount(key).signTypedData(envelope);
   }
@@ -155,8 +145,30 @@ export function SignatureSecretManager({
 }: SignatureSecretManagerParams): ISecretManager {
   const noteSigner = signer ?? new KeystoreNoteSigner(host.keystore, accountIndex);
 
+  // Memoize the signature per message — signing re-derives the HD key + runs
+  // ECDSA, and discovery probes the same keys repeatedly (the keccak/poseidon
+  // tail is cheap, so only the signature is cached). The promise is stored to
+  // dedupe concurrent misses; a rejected one is evicted so it stays retryable.
+  const sigCache = new Map<string, Promise<Hex>>();
+
+  const signNote = (msg: NoteMessage): Promise<Hex> => {
+    const key = `${msg.chainId}:${msg.entrypointAddress}:${msg.depositIndex}:${msg.secretIndex}`;
+    const hit = sigCache.get(key);
+
+    if (hit) return hit;
+
+    const pending = noteSigner.signNote(msg).catch((err) => {
+      sigCache.delete(key);
+      throw err;
+    });
+
+    sigCache.set(key, pending);
+
+    return pending;
+  };
+
   const deriveSecrets = async ({ chainId, entrypointAddress, depositIndex, secretIndex }: DeriveSecretsParams): Promise<Secret> => {
-    const sig = await noteSigner.signNote({ chainId, entrypointAddress, depositIndex, secretIndex });
+    const sig = await signNote({ chainId, entrypointAddress, depositIndex, secretIndex });
     const nullifier = fieldFromSig('nullifier', sig);
     const salt = fieldFromSig('salt', sig);
     const precommitment = poseidon([nullifier, salt]);
@@ -174,7 +186,7 @@ export function SignatureSecretManager({
   };
 
   const deriveEphemeralSigner = async ({ chainId, entrypointAddress, depositIndex, withdrawIndex }: DeriveWithdrawalSecretsParams) => {
-    const sig = await noteSigner.signNote({ chainId, entrypointAddress, depositIndex, secretIndex: withdrawIndex });
+    const sig = await signNote({ chainId, entrypointAddress, depositIndex, secretIndex: withdrawIndex });
     const key = fieldFromSig('signer', sig);
 
     return `0x${key.toString(16).padStart(64, '0')}` as `0x${string}`;
