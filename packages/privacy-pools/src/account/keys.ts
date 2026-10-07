@@ -18,21 +18,21 @@ export interface Secret {
   nullifierHash: bigint;
 };
 
-type BaseDeriveSecretParams = {
+export type BaseDeriveSecretParams = {
   entrypointAddress: bigint;
   chainId: bigint;
 };
 
-type DeriveDepositSecretParams = BaseDeriveSecretParams & {
+export type DeriveDepositSecretParams = BaseDeriveSecretParams & {
   depositIndex: number;
 };
 
-type DeriveWithdrawalSecretsParams = BaseDeriveSecretParams & {
+export type DeriveWithdrawalSecretsParams = BaseDeriveSecretParams & {
   depositIndex: number;
   withdrawIndex: number;
 };
 
-type DeriveSecretsParams = BaseDeriveSecretParams & {
+export type DeriveSecretsParams = BaseDeriveSecretParams & {
   depositIndex: number;
   secretIndex: number;
 };
