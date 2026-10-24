@@ -11,6 +11,7 @@ const N_ROUNDS_FULL_POST = 4;
 function redc(x: bigint): bigint {
   const q = ((x & MASK) * NINV) & MASK;
   const r = (x + q * p) >> 256n;
+
   return r >= p ? r - p : r;
 }
 
@@ -22,11 +23,13 @@ function toMontgomery(x: bigint): bigint {
 function pow5(x: bigint): bigint {
   const x2 = redc(x * x);
   const x4 = redc(x2 * x2);
+
   return redc(x * x4)
 }
 
 function add(a: bigint, b: bigint): bigint {
   const r = a + b;
+
   return r >= p ? r - p : r;
 }
 
@@ -61,6 +64,7 @@ class State {
 
     mix(matrix: bigint[][]): void {
         const outs = this.s.map((_,i) => this.mixRow(matrix[i]));
+
         this.s = outs
     }
 
@@ -71,6 +75,7 @@ class State {
     }
 
     partial(constant: bigint, sRound: bigint[]): void {
+        // We can avoid % p here and assume that s[0] < 2p
         this.s[0] = pow5(this.s[0]) + constant;
         const out0 = this.mixRow([sRound[0], sRound[1], sRound[2]]) ;
 
@@ -84,7 +89,8 @@ class State {
 export function hash(in0: bigint, in1: bigint): bigint {
     if (in0 < 0n || in1 < 0n) throw new RangeError("inputs must be non-negative");
 
-    let state = new State(in0, in1);
+    const state = new State(in0, in1);
+
     state.ARC(C0);
 
     // First full (4) rounds. The first 3 are mixed with M; the last one with P.

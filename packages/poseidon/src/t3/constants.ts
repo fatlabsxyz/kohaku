@@ -1,18 +1,18 @@
-// The constants of constants_t3.ts in Montgomery form (x·R mod p, R = 2^256), same layout.
-// Generated from constants_t3.ts; the field constants below drive the Montgomery reduction.
-
 // BN254 scalar field
 export const p = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
 
+// Montgomery context (R=2**256)
 // R - 1: x & MASK = x mod R
 export const MASK = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn;
-
 // -p^-1 mod R
 export const NINV = 0x73f82f1d0d8341b2e39a9828990623916586864b4c6911b3c2e1f593efffffffn;
-
 // R^2 mod p
 export const R2 = 0x0216d0b17f4e44a58c49833d53bb808553fe3ab1e35c59e31bb8e645ae216da7n;
 
+
+// The constants optimized poseidonT3 (https://github.com/iden3/circomlibjs/blob/main/src/poseidon_constants_opt.js)
+// in  in Montgomery form (x·R mod p, R = 2^256). Organized by convenience.
+//
 // initial ARC
 export const C0: bigint[] = [
   0x1638bf18c850744227a219050e23910c0971619601250a0783bbbac36534a858n,

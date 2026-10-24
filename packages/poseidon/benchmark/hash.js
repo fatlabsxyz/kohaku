@@ -21,9 +21,11 @@ const variants = [
 // and both variants can be checked against each other.
 function run(hash, elements) {
   let acc = 0n;
+
   for (const element of elements) {
     acc = hash(acc, element);
   }
+
   return acc;
 }
 
@@ -33,13 +35,16 @@ for (const variant of variants) {
 
 for (const { label, elements } of cases) {
   let expected;
+
   for (const variant of variants) {
     const start = process.hrtime.bigint();
     const result = run(variant.hash, elements);
     const diff = process.hrtime.bigint() - start;
+
     console.log(`${label}, ${variant.label}`, diff / 1_000_000n);
 
     expected ??= result;
+
     if (result !== expected) {
       throw new Error(`${label}: ${variant.label} result mismatch`);
     }

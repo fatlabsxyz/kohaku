@@ -17,7 +17,9 @@ const HASHERS: Hashers = {
 // Returns the Poseidon hash function for the given arity.
 export function createPoseidon<A extends Arity>(arity: A): Hashers[A] {
     const hasher = HASHERS[arity];
+
     if (!hasher) throw new RangeError(`unsupported arity: ${arity}`);
+
     return hasher;
 }
 
