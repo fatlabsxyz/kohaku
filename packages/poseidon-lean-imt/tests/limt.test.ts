@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { LeanIMT as ZkLeanIMT } from '@zk-kit/lean-imt';
 import { poseidonT3 } from '@kohaku-eth/poseidon';
-import { LeanIMT } from '../src/index.ts';
+import { PoseidonT3LeanIMT as LeanIMT } from '../src/index.ts';
 
 const p = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
 

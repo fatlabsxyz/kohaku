@@ -10,7 +10,7 @@ export interface LeanIMTMerkleProof {
 }
 
 export interface ParallelOptions {
-  // Defaults to the number of logical CPUs.
+  // Defaults to the number of logical CPUs, capped at 16.
   workers?: number;
   // URL of dist/worker.js ("@kohaku-eth/poseidon-lean-imt/worker.js"), for bundlers that
   // do not emit it on their own.
@@ -18,7 +18,7 @@ export interface ParallelOptions {
 }
 
 // @zk-kit/lean-imt LeanIMT over Poseidon T3.
-export class LeanIMT {
+export class PoseidonT3LeanIMT {
   // levels[0] holds the leaves, the last level holds [root].
   private levels: bigint[][] = [[]];
   private readonly positions = new Map<bigint, number>();
@@ -30,14 +30,14 @@ export class LeanIMT {
   // Same tree as new LeanIMT(leaves), hashed level by level on workers. Workers
   // always start (at most one per parent), even when the tree is too small to
   // gain from them.
-  static async fromLeavesParallel(leaves: bigint[], options: ParallelOptions = {}): Promise<LeanIMT> {
+  static async fromLeavesParallel(leaves: bigint[], options: ParallelOptions = {}): Promise<PoseidonT3LeanIMT> {
     const workers = options.workers ?? (await defaultWorkerCount());
 
     if (!Number.isInteger(workers) || workers < 1) {
       throw new Error(`workers must be a positive integer, got ${workers}`);
     }
 
-    const tree = new LeanIMT();
+    const tree = new PoseidonT3LeanIMT();
 
     if (leaves.length === 0) return tree;
 
@@ -149,7 +149,7 @@ export class LeanIMT {
   }
 
   verifyProof(proof: LeanIMTMerkleProof): boolean {
-    return LeanIMT.verifyProof(proof);
+    return PoseidonT3LeanIMT.verifyProof(proof);
   }
 
   // Bit i of index set: siblings[i] is on the left.

@@ -26,12 +26,15 @@ type NodeWorkerThreads = { Worker: new (url: URL | string) => NodeWorker };
 
 const isBrowser = typeof (globalThis as { Worker?: unknown }).Worker === "function";
 
+// Past this many workers, startup and message passing outweigh the extra cores.
+export const MAX_DEFAULT_WORKERS = 16;
+
 export async function defaultWorkerCount(): Promise<number> {
-  if (isBrowser) return globalThis.navigator?.hardwareConcurrency ?? 4;
+  if (isBrowser) return Math.min(globalThis.navigator?.hardwareConcurrency ?? 4, MAX_DEFAULT_WORKERS);
 
   const os = (await import(NODE_OS_MODULE)) as { availableParallelism(): number };
 
-  return os.availableParallelism();
+  return Math.min(os.availableParallelism(), MAX_DEFAULT_WORKERS);
 }
 
 async function startNodeWorkers(count: number, workerUrl?: string | URL): Promise<Channel[]> {

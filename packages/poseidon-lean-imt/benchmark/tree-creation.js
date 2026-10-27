@@ -1,7 +1,7 @@
 /* global process, console */
 import { LeanIMT as ZkLeanIMT } from '@zk-kit/lean-imt';
 import { poseidonT3 } from '@kohaku-eth/poseidon';
-import { LeanIMT } from '../dist/index.js';
+import { PoseidonT3LeanIMT as LeanIMT } from '../dist/index.js';
 
 const cases = [
   { label: '1k tree create', size: 1_000 },
