@@ -1,4 +1,4 @@
-import { LeanIMT } from "@zk-kit/lean-imt";
+import { LeanIMT } from "@kohaku-eth/poseidon-lean-imt";
 
 import { buildMerkleTree } from "../../utils/proof.util";
 
@@ -25,7 +25,7 @@ import { buildMerkleTree } from "../../utils/proof.util";
 interface CachedTree {
   count: number;
   last: bigint;
-  tree: LeanIMT<bigint>;
+  tree: LeanIMT;
 }
 
 const namespaces = new Map<string, Map<string, CachedTree>>();
@@ -46,7 +46,7 @@ function namespace(ns: string): Map<string, CachedTree> {
  * is an append-only extension of what was last seen for `key`. Otherwise builds
  * a fresh tree (first access, or a divergent/shrunken leaf set).
  */
-export function getIncrementalTree(ns: string, key: string, leaves: bigint[]): LeanIMT<bigint> {
+export function getIncrementalTree(ns: string, key: string, leaves: bigint[]): LeanIMT {
   const cache = namespace(ns);
   const cached = cache.get(key);
 
