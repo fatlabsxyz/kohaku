@@ -34,28 +34,34 @@ export const aspLeavesSelector = createSelector(
 
 // State Merkle proof selector - parameterized by pool + note. The tree is cached
 // per pool (see merkle-tree.cache), so repeated proofs reuse one built tree.
+/**
+ * MUST ONLY BE USED IN THUNKS
+ */
 export const stateMerkleProofSelector = createSelector(
   [
     stateLeavesSelector,
     (_state: RootState, poolAddress: bigint, _note: INote & Secret) => poolAddress,
     (_state: RootState, _poolAddress: bigint, note: INote & Secret) => note,
   ],
-  (stateLeaves, poolAddress, note): MerkleProof => {
-    const tree = getIncrementalTree('state', String(poolAddress), stateLeaves);
+  async (stateLeaves, poolAddress, note): Promise<MerkleProof> => {
+    const tree = await getIncrementalTree('state', String(poolAddress), stateLeaves);
     return proofFromTree(tree, commitment(note));
   }
 );
 
 // ASP Merkle proof selector - parameterized by label. The ASP tree is cached per
 // entrypoint (see merkle-tree.cache).
+/**
+ * MUST ONLY BE USED IN THUNKS
+ */
 export const aspMerkleProofSelector = createSelector(
   [
     aspLeavesSelector,
     entrypointInfoSelector,
     (_state: RootState, label: bigint) => label,
   ],
-  (aspLeaves, entrypointInfo, label): MerkleProof => {
-    const tree = getIncrementalTree('asp', String(entrypointInfo.entrypointAddress), aspLeaves);
+  async (aspLeaves, entrypointInfo, label): Promise<MerkleProof> => {
+    const tree = await getIncrementalTree('asp', String(entrypointInfo.entrypointAddress), aspLeaves);
     return proofFromTree(tree, label);
   }
 );

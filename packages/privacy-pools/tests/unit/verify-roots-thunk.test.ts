@@ -259,12 +259,12 @@ describe('verifyRootsThunk', () => {
     expect(verifyStateRootOnChain).toHaveBeenCalledWith(
       dataService,
       poolAddress,
-      computeMerkleTreeRoot([10n]),
+      await computeMerkleTreeRoot([10n]),
     );
     expect(verifyStateRootOnChain).toHaveBeenCalledWith(
       dataService,
       poolAddress2,
-      computeMerkleTreeRoot([77n]),
+      await computeMerkleTreeRoot([77n]),
     );
   });
 
@@ -309,7 +309,7 @@ describe('verifyRootsThunk', () => {
     expect(verifyStateRootOnChain).toHaveBeenCalledWith(
       dataService,
       poolAddress,
-      computeMerkleTreeRoot([10n]),
+      await computeMerkleTreeRoot([10n]),
     );
   });
 });

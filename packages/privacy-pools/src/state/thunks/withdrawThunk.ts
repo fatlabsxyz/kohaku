@@ -63,8 +63,10 @@ export const withdrawThunk = createAsyncThunk<
 
     // 4. Get Merkle proofs
     const existingNoteFull = { ...existingNote, ...existingSecrets };
-    const stateMerkleProof = stateMerkleProofSelector(state, poolInfo.address, existingNoteFull);
-    const aspMerkleProof = aspMerkleProofSelector(state, existingNote.label);
+    const [stateMerkleProof, aspMerkleProof] = await Promise.all([
+      stateMerkleProofSelector(state, poolInfo.address, existingNoteFull),
+      aspMerkleProofSelector(state, existingNote.label),
+    ]);
 
     // 5. Generate ZK proof
     const prover = await params.proverFactory();
