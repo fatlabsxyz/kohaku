@@ -82,18 +82,22 @@ describe('Privacy Pools external paymaster signing', () => {
       note: { deposit, withdraw: 0, balance: 10n ** 18n }, withdrawnValue,
     })) as NoteToSpend[];
     const [withdrawal] = await prepare({ mode: 'external', signer: externalSigner() }, undefined, notesToSpend);
+
     expect(withdrawal!.withdrawnValue).toBe(1_900_000_000_000_000_000n);
     // The direct note is proved once; both sponsoring proofs use the same partial amount.
     const proofParams = fixture.proof.mock.calls.map(call => call[0]);
+
     expect(proofParams.filter(p => p.note.deposit === 1).map(p => p.amount)).toEqual([balances[1]]);
     expect(proofParams.filter(p => p.note.deposit === 0).map(p => p.amount)).toEqual([balances[0], balances[0]]);
     const { decodeFunctionData, erc20Abi } = await import('viem');
     const { SIMPLE_7702_EXECUTE_ABI } = await import('../../src/data/abis/account.abi');
     const decoded = decodeFunctionData({ abi: SIMPLE_7702_EXECUTE_ABI, data: withdrawal!.userOperation.callData });
     const calls = decoded.args[0] as readonly { target: string; value: bigint; data: `0x${string}` }[];
+
     expect(calls).toHaveLength(2);
     const forward = calls[1]!;
     const expected = withdrawal!.withdrawnValue - withdrawal!.fee;
+
     if (isERC20) {
       expect(decodeFunctionData({ abi: erc20Abi, data: forward.data }).args).toEqual([recipient, expected]);
     } else {
