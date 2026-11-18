@@ -12,6 +12,7 @@ minimumReleaseAgeExclude:
 packages:
   - "packages/provider"
   - "packages/privacy-pools"
+  - "packages/privacy-pools-v2"
   - "packages/plugins"
   - "packages/tornado-cash"
   - "packages/mimc-tree"

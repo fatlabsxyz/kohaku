@@ -1,5 +1,4 @@
 export * from './v1';
-export * from './v2';
 export { analyzePPv1Withdrawal, PPv1AmountObfuscationError } from './withdrawal/batch-plan';
 export type { PPv1WithdrawalAnalysis } from './withdrawal/batch-plan';
 export { PPv1NoteUnavailableError } from './withdrawal/note-label';
